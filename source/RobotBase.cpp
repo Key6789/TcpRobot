@@ -787,7 +787,12 @@ namespace TCP_ROBOT
 
 	QVector<TopoDS_Shape> RobotBase::loadWorkSTEPModel(const QString& filePath)
 	{
-		QVector<TopoDS_Shape> vector;
+		QVector<TopoDS_Shape> vector = QVector<TopoDS_Shape>();
+		if (filePath.isEmpty())
+		{
+			return vector;
+		}
+		
 		STEPControl_Reader reader;
 		IFSelect_ReturnStatus status = reader.ReadFile(filePath.toStdString().c_str());
 		if (status != IFSelect_RetDone) {
@@ -1402,6 +1407,22 @@ namespace TCP_ROBOT
 		}
 		addRobot.shapes = SacleShapes;
 		m_myRobotData.insert(name, addRobot);
+		return SacleShapes;
+	}
+
+	QVector<TopoDS_Shape> RobotBase::scaleShapes(QVector<TopoDS_Shape> shapes, double scale)
+	{
+		QVector<TopoDS_Shape> SacleShapes = shapes;
+		for (auto& shape : SacleShapes) {
+			// 创建一个 gp_Trsf 对象
+			gp_Trsf transformation;
+			transformation.SetScale(gp_Pnt(0, 0, 0), scale); // 放大两倍
+
+			// 使用 BRepBuilderAPI_Transform 来应用变换
+			BRepBuilderAPI_Transform transformer(shape, transformation, true);
+			shape = transformer.Shape();
+
+		}
 		return SacleShapes;
 	}
 

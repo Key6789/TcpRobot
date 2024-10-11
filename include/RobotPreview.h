@@ -22,6 +22,15 @@ namespace TCP_ROBOT
 	public slots:
 		void slotUpdataRobotShaps(void) override;
 
+		// 模型更新
+		void slotUpdateModel(WORKANDHOLE workAndHole);
+
+		// 单个模型更新
+		void slotUpdateSingleModel(WORKANDHOLE workAndHole,QString holeName);
+
+		QMap<QString, ADDROBOTDATA> createRobotData(WORKANDHOLE workAndHole);
+
+
 	};
 }
 #endif() // ROBOTPREVIEW_H_

@@ -163,6 +163,7 @@ namespace TCP_ROBOT
 		void setMyShapColor();
 		QVector<TopoDS_Shape> getShapesFromResult(const QString& name, const QVector<LoadResult>& shapes);
 		QVector<TopoDS_Shape> findAndScaleShapes(const QString& name, double scale = 1.0);
+		QVector<TopoDS_Shape> scaleShapes(QVector<TopoDS_Shape> shapes, double scale = 1.0);
 		// 英文与中文转换，防止乱码
 		TCollection_ExtendedString displayText(const char* theText);
 		// 添加标题文本

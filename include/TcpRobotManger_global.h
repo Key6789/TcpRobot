@@ -272,6 +272,7 @@
 #include <QColorDialog>
 
 #include "TcpXViewBase.h"
+#include <QFormLayout>
 
 #define   WORKPATH	QDir::currentPath().append("/RobotData/WorkPath")
 #define   ROBOTPATH	QDir::currentPath().append("/RobotData/RobotPath")
@@ -299,12 +300,12 @@
 
 
 
+
 #if defined(TCPROBOT_LIBRARY)
 #define TCPROBOT_EXPORT Q_DECL_EXPORT
 #else
 #define TCPROBOT_EXPORT Q_DECL_IMPORT
 #endif
-
 
 //! mouse actions.
 enum CurrentAction3d
@@ -393,6 +394,8 @@ struct addComponentRobotData {
 	double d = 0.0;
 	double theta = 0.0;
 
+	double sacle = 1.0;
+
 	QVector<double> joints()
 	{
 		QVector<double> joints;
@@ -449,4 +452,84 @@ struct RobotRotateData
 	MoveDirection direction;
 }typedef ROTATEDATA;
 
+// 定义工作区数据结构
+struct WorkDATAStruct 
+{
+	// 焊缝名称
+	QString workName;
 
+	//下一个形状名称
+	QString nextShapeName = QString();
+	QVector<QString> nextShapeNames = QVector<QString>();
+	// 焊缝颜色
+	QString color = "#ffffff";
+
+	// 焊缝形状
+	QVector<TopoDS_Shape> holeShape = QVector<TopoDS_Shape>();
+
+	// 焊缝尺寸
+	QString sacle = "1.0";
+
+	// 焊缝位置
+	QString positionX = "0.0";
+	QString positionY = "0.0";
+	QString positionZ = "0.0";
+
+	// 焊缝角度
+	QString angleX = "0.0";
+	QString angleY = "0.0";
+	QString angleZ = "0.0";
+
+	QString path = QString();
+
+	double alpha = 0.0;
+	double aDistance = 0.0;
+	double theta = 0.0;
+	double dDistance = 0.0;
+}typedef WORKDATA;
+
+// 定义焊缝数据结构
+struct HoleDATAStruct 
+{
+	// 焊缝名称
+	QString holeName;
+
+	//下一个形状名称
+	QString nextShapeName = QString();
+
+	// 焊缝颜色
+	QString color = "#ffffff";
+
+	// 焊缝形状
+	QVector<TopoDS_Shape> holeShape = QVector<TopoDS_Shape>();
+
+	// 焊缝尺寸
+	QString sacle = "1.0";
+
+	// 焊缝位置
+	QString positionX = "0.0";
+	QString positionY = "0.0";
+	QString positionZ = "0.0";
+
+	// 焊缝角度
+	QString angleX = "0.0";
+	QString angleY = "0.0";
+	QString angleZ = "0.0";
+
+	QString path = QString();
+
+	double alpha = 0.0;
+	double aDistance = 0.0;
+	double theta = 0.0;
+	double dDistance = 0.0;
+
+}typedef HOLEDATA;
+
+// 定义工作区和焊缝数据结构
+struct workAndHoleStruct 
+{
+	QString workName;
+	WorkDATAStruct workData;
+	QMap<QString, HOLEDATA> holeShape;
+
+}typedef WORKANDHOLE;
