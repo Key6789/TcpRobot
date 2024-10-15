@@ -18,6 +18,10 @@ namespace TCP_ROBOT
 		// 构造
 		RobotCore(QWidget* parent = nullptr);
 		~RobotCore();
+
+		void slotUpdataRobotShaps(void) override;
+
+		void loadShapes(QString filePath);
 	};
 }
 #endif() // ROBOTPREVIEW_H_
