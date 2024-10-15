@@ -202,6 +202,7 @@ namespace TCP_ROBOT
 		void displayAllRobotShapes(QVector <LoadRobotTransformResult> results);
 		void displayAllRobotShapes();
 		QVector<Handle(AIS_Shape)> RobotTransformParallel(ADDROBOTDATA data);
+		QVector<Handle(AIS_Shape)> RobotTransformParallelPreview(ADDROBOTDATA data);
 
 		QStringList getCurrentAndNextName(QString name);
 		

@@ -12,6 +12,15 @@ class QMenu;
 class QRubberBand;
 namespace TCP_ROBOT
 {
+	struct WorkPoint
+	{
+		QString WorkName;
+		QWidget* workRightView = nullptr;
+		RobotPreview * workPreview = nullptr;
+	};
+
+
+	class ShapeCommondPreview;
 	class TCPROBOT_EXPORT ROSRobot : public QWidget
 	{
 		Q_OBJECT
@@ -23,45 +32,104 @@ namespace TCP_ROBOT
 		// QWidget 用于显示预览
 		QWidget* showPreview(QWidget* parent = nullptr);
 
-		// QWidget 用于显示工作和焊缝的预览
-		QWidget* showWorkAndHolePreview(QWidget* parent = nullptr);
-
-		// QWidget 用于显示焊缝的预览
-		QWidget* showHolePreview(QWidget* parent = nullptr);
-
-		// QWidget 用于显示特定焊缝的右侧预览
-		QWidget* showHoleRightPreview(QString holeName, QWidget* parent = nullptr);
-
-		// 创建工作和焊缝的数据结构
-		WORKANDHOLE createWorkAndHole(QMap<QString, HoleDATAStruct> holeMap);
-
 	signals:
 		// 选中的工作名称变化信号
 		void seletedWorkChanged(QString workName);
+	private: // tool
+		// 创建目录
+		void createOrCheckDirectory(const QString& path);
+
+		// 删除目录
+		bool removeDirectory(const QString& path);
+
+		// 获取子目录
+		QStringList getSubDirectories(const QString& path);
+
+		bool saveToJsonFile(const QVariantMap& data, const QString& filePath);
+
 
 	private:
-		// 焊缝数据结构映射
-		QMap<QString, HoleDATAStruct> m_holeMap = QMap<QString, HoleDATAStruct>();
+		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
+	};
 
-		// 右侧视图指针
-		QWidget* m_rightView = nullptr;
+	class TCPROBOT_EXPORT ShapeCommondPreview : public QWidget
+	{
+		Q_OBJECT
+	public:
+		ShapeCommondPreview(QWidget* parent = nullptr);
+		~ShapeCommondPreview();
 
-		// 右侧工作视图指针
-		QWidget* m_rightWorkView = nullptr;
+		void setRobotPreviewPoint(RobotPreview* robotPreview );
 
-		// 焊缝数据的复制
-		HoleDATAStruct m_holeDataCopy = HoleDATAStruct();
+		// 设置形状结构体
+		void setShapeStruct(SHAPESTRUCT shapeStruct);
+		// 获取形状结构体
+		SHAPESTRUCT getShapeStruct() { return m_shapeStruct; };
 
-		// 机器人预览指针
+		// 设置形状类型
+		void setShapeType(ShapeType shapeType);
+
+		// 初始化连接
+		void initConnect();
+
+	public slots:
+		// 读取形状路径
+		void readShapePath();
+		// 读取形状颜色
+		void readShapeColor();
+		// 读取形状缩放
+		void readShapeScale();
+		// 读取形状X轴角度
+		void readShapeAngleX();
+		// 读取形状Y轴角度
+		void readShapeAngleY();
+		// 读取形状Z轴角度
+		void readShapeAngleZ();
+		// 读取形状X轴位置
+		void readShapePosX();
+		// 读取形状Y轴位置
+		void readShapePosY();
+		// 读取形状Z轴位置
+		void readShapePosZ();
+		// 读取形状名称
+		void readShapeName();
+
+	private:
+		// 形状结构体
+		SHAPESTRUCT m_shapeStruct;
+
+		// 形状名称输入框
+		QLineEdit* m_shapeName = nullptr;
+		// 形状颜色输入框
+		QLineEdit* m_shapeColor = nullptr;
+		// 形状路径输入框
+		QLineEdit* m_shapePath = nullptr;
+		// 形状缩放输入框
+		QLineEdit* m_shapeScale = nullptr;
+		// 形状X轴角度输入框
+		QLineEdit* m_shapeAngleX = nullptr;
+		// 形状Y轴角度输入框
+		QLineEdit* m_shapeAngleY = nullptr;
+		// 形状Z轴角度输入框
+		QLineEdit* m_shapeAngleZ = nullptr;
+		// 形状X轴位置输入框
+		QLineEdit* m_shapePosX = nullptr;
+		// 形状Y轴位置输入框
+		QLineEdit* m_shapePosY = nullptr;
+		// 形状Z轴位置输入框
+		QLineEdit* m_shapePosZ = nullptr;
+
+		QPushButton* m_readShapePathButton = nullptr;
+		QPushButton* m_readShapeColorButton = nullptr;
+
+		// 形状预览
 		RobotPreview* m_robotPreview = nullptr;
 
-		// 焊缝预览指针
-		QWidget* m_holePreview = nullptr;
-
-		// 当前工作名称
-		QString m_currentWorkName = QString();
 
 	};
+
+
+
 }
 
 #endif // !

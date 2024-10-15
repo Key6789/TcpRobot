@@ -12,95 +12,139 @@ namespace TCP_ROBOT
 	}
 	void RobotPreview::slotUpdateModel(WORKANDHOLE workAndHole)
 	{
-		QMap<QString, ADDROBOTDATA> robotData = createRobotData(workAndHole);
-		m_myRobotData = robotData;
-		if (m_myRobotData.isEmpty())
+
+	}
+
+	void RobotPreview::slotReplaceModelByPath(SHAPESTRUCT shapeStruct)
+	{
+
+		// 读取文件
+		// 转换为机器人数据
+		ADDROBOTDATA robotData = createRobotData(shapeStruct);
+		RemovePreview(m_mapPreviewData[shapeStruct.ShapeName]);
+		m_mapPreviewData.insert(shapeStruct.ShapeName, robotData);
+
+		displaySingalAddRobot(robotData);
+	}
+
+	void RobotPreview::slotChangPreviewColor(SHAPESTRUCT shapeStruct)
+	{
+		// 修改颜色
+		QString colorStr = shapeStruct.ShapeColor;
+		// 转换颜色格式
+		QColor color(colorStr);
+		// 转换为Quantity_Color
+		Quantity_Color qColor(color.redF(), color.greenF(), color.blueF(), Quantity_TOC_sRGB);
+		// 修改颜色
+		for (auto shape : m_mapPreviewData[shapeStruct.ShapeName].myAisShapes)
 		{
-			 qDebug() << "slotUpdateModel";
-			return;
+			shape->SetColor(qColor);
 		}
-		myContext->RemoveAll(true);
-		addComponentRobotALL();
+	}
+
+	void RobotPreview::slotChangedPreviewScale(SHAPESTRUCT shapeStruct)
+	{
+		slotReplaceModelByPath(shapeStruct);
+	}
+
+	void RobotPreview::slotChangedPreviewRotation(SHAPESTRUCT shapeStruct)
+	{
+		slotReplaceModelByPath(shapeStruct);
+	}
+
+	void RobotPreview::slotChangedPreviewTranslation(SHAPESTRUCT shapeStruct)
+	{
+		// 修改位置
+		slotReplaceModelByPath(shapeStruct);
+	}
+
+	void RobotPreview::removePreview(SHAPESTRUCT shapeStruct)
+	{
+		RemovePreview(m_mapPreviewData[shapeStruct.ShapeName]);
+	}
+
+	void RobotPreview::removeAllPreview()
+	{
+		getContext()->EraseAll(true);
+		m_mapPreviewData.clear();
 	}
 	
 	void RobotPreview::slotUpdateSingleModel(WORKANDHOLE workAndHole, QString holeName)
 	{
-		QMap<QString, ADDROBOTDATA> robotData = createRobotData(workAndHole);
-		foreach(QString key, robotData.keys())
-		{
-			QStringList robotNames = m_myRobotData.keys();
-			if (robotNames.contains(key))
-			{
-				removeRobotShapes(m_myRobotData[key].myAisShapes);
-				m_myRobotData.remove(key);
-				m_myRobotData.insert(key, robotData[key]);
-			}
-			
-		}
-		addComponentRobotALL();
+		
 
 	}
-	QMap<QString, ADDROBOTDATA> RobotPreview::createRobotData(WORKANDHOLE workAndHole)
+	ADDROBOTDATA RobotPreview::createRobotData(SHAPESTRUCT shapeStruct)
 	{
-		// 创建机器人数据
-		QMap<QString, ADDROBOTDATA> robotData;
+		ADDROBOTDATA robot;
+		robot.name = shapeStruct.ShapeName;
 
-		QMap<QString, HOLEDATA> holeData = workAndHole.holeShape;
+		// 机器人坐标
+		robot.x = shapeStruct.ShapePositionX.toDouble();
+		robot.y = shapeStruct.ShapePositionY.toDouble();
+		robot.z = shapeStruct.ShapePositionZ.toDouble();
 
-		foreach(QString key, holeData.keys())
+		// 机器人姿态
+		robot.angleX = shapeStruct.ShapeAngleX.toDouble();
+		robot.angleY = shapeStruct.ShapeAngleY.toDouble();
+		robot.angleZ = shapeStruct.ShapeAngleZ.toDouble();
+
+		// 机器人 路径
+		robot.path = shapeStruct.ShapePath;
+
+		// 机器人连杆
+		robot.a = shapeStruct.aDistance;
+		robot.alpha = shapeStruct.alpha;
+		robot.theta = shapeStruct.theta;
+		robot.d = shapeStruct.dDistance;
+
+		// 机器人尺寸
+		robot.sacle = shapeStruct.ShapeScale.toDouble();
+
+		// 机器人下一个形状名称
+		robot.nextShapeName = shapeStruct.nextShapeName;
+
+		// 机器人装配点
+		robot.assemblyPoint = gp_Pnt(shapeStruct.ShapePositionX.toDouble(), shapeStruct.ShapePositionY.toDouble(), shapeStruct.ShapePositionZ.toDouble());
+
+		// 机器人颜色
+		QString colorStr = shapeStruct.ShapeColor;
+		// 转换颜色格式
+		QColor color(colorStr);
+		// 转换为Quantity_Color
+		robot.color = Quantity_Color(color.redF(), color.greenF(), color.blueF(), Quantity_TOC_sRGB);
+
+		// 机器人坐标系
+		robot.xDirCurrent = getTransformationMatrix(robot, robot.xDir);
+		robot.yDirCurrent = getTransformationMatrix(robot, robot.yDir);
+		robot.zDirCurrent = getTransformationMatrix(robot, robot.zDir);
+
+		// 获取模型
+		robot.shapes = getShapesFromResult(robot.path, loadFilesInParallel({ robot.path }));
+		robot.shapes = scaleShapes(robot.shapes, robot.sacle);
+		robot.myAisShapes = RobotTransformParallelPreview(robot);
+		// 加入数据
+		return robot;
+	}
+	void RobotPreview::displaySingalAddRobot(ADDROBOTDATA addRobotData)
+	{
+		// 显示机器人
+		for (auto shape : addRobotData.myAisShapes)
 		{
-			HOLEDATA hole = holeData[key];
-			ADDROBOTDATA robot;
-			robot.name = key;
-
-			// 机器人坐标
-			robot.x = hole.positionX.toDouble();
-			robot.y = hole.positionY.toDouble();
-			robot.z = hole.positionZ.toDouble();
-
-			// 机器人姿态
-			robot.angleX = hole.angleX.toDouble();
-			robot.angleY = hole.angleY.toDouble();
-			robot.angleZ = hole.angleZ.toDouble();
-
-			// 机器人 路径
-			robot.path = hole.path;
-
-			// 机器人连杆
-			robot.a = hole.aDistance;
-			robot.alpha = hole.alpha;
-			robot.theta = hole.theta;
-			robot.d = hole.dDistance;
-
-			// 机器人尺寸
-			robot.sacle = hole.sacle.toDouble();
-			
-			// 机器人下一个形状名称
-			robot.nextShapeName = hole.nextShapeName;
-
-			// 机器人装配点
-			robot.assemblyPoint = gp_Pnt(hole.positionX.toDouble(), hole.positionY.toDouble(), hole.positionZ.toDouble());
-
-			// 机器人颜色
-			QString colorStr = hole.color;
-			// 转换颜色格式
-			QColor color(colorStr);
-			// 转换为Quantity_Color
-			robot.color = Quantity_Color(color.redF(), color.greenF(), color.blueF(), Quantity_TOC_sRGB);
-			
-			// 机器人坐标系
-			robot.xDirCurrent = getTransformationMatrix(robot, robot.xDir);
-			robot.yDirCurrent = getTransformationMatrix(robot, robot.yDir);
-			robot.zDirCurrent = getTransformationMatrix(robot, robot.zDir);
-
-			// 获取模型
-			robot.shapes = getShapesFromResult(robot.path, loadFilesInParallel({ robot.path }));
-			robot.shapes = scaleShapes(robot.shapes, robot.sacle);
-			// 加入数据
-			robotData.insert(key, robot);
+			getContext()->Display(shape, Standard_True);
 		}
-
-		return robotData;
+		
+	}
+	void RobotPreview::RemovePreview(ADDROBOTDATA addRobotData)
+	{
+		if (m_mapPreviewData.contains(addRobotData.name))
+		{
+			for (auto shape : m_mapPreviewData[addRobotData.name].myAisShapes)
+			{
+				getContext()->Erase(shape,Standard_True);
+			}
+			m_mapPreviewData.remove(addRobotData.name);
+		}
 	}
 	void RobotPreview::slotUpdataRobotShaps(void)
 	{

@@ -1625,6 +1625,62 @@ namespace TCP_ROBOT
 		m_myRobotData[data.name].assemblyPoint = data.assemblyPoint;
 		return vectortemp;
 	}
+	QVector<Handle(AIS_Shape)> RobotBase::RobotTransformParallelPreview(ADDROBOTDATA data)
+	{
+		QVector<TopoDS_Shape> vector = data.shapes;
+		QVector<Handle(AIS_Shape)> vectortemp;
+
+		// 去除旧有的显示
+		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
+		{
+			if (ais->Shape().IsNull())
+			{
+				continue;
+			}
+			m_mutex->lock();
+			myContext->Remove(ais, Standard_True); // 移除旧的形状
+			m_mutex->unlock();
+		}
+
+		for (int i = 0; i < vector.size(); ++i)
+		{
+
+			// 保存原始位置，以便稍后恢复
+			gp_Pnt originalPosition = data.assemblyPoint;
+
+			// 将形状平移到原点
+			gp_Trsf moveToOrigin;
+			moveToOrigin.SetTranslation(gp_Pnt(0.0, 0.0, 0.0).XYZ());
+			TopoDS_Shape atOrigin = BRepBuilderAPI_Transform(vector[i], moveToOrigin).Shape();
+
+			// 角度偏移（现在是在局部坐标系中）
+			gp_Trsf localRotation;
+			localRotation.SetRotation(data.axisX, data.angleX / 180.0 * M_PI); // X轴旋转
+			TopoDS_Shape rotatedX = BRepBuilderAPI_Transform(atOrigin, localRotation).Shape();
+
+			localRotation.SetRotation(data.axisY, data.angleY / 180.0 * M_PI); // Y轴旋转
+			TopoDS_Shape rotatedXY = BRepBuilderAPI_Transform(rotatedX, localRotation).Shape();
+
+			localRotation.SetRotation(data.axisZ, data.angleZ / 180.0 * M_PI); // Z轴旋转
+			TopoDS_Shape rotatedXYZ = BRepBuilderAPI_Transform(rotatedXY, localRotation).Shape();
+
+
+			// 将形状移回原始位置
+			gp_Trsf moveBack;
+			moveBack.SetTranslation(originalPosition.XYZ());
+			TopoDS_Shape transformedComponent = BRepBuilderAPI_Transform(rotatedXYZ, moveBack).Shape();
+
+			// 位移
+			gp_Trsf finalTransform;
+			finalTransform.SetTranslation(gp_Vec(data.assemblyPoint.XYZ()));
+			transformedComponent = BRepBuilderAPI_Transform(transformedComponent, finalTransform).Shape();
+
+			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(transformedComponent);
+			aisShapeTemp->SetColor(data.color);
+			vectortemp.push_back(aisShapeTemp);
+		}
+		return vectortemp;
+	}
 	QStringList RobotBase::getCurrentAndNextName(QString name)
 	{
 		QStringList tempList = QStringList();

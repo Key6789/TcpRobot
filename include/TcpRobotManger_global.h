@@ -453,7 +453,7 @@ struct RobotRotateData
 }typedef ROTATEDATA;
 
 // 定义工作区数据结构
-struct WorkDATAStruct 
+struct WorkDATAStruct
 {
 	// 焊缝名称
 	QString workName;
@@ -489,7 +489,7 @@ struct WorkDATAStruct
 }typedef WORKDATA;
 
 // 定义焊缝数据结构
-struct HoleDATAStruct 
+struct HoleDATAStruct
 {
 	// 焊缝名称
 	QString holeName;
@@ -526,10 +526,94 @@ struct HoleDATAStruct
 }typedef HOLEDATA;
 
 // 定义工作区和焊缝数据结构
-struct workAndHoleStruct 
+struct workAndHoleStruct
 {
 	QString workName;
 	WorkDATAStruct workData;
 	QMap<QString, HOLEDATA> holeShape;
 
 }typedef WORKANDHOLE;
+
+enum ShapeType
+{
+	ShapeType_None = 0,
+	ShapeType_Work,
+	ShapeType_Hole,
+	ShapeType_Robot
+};
+// 定义焊缝数据结构
+struct ShapeDataStruct
+{
+	ShapeType shapeType = ShapeType_None;
+	// 焊缝名称
+	QString ShapeName;
+
+	//下一个形状名称
+	QString nextShapeName = QString();
+
+	// 焊缝颜色
+	QString ShapeColor = "#ffffff";
+
+	// 焊缝形状
+	QVector<TopoDS_Shape> ShapeVector = QVector<TopoDS_Shape>();
+
+	// 焊缝尺寸
+	QString ShapeScale = "1.0";
+
+	// 焊缝位置
+	QString ShapePositionX = "0.0";
+	QString ShapePositionY = "0.0";
+	QString ShapePositionZ = "0.0";
+
+	// 焊缝角度
+	QString ShapeAngleX = "0.0";
+	QString ShapeAngleY = "0.0";
+	QString ShapeAngleZ = "0.0";
+
+	QString ShapePath = QString();
+
+	double alpha = 0.0;
+	double aDistance = 0.0;
+	double theta = 0.0;
+	double dDistance = 0.0;
+
+	QVariantMap getShapeVariantMap()
+	{
+		QVariantMap map;
+		map.insert("ShapeName", ShapeName);
+		map.insert("nextShapeName", nextShapeName);
+		map.insert("ShapeColor", ShapeColor);
+		map.insert("ShapeScale", ShapeScale);
+		map.insert("ShapePositionX", ShapePositionX);
+		map.insert("ShapePositionY", ShapePositionY);
+		map.insert("ShapePositionZ", ShapePositionZ);
+		map.insert("ShapeAngleX", ShapeAngleX);
+		map.insert("ShapeAngleY", ShapeAngleY);
+		map.insert("ShapeAngleZ", ShapeAngleZ);
+		map.insert("ShapePath", ShapePath);
+		map.insert("ShapeType", shapeType);
+		return map;
+	}
+	void setShapeVariantMap(QVariantMap map)
+	{
+		ShapeName = map.value("ShapeName").toString();
+		nextShapeName = map.value("nextShapeName").toString();
+		ShapeColor = map.value("ShapeColor").toString();
+		ShapeScale = map.value("ShapeScale").toString();
+		ShapePositionX = map.value("ShapePositionX").toString();
+		ShapePositionY = map.value("ShapePositionY").toString();
+		ShapePositionZ = map.value("ShapePositionZ").toString();
+		ShapeAngleX = map.value("ShapeAngleX").toString();
+		ShapeAngleY = map.value("ShapeAngleY").toString();
+		ShapeAngleZ = map.value("ShapeAngleZ").toString();
+		ShapePath = map.value("ShapePath").toString();
+		shapeType = ShapeType(map.value("ShapeType").toInt());
+
+	}
+
+}typedef SHAPESTRUCT;
+
+#define  WORKPATHNAME         "WORK"
+#define  WORKCONFIGPATH       "WorkConfig.json"
+
+#define  ISNULLPOINTER(p)     if(p==nullptr){return;}

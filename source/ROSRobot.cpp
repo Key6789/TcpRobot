@@ -10,633 +10,530 @@ namespace TCP_ROBOT
 	}
 	ROSRobot::~ROSRobot()
 	{
-		if (m_robotPreview != nullptr)
-		{
-			delete m_robotPreview;
-		}
 	}
-
+	
 	QWidget* ROSRobot::showPreview(QWidget* parent)
 	{
 		QWidget* preview = new QWidget(parent);
 		preview->setWindowTitle(__StandQString("工件预览"));
+		/*********************************************************/
+		/***** 列表******/  /*****工件显示*****/
+		/**********/
+		// 主布局 QH
+		QHBoxLayout* mainLayout = new QHBoxLayout(preview);
 
-		QHBoxLayout* layout = new QHBoxLayout(preview);
-		layout->setContentsMargins(0, 0, 0, 0);
-
+		// 左侧布局 QV
 		QWidget* leftWidget = new QWidget(preview);
-		QVBoxLayout* layout2 = new QVBoxLayout(leftWidget);
-		layout2->setContentsMargins(0, 0, 0, 0);
 
-		
+		QVBoxLayout* layLeft = new QVBoxLayout(leftWidget);
+		layLeft->addWidget(new QLabel(__StandQString("工件列表:")));
+		QListWidget* workListWidget = new QListWidget(leftWidget);
+		workListWidget->setEditTriggers(QAbstractItemView::DoubleClicked);
+		workListWidget->setViewMode(QListView::ListMode);
+		layLeft->addWidget(workListWidget);
 
-		QListWidget* list = new QListWidget(preview);
+		QHBoxLayout* layoutButton = new QHBoxLayout(leftWidget);
+		QPushButton* seletedWorkButton = new QPushButton(leftWidget);
+		seletedWorkButton->setText(__StandQString("选择工件"));
 
-		// 获取指令文件夹下所有文件夹的名称
-		QDir dir(WORKPATH);
-		QStringList workNames = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-		for (int i = 0; i < workNames.size(); i++)
-		{
-			QListWidgetItem* item = new QListWidgetItem(workNames[i]);
-			list->addItem(item);
-		}
-		// 双击修改
-		list->setEditTriggers(QAbstractItemView::DoubleClicked);
-		// 设置显示模式
-		list->setViewMode(QListView::ListMode);
-		// 设置显示行数
-
-		layout2->addWidget(list);
-		connect(list, &QListWidget::itemClicked, this, [=](QListWidgetItem* item) {
-			if (m_rightWorkView != nullptr)
-			{
-				m_rightWorkView->close();
-				m_rightWorkView = nullptr;
-			}
-			m_currentWorkName = item->text();
-			m_rightWorkView = showWorkAndHolePreview(preview);
-			layout->addWidget(m_rightWorkView, 5);
-			});
-		connect(list, &QListWidget::currentTextChanged, this, [=](const QString& text) {
-			m_currentWorkName = text;
-			});
-		
-		QHBoxLayout* layout3 = new QHBoxLayout();
-		layout3->setContentsMargins(0, 0, 0, 0);
-		QPushButton* selectButton = new QPushButton(preview);
-		selectButton->setText(__StandQString("选择工件"));
-		QPushButton* addButton = new QPushButton(preview);
+		QPushButton* addButton = new QPushButton(leftWidget);
 		addButton->setText(__StandQString("添加工件"));
-		QPushButton* cancelButton = new QPushButton(preview);
-		cancelButton->setText(__StandQString("删除工件"));
-		layout3->addWidget(selectButton);
-		layout3->addWidget(addButton);
-		layout3->addWidget(cancelButton);
-		connect(selectButton, &QPushButton::clicked, this, [=]() {
-			});
-		connect(addButton, &QPushButton::clicked, this, [=]() {
-			QString workName = __StandQString("工件-") + QString::number(list->count() + 1);
-			QListWidgetItem* item = new QListWidgetItem(workName);
-			list->addItem(item);
-			if (m_rightWorkView != nullptr)
-			{
-				m_rightWorkView->close();
-				m_rightWorkView = nullptr;
-			}
-			m_currentWorkName = workName;
-			m_rightWorkView = showWorkAndHolePreview(preview);
-			layout->addWidget(m_rightWorkView, 5);
 
-			});
-		connect(cancelButton, &QPushButton::clicked, this, [=]() {
-			// 删除指定文件夹
-			QDir dir(WORKPATH);
-			dir.remove(m_currentWorkName);
-			// 删除列表项
-			int row = list->currentRow();
-			list->takeItem(row);
-			// 关闭右侧预览窗口
-			if (m_rightWorkView != nullptr)
-			{
-				m_rightWorkView->close();
-				m_rightWorkView = nullptr;
-			}
-			});
+		QPushButton* deleteButton = new QPushButton(leftWidget);
+		deleteButton->setText(__StandQString("删除工件"));
 
-		layout2->addLayout(layout3);
+		QPushButton* saveButton = new QPushButton(leftWidget);
+		saveButton->setText(__StandQString("保存工件"));
+		//saveButton->setEnabled(false);
 
-		// 右侧工作区
-		layout->addWidget(leftWidget, 1);
-		m_rightWorkView = new QWidget(preview);
-		layout->addWidget(m_rightWorkView);
+		layoutButton->addWidget(seletedWorkButton);
+		layoutButton->addWidget(addButton);
+		layoutButton->addWidget(deleteButton);
+		layoutButton->addWidget(saveButton);
+		layLeft->addLayout(layoutButton);
+
+		mainLayout->addWidget(leftWidget, 1);
+
+		// 右侧布局 QV
+		QWidget* rightWidget = new QWidget(preview);
+		mainLayout->addWidget(rightWidget, 1);
+
+		QVBoxLayout* layRight = new QVBoxLayout(rightWidget);
+		ShapeCommondPreview* preViewWork = new ShapeCommondPreview(rightWidget);
+		preViewWork->setShapeType(ShapeType_Work);
+		layRight->addWidget(preViewWork);
+
+		QWidget* leftHoleWidget = new QWidget(rightWidget);
+		layRight->addWidget(leftHoleWidget);
+
+		QHBoxLayout* layLeftHoleMain = new QHBoxLayout(leftHoleWidget);
+
+		QVBoxLayout* layLeftHole = new QVBoxLayout(leftHoleWidget);
+		layLeftHole->addWidget(new QLabel(__StandQString("焊缝列表:")));
+		QListWidget* holeListWidget = new QListWidget(leftHoleWidget);
+		holeListWidget->setEditTriggers(QAbstractItemView::DoubleClicked);
+		holeListWidget->setViewMode(QListView::ListMode);
+		layLeftHole->addWidget(holeListWidget);
+
+		QHBoxLayout* layoutButtonHole = new QHBoxLayout(leftHoleWidget);
+		QPushButton* addHoleButton = new QPushButton(leftHoleWidget);
+		addHoleButton->setText(__StandQString("添加焊缝"));
+
+		QPushButton* deleteHoleButton = new QPushButton(leftHoleWidget);
+		deleteHoleButton->setText(__StandQString("删除焊缝"));
+
+		// 保存按钮
+		QPushButton* saveButtonHole = new QPushButton(leftHoleWidget);
+		saveButtonHole->setText(__StandQString("保存焊缝"));
+		saveButtonHole->setEnabled(false);
+
+		layoutButtonHole->addWidget(addHoleButton);
+		layoutButtonHole->addWidget(deleteHoleButton);
+		layoutButtonHole->addWidget(saveButtonHole);
+		layLeftHole->addLayout(layoutButtonHole);
 
 
-		preview->adjustSize();
-		return preview;
-	}
+		layLeftHoleMain->addLayout(layLeftHole, 1);
 
-	QWidget* ROSRobot::showWorkAndHolePreview(QWidget* parent)
-	{
-		QWidget* preview = new QWidget(parent);
-		preview->setWindowTitle(__StandQString("工件预览"));
+		ShapeCommondPreview* preViewHole = new ShapeCommondPreview(leftHoleWidget);
+		preViewHole->setShapeType(ShapeType_Hole);
+		layLeftHoleMain->addWidget(preViewHole, 1);
 
-		// 创建一个水平布局并设置边距为0
-		QHBoxLayout* layout = new QHBoxLayout(preview);
-		layout->setContentsMargins(0, 0, 0, 0);
 
-		// 创建机器人预览组件
-		m_robotPreview = new RobotPreview();
-		// 将左侧的 QWidget 和机器人预览组件添加到布局中
+		RobotPreview* robotPreview = new RobotPreview(rightWidget);
+		mainLayout->addWidget(robotPreview, 5);
 
-		int index = 0;
+		preViewHole->setRobotPreviewPoint(robotPreview);
+		preViewWork->setRobotPreviewPoint(robotPreview);
 
-		// 
-		// 设置部分
-		QWidget* settingView = new QWidget(parent);
-		layout->addWidget(settingView, 1);
-		layout->addWidget(m_robotPreview, 5);
-		QGridLayout* layout2 = new QGridLayout(settingView);
-
-		// 设置工件名称
-		QLabel* label = new QLabel(settingView);
-		label->setText(__StandQString("工件名称:"));
-		QLineEdit* editName = new QLineEdit(settingView);
-		layout2->addWidget(label, index, 0);
-		layout2->addWidget(editName, index, 1, 1, 2);
-		editName->setText(m_currentWorkName);
-		editName->setReadOnly(true);
-		// 设置存储路径
-		QLabel* label6 = new QLabel(settingView);
-		label6->setText(__StandQString("存储路径:"));
-		QLineEdit* editStorePath = new QLineEdit(settingView);
-
-		index++;
-		layout2->addWidget(label6, index, 0);
-		layout2->addWidget(editStorePath, index, 1, 1, 2);
-
-		// 判断是否存在文件夹
-		if (!QDir(WORKPATH).exists())
 		{
-			// 创建文件夹
-			QDir().mkdir(WORKPATH);
+			// 读取工件列表
+			QDir dir(WORKPATH);
+			dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+			QStringList workList = dir.entryList();
+			foreach(QString workName, workList)
+			{
+				QListWidgetItem* item = new QListWidgetItem(workName);
+				workListWidget->addItem(item);
+			}
 		}
-		QString storePathName = WORKPATH.append("/").append(editName->text());
-		editStorePath->setText(storePathName);
-		editStorePath->setReadOnly(true);
-		//QPushButton* buttonStorePath = new QPushButton(settingView);
-		//buttonStorePath->setText("选择路径");
-		//connect(buttonStorePath, &QPushButton::clicked, this, [=]() {QString fileName = QFileDialog::getExistingDirectory(this, "选择文件夹", ""); editStorePath->setText(fileName); });
-		connect(editName, &QLineEdit::textChanged, this, [=]() {QString storePathName = WORKPATH.append("/").append(editName->text()); editStorePath->setText(storePathName); });
 
-		// 工件路径
-		QLabel* label5 = new QLabel(settingView);
-		label5->setText(__StandQString("工件路径:"));
-		QLineEdit* editPath = new QLineEdit(settingView);
-		editPath->setReadOnly(true);
-		QPushButton* buttonPath = new QPushButton(settingView);
-		buttonPath->setText(__StandQString("选择路径"));
-		connect(buttonPath, &QPushButton::clicked, this, [=]() {
-			QString fileName = QFileDialog::getOpenFileName(this, __StandQString("选择文件"), "", __StandQString("STEP文件(*.step)"));
-			editPath->setText(fileName);
-			// 加载模型
-			m_robotPreview->loadModel(fileName);
+		// 信号链接
+		connect(workListWidget, &QListWidget::itemClicked, [=](QListWidgetItem* item) {
+			// 读取文件
+			m_shapeMap.clear();
+			robotPreview->removeAllPreview();
+			QString fileName = WORKPATH.append("/").append(item->text()).append("/").append(WORKCONFIGPATH);
+			QFile file(fileName);
+			qDebug() << "工件配置文件:" << fileName;
+			if (file.open(QIODevice::ReadOnly))
+			{
+				QTextStream in(&file);
+				QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+				QVariantMap variantMap = doc.toVariant().toMap();
+				if (variantMap.isEmpty())
+				{
+					qDebug() << "工件配置文件为空";
+					//打印输出
+					for (auto it = variantMap.begin(); it != variantMap.end(); ++it)
+					{
+						qDebug() << it.key() << it.value();
+					}
+					return;
+				}
+				// 工件更新
+				SHAPESTRUCT shapeStruct;
+				shapeStruct.setShapeVariantMap(variantMap[WORKPATHNAME].toMap());
+				preViewWork->setShapeStruct(shapeStruct);
+				m_shapeMap.insert(item->text(), shapeStruct);
+				// 焊缝 
+				holeListWidget->clear();
+				foreach(QString key, variantMap.keys())
+				{
+					// 工件更新
+					SHAPESTRUCT shapeStructHole;
+					shapeStructHole.setShapeVariantMap(variantMap[key].toMap());
+					if (shapeStructHole.shapeType == ShapeType_Hole)
+					{
+						QListWidgetItem* item = new QListWidgetItem(shapeStructHole.ShapeName);
+						holeListWidget->addItem(item);
+						m_shapeMap.insert(item->text(), shapeStructHole);
+						preViewHole->setShapeStruct(shapeStructHole);
+					}
+				}
+				preViewHole->setShapeStruct(SHAPESTRUCT());
+
+				file.close();
+
+			}
+			saveButton->setEnabled(true);
 
 			});
-		index++;
-		layout2->addWidget(label5, index, 0);
-		layout2->addWidget(editPath, index, 1);
-		layout2->addWidget(buttonPath, index, 2);
-
-
-
-		// 设置工件颜色
-		QLabel* label2 = new QLabel(settingView);
-		label2->setText(__StandQString("工件颜色:"));
-		QLineEdit* editColor = new QLineEdit(settingView);
-		editColor->setReadOnly(true);
-		QPushButton* buttonColor = new QPushButton(settingView);
-		buttonColor->setText(__StandQString("选择颜色"));
-		connect(buttonColor, &QPushButton::clicked, this, [=]() {QColor color = QColorDialog::getColor(Qt::white, this); editColor->setText(color.name()); editColor->setStyleSheet("background-color: " + color.name() + ";"); });
-
-		index++;
-		layout2->addWidget(label2, index, 0);
-		layout2->addWidget(editColor, index, 1);
-		layout2->addWidget(buttonColor, index, 2);
-
-		// 设置工件尺寸
-		QLabel* label3 = new QLabel(settingView);
-		label3->setText(__StandQString("工件尺寸:"));
-		QLineEdit* editSize = new QLineEdit(settingView);
-
-		index++;
-		layout2->addWidget(label3, index, 0);
-		layout2->addWidget(editSize, index, 1);
-
-		// 设置工件位置
-		QLabel* label4 = new QLabel(settingView);
-		label4->setText(__StandQString("工件-世界坐标XYZ:"));
-		QLabel* labelX = new QLabel(settingView);
-		labelX->setText(__StandQString("X:"));
-		QLabel* labelY = new QLabel(settingView);
-		labelY->setText(__StandQString("Y:"));
-		QLabel* labelZ = new QLabel(settingView);
-		labelZ->setText(__StandQString("Z:"));
-
-
-		QLineEdit* editPosX = new QLineEdit(settingView);
-		QLineEdit* editPosY = new QLineEdit(settingView);
-		QLineEdit* editPosZ = new QLineEdit(settingView);
-
-		editPosX->setText("0");
-		editPosY->setText("0");
-		editPosZ->setText("0");
-
-		index++;
-		layout2->addWidget(label4, index, 0);
-		index++;
-		layout2->addWidget(labelX, index, 0);
-		layout2->addWidget(editPosX, index, 1, 1, 2);
-		index++;
-		layout2->addWidget(labelY, index, 0);
-		layout2->addWidget(editPosY, index, 1, 1, 2);
-		index++;
-		layout2->addWidget(labelZ, index, 0);
-		layout2->addWidget(editPosZ, index, 1, 1, 2);
-
-		// 设置工件自转角度
-		QLabel* label7 = new QLabel(settingView);
-		label7->setText(__StandQString("工件自转角度XYZ:"));
-
-		QLabel* labelRotX = new QLabel(settingView);
-		labelRotX->setText(__StandQString("X:"));
-		QLabel* labelRotY = new QLabel(settingView);
-		labelRotY->setText(__StandQString("Y:"));
-		QLabel* labelRotZ = new QLabel(settingView);
-		labelRotZ->setText(__StandQString("Z:"));
-		QLineEdit* editRotX = new QLineEdit(settingView);
-		QLineEdit* editRotY = new QLineEdit(settingView);
-		QLineEdit* editRotZ = new QLineEdit(settingView);
-
-		editRotX->setText("0");
-		editRotY->setText("0");
-		editRotZ->setText("0");
-
-		index++;
-		layout2->addWidget(label7, index, 0);
-		index++;
-		layout2->addWidget(labelRotX, index, 0);
-		layout2->addWidget(editRotX, index, 1, 1, 2);
-		index++;
-		layout2->addWidget(labelRotY, index, 0);
-		layout2->addWidget(editRotY, index, 1, 1, 2);
-		index++;
-		layout2->addWidget(labelRotZ, index, 0);
-		layout2->addWidget(editRotZ, index, 1, 1, 2);
-		index++;
-		layout2->addWidget(new QLabel(__StandQString("焊缝设置")), index, 0);
-		index++;
-		layout2->addWidget(showHolePreview(parent), index, 0, 1, 3);
-		// 确认与取消按钮
-		QPushButton* buttonConfirm = new QPushButton(settingView);
-		buttonConfirm->setText(__StandQString("确认"));
-		//// 添加焊缝预览
-		//QPushButton* buttonHolePreview = new QPushButton(settingView);
-		//buttonHolePreview->setText(__StandQString("焊缝预览"));
-		//connect(buttonHolePreview, &QPushButton::clicked, [=]() {
-		//	if (m_holePreview == nullptr)
-		//	{
-		//		m_holePreview = showHolePreview(parent);
-		//	}
-		//	m_holePreview = showHolePreview(parent);
-		//	m_holePreview->show();
-		//	});
-		QPushButton* buttonCancel = new QPushButton(settingView);
-		buttonCancel->setText(__StandQString("取消"));
-
-		index++;
-		layout2->addWidget(buttonConfirm, index, 0);
-		//layout2->addWidget(buttonHolePreview, index, 1);
-		layout2->addWidget(buttonCancel, index, 2);
-
-		// 信号与槽
-		connect(buttonConfirm, &QPushButton::clicked, [=]() {
+		connect(addButton, &QPushButton::clicked, [=]() {
+			QString workName = __StandQString("Work_").append(QString::number(workListWidget->count() + 1));
 			// 创建文件夹
-			if (!QDir(editStorePath->text()).exists())
+			QDir().mkdir(WORKPATH.append("/").append(workName));
+			// 创建文件
+			QFile file(WORKPATH.append("/").append(workName).append("/").append(WORKCONFIGPATH));
+
+			QVariantMap variantMap;
+			SHAPESTRUCT shapeStruct;
+			shapeStruct.shapeType = ShapeType_Work;
+			shapeStruct.ShapeName = workName;
+			variantMap.insert(WORKPATHNAME, shapeStruct.getShapeVariantMap());
+
+			if (file.open(QIODevice::WriteOnly))
 			{
-				qDebug() << __StandQString("创建文件夹") << editStorePath->text();
-				QDir().mkpath(editStorePath->text());
+				QTextStream out(&file);
+				QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+				out << doc.toJson();
+				file.close();
 			}
-			WORKANDHOLE workAndHole;
-			workAndHole.workName = editName->text();
-			workAndHole.holeShape = m_holeMap;
 
-			m_robotPreview->slotUpdateModel(workAndHole);
-			// 判断 RobotPostion.json 文件是否存在
-			QFile file(editStorePath->text().append("/ShapesPosition.json"));
-			if (!file.exists())
+			// 刷新列表
+			QListWidgetItem* item = new QListWidgetItem(workName);
+			workListWidget->addItem(item);
+
+			// 刷新预览
+			holeListWidget->clear();
+			preViewWork->setShapeStruct(SHAPESTRUCT());
+			preViewHole->setShapeStruct(SHAPESTRUCT());
+			//	
+			m_shapeMap.insert(workName, shapeStruct);
+			});
+		connect(deleteButton, &QPushButton::clicked, [=]() {
+			// 删除文件夹
+			QDir().rmdir(WORKPATH.append("/").append(workListWidget->currentItem()->text()));
+			// 删除列表项
+			int row = workListWidget->currentRow();
+			workListWidget->takeItem(row);
+
+			// 刷新预览
+			holeListWidget->clear();
+			preViewWork->setShapeStruct(SHAPESTRUCT());
+			preViewHole->setShapeStruct(SHAPESTRUCT());
+			//	
+			/*if (!workListWidget->currentItem())
 			{
-				QVariantMap mainMap;
-				QString workName = editName->text();
-				if (workName.isEmpty())
+				if (m_shapeMap.contains(workListWidget->currentItem()->text()))
 				{
-					QMessageBox::warning(this, __StandQString("警告"), __StandQString("工件名称不能为空!"));
+					m_shapeMap.remove(workListWidget->currentItem()->text());
 				}
 
-				QVariantMap workMap;
-				workMap.insert("WorkName", editName->text());
-				workMap.insert("WorkPath", editPath->text());
-				workMap.insert("WorkColor", editColor->text());
-				workMap.insert("WorkSize", editSize->text());
-				workMap.insert("x", editPosX->text().toDouble());
-				workMap.insert("y", editPosY->text().toDouble());
-				workMap.insert("z", editPosZ->text().toDouble());
-				workMap.insert("rx", editRotX->text().toDouble());
-				workMap.insert("ry", editRotY->text().toDouble());
-				workMap.insert("rz", editRotZ->text().toDouble());
-				mainMap.insert(QString("Work_").append(editName->text()), workMap);
-
-				for (auto hole : m_holeMap)
-				{
-					QString holeName = hole.holeName;
-
-					QVariantMap holeMap;
-					holeMap.insert("HoleName", holeName);
-					holeMap.insert("HolePath", hole.path);
-					holeMap.insert("HoleColor", hole.color);
-					holeMap.insert("HoleSize", hole.sacle);
-					holeMap.insert("x", hole.positionX);
-					holeMap.insert("y", hole.positionY);
-					holeMap.insert("z", hole.positionZ);
-					holeMap.insert("rx", hole.angleX);
-					holeMap.insert("ry", hole.angleY);
-					holeMap.insert("rz", hole.angleZ);
-					mainMap.insert(QString("Hole_").append(holeName), holeMap);
-				}
-
-
-				// 转换为json格式
-				QJsonDocument doc = QJsonDocument::fromVariant(mainMap);
-				// 保存到文件
-				QFile file(editStorePath->text().append("/ShapesPosition.json"));
-				if (file.open(QIODevice::WriteOnly | QIODevice::Text))
-				{
-					QTextStream stream(&file);
-					stream << doc.toJson();
-					file.close();
-				}
-			}
+			}*/
 
 
 			});
-		connect(buttonCancel, &QPushButton::clicked, [=]() {settingView->close(); });
+
+		connect(seletedWorkButton, &QPushButton::clicked, [=]() {});
+		connect(saveButton, &QPushButton::clicked, [=]() {
+
+			QString key = workListWidget->currentItem()->text();
+			QString fileName = WORKPATH.append("/").append(key).append("/").append(WORKCONFIGPATH);
+			QFile file(fileName);
+			QVariantMap variantMap;
+			m_shapeMap.insert(key, preViewWork->getShapeStruct());
+			preViewWork->getShapeStruct().ShapeAngleX;
+			qDebug() << __StandQString("工件保存角度X:").append(preViewWork->getShapeStruct().ShapeAngleX);
+			foreach(QString key, m_shapeMap.keys())
+			{
+				SHAPESTRUCT shapeStruct = m_shapeMap[key];
+				if (shapeStruct.shapeType == ShapeType_Work)
+				{
+					variantMap.insert(WORKPATHNAME, shapeStruct.getShapeVariantMap());
+				}
+				else
+				{
+					variantMap.insert(key, shapeStruct.getShapeVariantMap());
+				}
+
+			}
+			// 保存文件
+			if (file.open(QIODevice::WriteOnly))
+			{
+				QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+				QTextStream out(&file);
+				out << doc.toJson();
+			}
+			file.close();
+			});
+
+		connect(holeListWidget, &QListWidget::itemClicked, [=](QListWidgetItem* item) {
+			preViewHole->setShapeStruct(m_shapeMap[item->text()]);
+			saveButtonHole->setEnabled(true);
+			});
+		connect(addHoleButton, &QPushButton::clicked, [=]() {
+			QString workName = __StandQString("Hole_").append(QString::number(holeListWidget->count() + 1));
+			holeListWidget->addItem(new QListWidgetItem(workName));
+			SHAPESTRUCT shapeStruct;
+			shapeStruct.shapeType = ShapeType_Hole;
+			shapeStruct.ShapeName = workName;
+			preViewHole->setShapeStruct(shapeStruct);
+			m_shapeMap.insert(workName, shapeStruct);
 
 
+			});
+		connect(deleteHoleButton, &QPushButton::clicked, [=]() {
+			// 删除列表项
+			int row = holeListWidget->currentRow();
+			holeListWidget->takeItem(row);
+
+			// 刷新预览
+			preViewHole->setShapeStruct(SHAPESTRUCT());
+			m_shapeMap.remove(holeListWidget->currentItem()->text());
+			saveButtonHole->setEnabled(false);
+			});
+
+		connect(saveButtonHole, &QPushButton::clicked, [=]() {
+			m_shapeMap.insert(holeListWidget->currentItem()->text(), preViewHole->getShapeStruct());
+			});
 
 		return preview;
 	}
 
-	QWidget* ROSRobot::showHolePreview(QWidget* parent)
+	void ROSRobot::createOrCheckDirectory(const QString& path)
 	{
-		// 存储数据
-		// 创建焊缝预览窗口的 QWidget 类实例
-		QWidget* holePreview = new QWidget(parent);
-		holePreview->setWindowTitle(__StandQString("焊缝预览"));
-
-		//  核心布局
-		QHBoxLayout* mainLayout = new QHBoxLayout(holePreview);
-		mainLayout->setContentsMargins(0, 0, 0, 0);
-
-
-		// 左侧部件布局，包含焊缝列表和按钮
-		QWidget* settingView = new QWidget(holePreview);
-		mainLayout->addWidget(settingView);
-
-
-		// 左侧组件布局，包含添加和删除按钮
-		QVBoxLayout* holeLayout = new QVBoxLayout(settingView);
-		// 焊缝列表
-		QListWidget* listWidget = new QListWidget(holePreview);
-		holeLayout->addWidget(listWidget);
-
-		QPushButton* buttonAdd = new QPushButton(holePreview);
-		buttonAdd->setText(__StandQString("添加"));
-		QPushButton* buttonDelete = new QPushButton(holePreview);
-		buttonDelete->setText(__StandQString("删除"));
-		// 连接添加按钮的点击事件
-		connect(buttonAdd, &QPushButton::clicked, [=]() {
-			QListWidgetItem* item = new QListWidgetItem(listWidget);
-			item->setText(__StandQString("焊缝-").append(QString::number(listWidget->count())));
-			item->setFlags(item->flags() | Qt::ItemIsEditable);
-			listWidget->addItem(item);
-
-			// 焊缝名称
-			QString holeName = item->text();
-
-			// 创建焊缝数据结构
-			HoleDATAStruct holeItem;
-			holeItem.holeName = holeName;
-
-			// 插入数据
-			m_holeMap.insert(holeName, holeItem);
-
-			// 设置为增加项
-			listWidget->setCurrentItem(item);
-			});
-		// 连接删除按钮的点击事件
-		connect(buttonDelete, &QPushButton::clicked, [=]() {
-			if (listWidget->currentRow() >= 0)
-			{
-				// 删除数据
-				QString holeName = listWidget->item(listWidget->currentRow())->text();
-				m_holeMap.remove(holeName);
-
-				if (m_rightView)
-				{
-					m_rightView->close();
-					m_rightView = nullptr;
-				}
-				// 删除列表项
-				listWidget->takeItem(listWidget->currentRow());
-
-			}
-
-
-
-			});
-
-		QHBoxLayout* buttonLayout = new QHBoxLayout();
-		buttonLayout->addWidget(buttonAdd);
-		buttonLayout->addWidget(buttonDelete);
-		holeLayout->addLayout(buttonLayout);
-
-		m_rightView = new QWidget(holePreview);
-		mainLayout->addWidget(m_rightView);
-		// 连接列表项点击事件
-		connect(listWidget, &QListWidget::currentItemChanged, [=](QListWidgetItem* item) {
-			if (m_rightView)
-			{
-				m_rightView->close();
-				m_rightView = nullptr;
-			}
-			// 文本
-			QString holeName = item->text();
-			// 显示右侧组件
-			//HoleDATAStruct holeData = 
-			m_rightView = showHoleRightPreview(holeName, holePreview);
-			mainLayout->addWidget(m_rightView);
-			});
-
-
-
-		return holePreview;
+		if (!QDir(path).exists())
+		{
+			qDebug() << "创建文件夹" << path;
+			QDir().mkpath(path);
+		}
 	}
 
-	QWidget* ROSRobot::showHoleRightPreview(QString holeName, QWidget* parent)
+	bool ROSRobot::removeDirectory(const QString& path)
 	{
-		QWidget* holeViewRight = new QWidget(parent);
-		// 右侧组件布局，包含焊缝名称、焊缝颜色、焊缝尺寸、焊缝位置、焊缝自转角度
-		m_holeDataCopy = m_holeMap[holeName];
+		QDir dir(path);
+		return dir.removeRecursively();
+	}
 
-		int holeRightIndex = 0;
-		QGridLayout* formLayout = new QGridLayout(holeViewRight);
-		QLabel* labelName = new QLabel(holeViewRight);
-		labelName->setText(__StandQString("焊缝名称:"));
-		QLineEdit* editName = new QLineEdit(holeViewRight);
-		editName->setText(m_holeDataCopy.holeName);
-		connect(editName, &QLineEdit::textChanged, [=]() { m_holeDataCopy.holeName = editName->text(); });
+	QStringList ROSRobot::getSubDirectories(const QString& path)
+	{
+		QDir dir(path);
+		return dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+	}
 
-		formLayout->addWidget(labelName, holeRightIndex, 0);
-		formLayout->addWidget(editName, holeRightIndex, 1, 1, 2);
+	bool ROSRobot::saveToJsonFile(const QVariantMap& data, const QString& filePath)
+	{
+		QJsonDocument doc = QJsonDocument::fromVariant(data);
+		QFile file(filePath);
+		if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+		{
+			QTextStream stream(&file);
+			stream << doc.toJson();
+			file.close();
+			return true;
+		}
+		return false;
+	}
 
-		// 焊缝路径
-		QLabel* labelPath = new QLabel(holeViewRight);
-		labelPath->setText(__StandQString("焊缝路径:"));
-		QLineEdit* editPath = new QLineEdit(holeViewRight);
-		editPath->setText(m_holeDataCopy.path);
-		editPath->setReadOnly(true);
-		QPushButton* buttonPath = new QPushButton(holeViewRight);
-		buttonPath->setText(__StandQString("选择路径"));
-		connect(buttonPath, &QPushButton::clicked, [=]() {
-			QString fileName = QFileDialog::getOpenFileName(this, __StandQString("选择文件"), "", __StandQString("STEP文件(*.step)"));
-			editPath->setText(fileName);
-			m_holeDataCopy.path = fileName;
-			});
-		holeRightIndex++;
-		formLayout->addWidget(labelPath, holeRightIndex, 0);
-		formLayout->addWidget(editPath, holeRightIndex, 1);
-		formLayout->addWidget(buttonPath, holeRightIndex, 2);
+	
 
-		QLabel* labelColor = new QLabel(holeViewRight);
-		labelColor->setText(__StandQString("焊缝颜色:"));
-		QLineEdit* editColor = new QLineEdit(holeViewRight);
-		editColor->setReadOnly(true);
+	ShapeCommondPreview::ShapeCommondPreview(QWidget* parent)
+	{
+		QGridLayout* layout = new QGridLayout(this);
+		QLabel* labelName = new QLabel(this);
+		labelName->setText(__StandQString("模型名称:"));
+		m_shapeName = new QLineEdit(this);
+		m_shapeName->setText(m_shapeStruct.ShapeName);
+		layout->addWidget(labelName, 0, 0, 1, 1);
+		layout->addWidget(m_shapeName, 0, 1, 1, 4);
 
-		editColor->setStyleSheet("background-color: " + m_holeDataCopy.color + ";");
+		// 模型路径
+		QLabel* labelPath = new QLabel(this);
+		labelPath->setText(__StandQString("模型路径:"));
+		m_shapePath = new QLineEdit(this);
+		m_shapePath->setText(m_shapeStruct.ShapePath);
+		m_shapePath->setReadOnly(true);
+		m_readShapePathButton = new QPushButton(this);
+		m_readShapePathButton->setText(__StandQString("选择路径"));
+		layout->addWidget(labelPath, 1, 0, 1, 1);
+		layout->addWidget(m_shapePath, 1, 1, 1, 3);
+		layout->addWidget(m_readShapePathButton, 1, 4, 1, 1);
 
-		QPushButton* buttonColor = new QPushButton(holeViewRight);
-		buttonColor->setText(__StandQString("选择颜色"));
-		connect(buttonColor, &QPushButton::clicked, [=]() {QColor color = QColorDialog::getColor(Qt::white, this); editColor->setStyleSheet("background-color: " + color.name() + ";"); m_holeDataCopy.color = color.name(); });
-		holeRightIndex++;
-		formLayout->addWidget(labelColor, holeRightIndex, 0);
-		formLayout->addWidget(editColor, holeRightIndex, 1);
-		formLayout->addWidget(buttonColor, holeRightIndex, 2);
+		// 模型颜色
+		QLabel* labelColor = new QLabel(this);
+		labelColor->setText(__StandQString("模型颜色:"));
+		m_shapeColor = new QLineEdit(this);
+		m_shapeColor->setReadOnly(true);
+		m_shapeColor->setStyleSheet("background-color: " + m_shapeStruct.ShapeColor + ";");
+		m_readShapeColorButton = new QPushButton(this);
+		m_readShapeColorButton->setText(__StandQString("选择颜色"));
+		layout->addWidget(labelColor, 2, 0, 1, 1);
+		layout->addWidget(m_shapeColor, 2, 1, 1, 3);
+		layout->addWidget(m_readShapeColorButton, 2, 4, 1, 1);
 
-		QLabel* labelSize = new QLabel(holeViewRight);
-		labelSize->setText(__StandQString("焊缝尺寸:"));
-		QLineEdit* editSize = new QLineEdit(holeViewRight);
-		editSize->setText(m_holeDataCopy.sacle);
-		connect(editSize, &QLineEdit::textChanged, [=]() { m_holeDataCopy.sacle = editSize->text(); });
+		// 模型尺寸
+		QLabel* labelSize = new QLabel(this);
+		labelSize->setText(__StandQString("模型尺寸:"));
+		m_shapeScale = new QLineEdit(this);
+		m_shapeScale->setText(m_shapeStruct.ShapeScale);
+		layout->addWidget(labelSize, 3, 0, 1, 1);
+		layout->addWidget(m_shapeScale, 3, 1, 1, 4);
 
-		holeRightIndex++;
-		formLayout->addWidget(labelSize, holeRightIndex, 0);
-		formLayout->addWidget(editSize, holeRightIndex, 1);
-
-		QLabel* labelPos = new QLabel(holeViewRight);
-		labelPos->setText(__StandQString("焊缝-世界坐标XYZ:"));
-		QLabel* labelX = new QLabel(holeViewRight);
+		// XYZ坐标
+		QLabel* labelX = new QLabel(this);
 		labelX->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelX->setText(__StandQString("X:"));
-		QLabel* labelY = new QLabel(holeViewRight);
+		labelX->setText(__StandQString("模型-世界坐标X:"));
+		m_shapePosX = new QLineEdit(this);
+		m_shapePosX->setText(m_shapeStruct.ShapePositionX);
+		layout->addWidget(labelX, 4, 0, 1, 1);
+		layout->addWidget(m_shapePosX, 4, 1, 1, 4);
+
+		QLabel* labelY = new QLabel(this);
 		labelY->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelY->setText(__StandQString("Y:"));
-		QLabel* labelZ = new QLabel(holeViewRight);
+		labelY->setText(__StandQString("模型-世界坐标Y:"));
+		m_shapePosY = new QLineEdit(this);
+		m_shapePosY->setText(m_shapeStruct.ShapePositionY);
+		layout->addWidget(labelY, 5, 0, 1, 1);
+		layout->addWidget(m_shapePosY, 5, 1, 1, 4);
+
+		QLabel* labelZ = new QLabel(this);
 		labelZ->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelZ->setText(__StandQString("Z:"));
-		QLineEdit* editPosX = new QLineEdit(holeViewRight);
-		QLineEdit* editPosY = new QLineEdit(holeViewRight);
-		QLineEdit* editPosZ = new QLineEdit(holeViewRight);
+		labelZ->setText(__StandQString("模型-世界坐标Z:"));
+		m_shapePosZ = new QLineEdit(this);
+		m_shapePosZ->setText(m_shapeStruct.ShapePositionZ);
+		layout->addWidget(labelZ, 6, 0, 1, 1);
+		layout->addWidget(m_shapePosZ, 6, 1, 1, 4);
 
-		editPosX->setText(m_holeDataCopy.positionX);
-		editPosY->setText(m_holeDataCopy.positionY);
-		editPosZ->setText(m_holeDataCopy.positionZ);
-
-		connect(editPosX, &QLineEdit::textChanged, [=]() { m_holeDataCopy.positionX = editPosX->text(); });
-		connect(editPosY, &QLineEdit::textChanged, [=]() { m_holeDataCopy.positionY = editPosY->text(); });
-		connect(editPosZ, &QLineEdit::textChanged, [=]() { m_holeDataCopy.positionZ = editPosZ->text(); });
-
-		holeRightIndex++;
-		formLayout->addWidget(labelPos, holeRightIndex, 0);
-		holeRightIndex++;
-		formLayout->addWidget(labelX, holeRightIndex, 0);
-		formLayout->addWidget(editPosX, holeRightIndex, 1, 1, 2);
-		holeRightIndex++;
-		formLayout->addWidget(labelY, holeRightIndex, 0);
-		formLayout->addWidget(editPosY, holeRightIndex, 1, 1, 2);
-		holeRightIndex++;
-		formLayout->addWidget(labelZ, holeRightIndex, 0);
-		formLayout->addWidget(editPosZ, holeRightIndex, 1, 1, 2);
-
-		QLabel* labelRot = new QLabel(holeViewRight);
-		labelRot->setText(__StandQString("焊缝自转角度XYZ:"));
-		QLabel* labelRotX = new QLabel(holeViewRight);
+		// 自转角度
+		QLabel* labelRotX = new QLabel(this);
 		labelRotX->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelRotX->setText(__StandQString("X:"));
-		QLabel* labelRotY = new QLabel(holeViewRight);
+		labelRotX->setText(__StandQString("模型-自转角度X:"));
+		m_shapeAngleX = new QLineEdit(this);
+		m_shapeAngleX->setText(m_shapeStruct.ShapeAngleX);
+		layout->addWidget(labelRotX, 7, 0, 1, 1);
+		layout->addWidget(m_shapeAngleX, 7, 1, 1, 4);
+
+		QLabel* labelRotY = new QLabel(this);
 		labelRotY->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelRotY->setText(__StandQString("Y:"));
-		QLabel* labelRotZ = new QLabel(holeViewRight);
+		labelRotY->setText(__StandQString("模型-自转角度Y:"));
+		m_shapeAngleY = new QLineEdit(this);
+		m_shapeAngleY->setText(m_shapeStruct.ShapeAngleY);
+		layout->addWidget(labelRotY, 8, 0, 1, 1);
+		layout->addWidget(m_shapeAngleY, 8, 1, 1, 4);
+
+		QLabel* labelRotZ = new QLabel(this);
 		labelRotZ->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		labelRotZ->setText(__StandQString("Z:"));
-		QLineEdit* editRotX = new QLineEdit(holeViewRight);
-		QLineEdit* editRotY = new QLineEdit(holeViewRight);
-		QLineEdit* editRotZ = new QLineEdit(holeViewRight);
-		editRotX->setText(m_holeDataCopy.angleX);
-		editRotY->setText(m_holeDataCopy.angleY);
-		editRotZ->setText(m_holeDataCopy.angleZ);
+		labelRotZ->setText(__StandQString("模型-自转角度Z:"));
+		m_shapeAngleZ = new QLineEdit(this);
+		m_shapeAngleZ->setText(m_shapeStruct.ShapeAngleZ);
+		layout->addWidget(labelRotZ, 9, 0, 1, 1);
+		layout->addWidget(m_shapeAngleZ, 9, 1, 1, 4);
 
-		connect(editRotX, &QLineEdit::textChanged, [=]() { m_holeDataCopy.angleX = editRotX->text(); });
-		connect(editRotY, &QLineEdit::textChanged, [=]() { m_holeDataCopy.angleY = editRotY->text(); });
-		connect(editRotZ, &QLineEdit::textChanged, [=]() { m_holeDataCopy.angleZ = editRotZ->text(); });
+		initConnect();
 
-		holeRightIndex++;
-		formLayout->addWidget(labelRot, holeRightIndex, 0);
-		holeRightIndex++;
-		formLayout->addWidget(labelRotX, holeRightIndex, 0);
-		formLayout->addWidget(editRotX, holeRightIndex, 1, 1, 2);
-		holeRightIndex++;
-		formLayout->addWidget(labelRotY, holeRightIndex, 0);
-		formLayout->addWidget(editRotY, holeRightIndex, 1, 1, 2);
-		holeRightIndex++;
-		formLayout->addWidget(labelRotZ, holeRightIndex, 0);
-		formLayout->addWidget(editRotZ, holeRightIndex, 1, 1, 2);
-
-
-		// 确认与取消按钮
-		QPushButton* buttonConfirm = new QPushButton(holeViewRight);
-		buttonConfirm->setText(__StandQString("确认"));
-
-		/*	QPushButton* buttonApply = new QPushButton(holeViewRight);
-			buttonApply->setText(__StandQString("应用"));*/
-
-		QPushButton* buttonCancel = new QPushButton(holeViewRight);
-		buttonCancel->setText(__StandQString("取消"));
-
-		holeRightIndex++;
-		formLayout->addWidget(buttonConfirm, holeRightIndex, 0);
-		formLayout->addWidget(buttonCancel, holeRightIndex, 1);
-
-		connect(buttonConfirm, &QPushButton::clicked, [=]() {
-			// 保存数据
-			qDebug() << __StandQString("保存数据");
-			m_holeMap.insert(m_holeDataCopy.holeName, m_holeDataCopy);
-
-			m_robotPreview->slotUpdateModel(createWorkAndHole(m_holeMap));
-			});
-
-		connect(buttonCancel, &QPushButton::clicked, [=]() {holeViewRight->close(); });
-		/*connect(buttonApply, &QPushButton::clicked, [=]() {
-			});*/
-
-		return holeViewRight;
 	}
 
-	WORKANDHOLE ROSRobot::createWorkAndHole(QMap<QString, HoleDATAStruct> holeMap)
+	ShapeCommondPreview::~ShapeCommondPreview()
 	{
-		WORKANDHOLE workAndHole;
-		workAndHole.workName = m_currentWorkName;
-		workAndHole.holeShape = holeMap;
-		return workAndHole;
 	}
 
+	void ShapeCommondPreview::setRobotPreviewPoint(RobotPreview* robotPreview)
+	{
+		m_robotPreview = robotPreview;
+		m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+		m_robotPreview->slotChangPreviewColor(m_shapeStruct);
+	}
+
+	void ShapeCommondPreview::setShapeStruct(SHAPESTRUCT shapeStruct)
+	{
+		m_shapeStruct = shapeStruct;
+		m_shapeName->setText(m_shapeStruct.ShapeName);
+		m_shapePath->setText(m_shapeStruct.ShapePath);
+		m_shapeColor->setStyleSheet("background-color: " + m_shapeStruct.ShapeColor + ";");
+		m_shapeColor->setText(m_shapeStruct.ShapeColor);
+		m_shapeScale->setText(m_shapeStruct.ShapeScale);
+		m_shapePosX->setText(m_shapeStruct.ShapePositionX);
+		m_shapePosY->setText(m_shapeStruct.ShapePositionY);
+		m_shapePosZ->setText(m_shapeStruct.ShapePositionZ);
+		m_shapeAngleX->setText(m_shapeStruct.ShapeAngleX);
+		m_shapeAngleY->setText(m_shapeStruct.ShapeAngleY);
+		m_shapeAngleZ->setText(m_shapeStruct.ShapeAngleZ);
+
+		ISNULLPOINTER(m_robotPreview);
+		m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+	}
+
+	void ShapeCommondPreview::setShapeType(ShapeType shapeType)
+	{
+		m_shapeStruct.shapeType = shapeType;
+	}
+	void ShapeCommondPreview::initConnect()
+	{
+		connect(m_shapeName, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeName);
+		connect(m_readShapePathButton, &QPushButton::clicked, this, &ShapeCommondPreview::readShapePath);
+		connect(m_readShapeColorButton, &QPushButton::clicked, this, &ShapeCommondPreview::readShapeColor);
+		connect(m_shapeScale, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeScale);
+		connect(m_shapePosX, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapePosX);
+		connect(m_shapePosY, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapePosY);
+		connect(m_shapePosZ, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapePosZ);
+		connect(m_shapeAngleX, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeAngleX);
+		connect(m_shapeAngleY, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeAngleY);
+		connect(m_shapeAngleZ, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeAngleZ);
+
+	}
+	void ShapeCommondPreview::readShapePath()
+	{
+		// 打开文件选择对话框
+		QString fileName = QFileDialog::getOpenFileName(this, __StandQString("选择模型文件"), QDir::currentPath(), __StandQString("*.step"));
+		if (!fileName.isEmpty())
+		{
+			m_shapePath->setText(fileName);
+			m_shapeStruct.ShapePath = fileName;
+		}
+		ISNULLPOINTER(m_robotPreview);
+		m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeColor()
+	{
+		// 读取模型颜色
+		QColor color = QColorDialog::getColor(Qt::white, this);
+		if (color.isValid())
+		{
+			m_shapeColor->setStyleSheet("background-color: " + color.name() + ";");
+			m_shapeStruct.ShapeColor = color.name();
+			m_shapeColor->setText(color.name());
+		}
+		m_robotPreview->slotChangPreviewColor(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeScale()
+	{
+		m_shapeStruct.ShapeScale = m_shapeScale->text();
+		m_robotPreview->slotChangedPreviewScale(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapePosX()
+	{
+		m_shapeStruct.ShapePositionX = m_shapePosX->text();
+		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapePosY()
+	{
+		m_shapeStruct.ShapePositionY = m_shapePosY->text();
+		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapePosZ()
+	{
+		m_shapeStruct.ShapePositionZ = m_shapePosZ->text();
+		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeAngleX()
+	{
+		m_shapeStruct.ShapeAngleX = m_shapeAngleX->text();
+		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeAngleY()
+	{
+		m_shapeStruct.ShapeAngleY = m_shapeAngleY->text();
+		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeAngleZ()
+	{
+		m_shapeStruct.ShapeAngleZ = m_shapeAngleZ->text();
+		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+	}
+	void ShapeCommondPreview::readShapeName()
+	{
+		m_shapeStruct.ShapeName = m_shapeName->text();
+	}
 }
 
