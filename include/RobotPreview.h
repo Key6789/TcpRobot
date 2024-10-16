@@ -21,15 +21,6 @@ namespace TCP_ROBOT
 
 	public slots:
 		void slotUpdataRobotShaps(void) override;
-
-		
-	private:
-		
-
-
-		
-
-
 	};
 }
 #endif() // ROBOTPREVIEW_H_

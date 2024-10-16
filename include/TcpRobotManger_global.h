@@ -539,8 +539,21 @@ enum ShapeType
 	ShapeType_None = 0,
 	ShapeType_Work,
 	ShapeType_Hole,
-	ShapeType_Robot
+	ShapeType_Robot,
+	ShapeType_Link
 };
+
+struct ShapeLinkData
+{
+	QString LinkName;
+	int index = -1;
+	ShapeType shapeType = ShapeType_Link;
+
+	double alpha = 0.0;
+	double aDistance = 0.0;
+	double theta = 0.0;
+	double dDistance = 0.0;
+}typedef SHAPELINKDATA;
 // 定义焊缝数据结构
 struct ShapeDataStruct
 {
@@ -572,10 +585,14 @@ struct ShapeDataStruct
 
 	QString ShapePath = QString();
 
-	double alpha = 0.0;
-	double aDistance = 0.0;
-	double theta = 0.0;
-	double dDistance = 0.0;
+	//double alpha = 0.0;
+	//double aDistance = 0.0;
+	//double theta = 0.0;
+	//double dDistance = 0.0;
+
+	bool ShapeLink = false;
+
+	QMap<QString, SHAPELINKDATA> shapeLinkData;
 
 	QVariantMap getShapeVariantMap()
 	{
@@ -592,6 +609,21 @@ struct ShapeDataStruct
 		map.insert("ShapeAngleZ", ShapeAngleZ);
 		map.insert("ShapePath", ShapePath);
 		map.insert("ShapeType", shapeType);
+		map.insert("isChecked", ShapeLink);
+
+		QVariantMap linkMapTemp;
+		for (auto it = shapeLinkData.begin(); it != shapeLinkData.end(); ++it)
+		{
+			QVariantMap linkMap;
+			linkMap.insert("index", it.value().index);
+			linkMap.insert("shapeType", it.value().shapeType);
+			linkMap.insert("alpha", it.value().alpha);
+			linkMap.insert("aDistance", it.value().aDistance);
+			linkMap.insert("theta", it.value().theta);
+			linkMap.insert("dDistance", it.value().dDistance);
+			linkMapTemp.insert(it.key(), linkMap);
+		}
+		map.insert("LinkData", linkMapTemp);
 		return map;
 	}
 	void setShapeVariantMap(QVariantMap map)
@@ -608,6 +640,21 @@ struct ShapeDataStruct
 		ShapeAngleZ = map.value("ShapeAngleZ").toString();
 		ShapePath = map.value("ShapePath").toString();
 		shapeType = ShapeType(map.value("ShapeType").toInt());
+		ShapeLink = map.value("isChecked").toBool();
+
+		QVariantMap linkMap = map.value("LinkData").toMap();
+		for (auto it = linkMap.begin(); it != linkMap.end(); ++it)
+		{
+			SHAPELINKDATA linkData;
+			linkData.LinkName = it.key();
+			linkData.index = it.value().toMap().value("index").toInt();
+			linkData.shapeType = ShapeType(it.value().toMap().value("shapeType").toInt());
+			linkData.alpha = it.value().toMap().value("alpha").toDouble();
+			linkData.aDistance = it.value().toMap().value("aDistance").toDouble();
+			linkData.theta = it.value().toMap().value("theta").toDouble();
+			linkData.dDistance = it.value().toMap().value("dDistance").toDouble();
+			shapeLinkData.insert(it.key(), linkData);
+		}
 
 	}
 
@@ -615,5 +662,6 @@ struct ShapeDataStruct
 
 #define  WORKPATHNAME         "WORK"
 #define  WORKCONFIGPATH       "WorkConfig.json"
+#define  ROBOTCONFIGPATH      "RobotConfig.json"
 
 #define  ISNULLPOINTER(p)     if(p==nullptr){return;}

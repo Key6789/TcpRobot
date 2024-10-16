@@ -12,14 +12,6 @@ class QMenu;
 class QRubberBand;
 namespace TCP_ROBOT
 {
-	struct WorkPoint
-	{
-		QString WorkName;
-		QWidget* workRightView = nullptr;
-		RobotPreview * workPreview = nullptr;
-	};
-
-
 	class ShapeCommondPreview;
 	class TCPROBOT_EXPORT ROSRobot : public QWidget
 	{
@@ -31,6 +23,7 @@ namespace TCP_ROBOT
 
 		// QWidget 用于显示预览
 		QWidget* showPreview(QWidget* parent = nullptr);
+		QWidget* showRobotPreview(QWidget* parent = nullptr);
 
 	signals:
 		// 选中的工作名称变化信号
@@ -50,6 +43,7 @@ namespace TCP_ROBOT
 
 	private:
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
+		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
 	};
 
 	class TCPROBOT_EXPORT ShapeCommondPreview : public QWidget
@@ -72,6 +66,8 @@ namespace TCP_ROBOT
 		// 初始化连接
 		void initConnect();
 
+		void setLinkIsVisable(bool isVisable);
+
 	public slots:
 		// 读取形状路径
 		void readShapePath();
@@ -93,6 +89,18 @@ namespace TCP_ROBOT
 		void readShapePosZ();
 		// 读取形状名称
 		void readShapeName();
+
+		void addLink();
+		void deleteLink();
+		void checkChangeLink();
+		void linkListItemChanged();
+
+		void readLinkName();
+		void readLinkAlpha();
+		void readLinkTheta();
+		void readLinkDDistance();
+		void readLinkADistance();
+		void readLinkIndex();
 
 	private:
 		// 形状结构体
@@ -119,11 +127,26 @@ namespace TCP_ROBOT
 		// 形状Z轴位置输入框
 		QLineEdit* m_shapePosZ = nullptr;
 
+		QListWidget* m_linkList = nullptr;
+		QLineEdit* m_linkIndex = nullptr;
+
+		QPushButton* m_addLinkButton = nullptr;
+		QPushButton* m_deleteLinkButton = nullptr;
+
+		QLineEdit* m_linkName = nullptr;
+		QLineEdit* m_linkAlpha = nullptr;
+		QLineEdit* m_linkTheta = nullptr;
+		QLineEdit* m_linkDDistance = nullptr;
+		QLineEdit* m_linkADistance = nullptr;
+		
+		QCheckBox* m_checkLink = nullptr;
+
 		QPushButton* m_readShapePathButton = nullptr;
 		QPushButton* m_readShapeColorButton = nullptr;
 
 		// 形状预览
 		RobotPreview* m_robotPreview = nullptr;
+		QWidget* m_linkWidget = nullptr;
 
 
 	};

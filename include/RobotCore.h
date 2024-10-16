@@ -21,7 +21,9 @@ namespace TCP_ROBOT
 
 		void slotUpdataRobotShaps(void) override;
 
-		void loadShapes(QString filePath);
+		void loadWorkShapes(QString filePath);
+		void loadRobotShape(QString filePath);
+		
 	};
 }
 #endif() // ROBOTPREVIEW_H_

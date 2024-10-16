@@ -3839,6 +3839,11 @@ namespace TCP_ROBOT
 		myView->FitAll();
 	}
 
+	void RobotBase::slotReadShapesParameter()
+	{
+
+	}
+
 	void RobotBase::slotUpdateSingleModel(WORKANDHOLE workAndHole, QString holeName)
 	{
 
@@ -3863,10 +3868,10 @@ namespace TCP_ROBOT
 		robot.path = shapeStruct.ShapePath;
 
 		// 机器人连杆
-		robot.a = shapeStruct.aDistance;
+		/*robot.a = shapeStruct.aDistance;
 		robot.alpha = shapeStruct.alpha;
 		robot.theta = shapeStruct.theta;
-		robot.d = shapeStruct.dDistance;
+		robot.d = shapeStruct.dDistance;*/
 
 		// 机器人尺寸
 		robot.sacle = shapeStruct.ShapeScale.toDouble();

@@ -106,6 +106,9 @@ namespace TCP_ROBOT
 		void removePreview(SHAPESTRUCT shapeStruct);
 		void removeAllPreview();
 
+		// 读取参数
+		void slotReadShapesParameter();
+
 		// 单个模型更新
 		void slotUpdateSingleModel(WORKANDHOLE workAndHole, QString holeName);
 
