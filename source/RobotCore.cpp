@@ -46,7 +46,10 @@ namespace TCP_ROBOT
 
 		QTimer* timer = new QTimer(this);
 		timer->setInterval(1000);
-		connect(timer, &QTimer::timeout, [=]() {slotWorkRotateShape(30); });
+		connect(timer, &QTimer::timeout, [=]() {
+			slotShapesRotateShape(m_mapPreviewData, 30);
+			slotShapesMoveShape(m_mapPreviewData, 1000);
+			});
 		timer->start();
 
 		// 加载参数
@@ -55,143 +58,37 @@ namespace TCP_ROBOT
 	void RobotCore::loadRobotShape(QString filePath)
 	{
 	}
-	void RobotCore::slotWorkRotateShape(double angle, MoveDirection moveType)
+	void RobotCore::slotShapesRotateShape(
+		QMap<QString, ADDROBOTDATA>& robotMap,
+		double angle,
+		ShapeType shapeType = ShapeType::ShapeType_Work,
+		MoveDirection moveType = MoveDirection::MoveDirection_ZAxis)
 	{
-
-		ADDROBOTDATA workData;
-		foreach(ADDROBOTDATA addRobotData, m_mapPreviewData.values())
+		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
-			if (addRobotData.shapeType == ShapeType_Work)
+			if (addRobotData.shapeType == shapeType)
 			{
-				switch (moveType)
-				{
-				case MoveDirection_XAxis:
-					addRobotData.angleX += angle;
-					break;
-				case MoveDirection_YAxis:
-					addRobotData.angleY += angle;
-					break;
-				case MoveDirection_ZAxis:
-					addRobotData.angleZ += angle;
-					break;
-				default:
-					break;
-				}
-
-				workData = ShapesRotated(addRobotData, angle);
-				m_mapPreviewData.insert(workData.name, workData);
-				break;
-			}
-		}
-		QStringList nextShapeNames = workData.nextShapeNames;
-		if (!nextShapeNames.isEmpty())
-		{
-			foreach(QString nextShapeName, nextShapeNames)
-			{
-				if (m_mapPreviewData.contains(nextShapeName))
-				{
-					ADDROBOTDATA nextShapeData = m_mapPreviewData[nextShapeName];
-					if (nextShapeData.shapeType == ShapeType_Hole)
-					{
-						switch (moveType)
-						{
-						case MoveDirection_XAxis:
-							nextShapeData.angleX += angle;
-							break;
-						case MoveDirection_YAxis:
-							nextShapeData.angleY += angle;
-							break;
-						case MoveDirection_ZAxis:
-							nextShapeData.angleZ += angle;
-							break;
-						default:
-							break;
-						}
-						nextShapeData = ShapesRotated(nextShapeData, workData.assemblyPoint, angle);
-						m_mapPreviewData.insert(nextShapeName, nextShapeData);
-					}
-				}
+				ShapesCreateTransformAngle(robotMap, addRobotData, angle, moveType);
+				//ShapesCreateTransformDistance(robotMap, addRobotData, 1000, moveType);
 			}
 		}
 	}
-	ADDROBOTDATA RobotCore::ShapesRotated(ADDROBOTDATA addRobotData, gp_Pnt center, double angle)
+
+	void RobotCore::slotShapesMoveShape(
+		QMap<QString, ADDROBOTDATA>& robotMap,
+		double moveDistance,
+		ShapeType shapeType = ShapeType::ShapeType_Work,
+		MoveDirection moveType = MoveDirection::MoveDirection_ZAxis)
 	{
-		QVector<TopoDS_Shape> vector = addRobotData.shapes;
-		QVector<Handle(AIS_Shape)> vectortemp;
-		QVector<Handle(AIS_Shape)> ShapesBox;
-		for (int i = 0; i < vector.size(); ++i)
+		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
-			if (!addRobotData.myAisShapes.isEmpty())
+			if (addRobotData.shapeType == shapeType)
 			{
-				myContext->Remove(addRobotData.myAisShapes[i], Standard_True); // 移除旧的形状
+				ShapesCreateTransformDistance(robotMap, addRobotData, moveDistance, moveType);
 			}
-
-			// 保存原始位置，以便稍后恢复
-			// gp_Pnt originalPosition = addRobotData.assemblyPoint;
-			// 将形状平移到原点
-			gp_Trsf moveToOrigin;
-			moveToOrigin.SetTranslation(gp_Pnt(0, 0, 0).XYZ());
-			TopoDS_Shape atOrigin = BRepBuilderAPI_Transform(vector[i], moveToOrigin).Shape();
-
-			gp_Trsf localRotation;
-			localRotation.SetRotation(addRobotData.axisX, addRobotData.angleX / 180.0 * M_PI); // X轴旋转
-			TopoDS_Shape rotatedX = BRepBuilderAPI_Transform(atOrigin, localRotation).Shape();
-
-			localRotation.SetRotation(addRobotData.axisY, addRobotData.angleY / 180.0 * M_PI); // Y轴旋转
-			TopoDS_Shape rotatedXY = BRepBuilderAPI_Transform(rotatedX, localRotation).Shape();
-
-			localRotation.SetRotation(addRobotData.axisZ, addRobotData.angleZ / 180.0 * M_PI); // Z轴旋转
-			TopoDS_Shape rotatedXYZ = BRepBuilderAPI_Transform(rotatedXY, localRotation).Shape();
-
-			Eigen::Vector3d pointEn(addRobotData.assemblyPoint.X(), addRobotData.assemblyPoint.Y(), addRobotData.assemblyPoint.Z());
-			Eigen::Vector3d pivot(center.X(), center.Y(), center.Z());
-			// 目标点
-			Eigen::Vector3d result =  rotateAroundZAxis(pointEn, pivot,angle/180.0*M_PI);
-			gp_Pnt newPoint = gp_Pnt(result[0], result[1], result[2]);
-			addRobotData.assemblyPoint = newPoint;
-
-			qDebug() << "newPoint: " << newPoint.X() << " " << newPoint.Y() << " " << newPoint.Z();
-			gp_Trsf moveBack;
-			moveBack.SetTranslation(newPoint.XYZ());
-			rotatedXYZ.Move(moveBack);
-			
-			// 将形状移回原始位置
-			 // 初始点
-			//Eigen::Vector3d pointEn(addRobotData.assemblyPoint.X(), addRobotData.assemblyPoint.Y(), addRobotData.assemblyPoint.Z());
-			//Eigen::Vector3d pivot(center.X(), center.Y(), center.Z());
-			//// 目标点
-			//Eigen::Vector3d result =  rotateAroundZAxis(pointEn, pivot,angle/180.0*M_PI);
-			//gp_Pnt newPoint = gp_Pnt(result[0], result[1], result[2]);
-			//gp_Trsf moveBack;
-			//moveBack.SetTranslation(newPoint.XYZ());
-			//TopoDS_Shape transformedComponent = BRepBuilderAPI_Transform(rotatedXYZ, moveBack).Shape();
-			//
-			//qDebug() << "newPoint: " << newPoint.X() << " " << newPoint.Y() << " " << newPoint.Z();
-			//qDebug() << "originalPosition: " << originalPosition.X() << " " << originalPosition.Y() << " " << originalPosition.Z();
-			//addRobotData.assemblyPoint = newPoint;
-			 //位移
-			/*gp_Trsf finalTransform;
-			finalTransform.SetTranslation(gp_Vec(addRobotData.assemblyPoint.XYZ()));
-			transformedComponent = BRepBuilderAPI_Transform(transformedComponent, finalTransform).Shape();*/
-
-
-
-			aisShape = new AIS_Shape(rotatedXYZ);
-			aisShape->SetColor(addRobotData.color);
-			myContext->Display(aisShape, Standard_True);
-			vectortemp.push_back(aisShape);
-
-			// 计算形状的边界框
-			Bnd_Box box;
-			BRepBndLib::Add(rotatedXYZ, box);
-			ShapesBox.push_back(aisShape);
-
-
 		}
-		addRobotData.myAisShapes = vectortemp;
-		addRobotData.ShapesBox = ShapesBox;
-		return addRobotData;
 	}
+
 	void RobotCore::ShapesLink()
 	{
 		// 读取文件 获取 连杆的各个参数
@@ -203,167 +100,228 @@ namespace TCP_ROBOT
 
 	}
 
-	TopoDS_Shape RobotCore::ShapeRotateX(TopoDS_Shape shape, double angleX)
+
+	void RobotCore::ShapesTransformRecursively(
+		QMap<QString, ADDROBOTDATA>& robotMap,
+		QString name,
+		const TRANSFORMDATA& data)
 	{
-		// 将形状平移到原点
-		gp_Trsf moveToOrigin;
-		gp_Pnt originPnt(0, 0, 0);
-		moveToOrigin.SetTranslation(originPnt.XYZ());
 
-		// 旋转
-		gp_Trsf rotateX;
-		rotateX.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), angleX * M_PI / 180.0);
-		TopoDS_Shape rotatedShape = BRepBuilderAPI_Transform(shape, moveToOrigin * rotateX).Shape();
 
-		return rotatedShape;
-	}
+		ADDROBOTDATA addRobot = robotMap.value(name);
+		QVector<Handle(AIS_Shape)> newAisShapes;
 
-	TopoDS_Shape RobotCore::ShapeRotateY(TopoDS_Shape shape, double angleY)
-	{
-		// 将形状平移到原点
-		gp_Trsf moveToOrigin;
-		gp_Pnt originPnt(0, 0, 0);
-		moveToOrigin.SetTranslation(originPnt.XYZ());
+		// 获取当前模型的装配点
+		gp_Pnt assemblyPoint = addRobot.assemblyPoint;
 
-		// 旋转
-		gp_Trsf rotateY;
-		rotateY.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0)), angleY * M_PI / 180.0);
-		TopoDS_Shape rotatedShape = BRepBuilderAPI_Transform(shape, moveToOrigin * rotateY).Shape();
-
-		return rotatedShape;
-	}
-
-	TopoDS_Shape RobotCore::ShapeRotateZ(TopoDS_Shape shape, double angleZ)
-	{
-		// 将形状平移到原点
-		gp_Trsf moveToOrigin;
-		gp_Pnt originPnt(0, 0, 0);
-		moveToOrigin.SetTranslation(originPnt.XYZ());
-
-		// 旋转
-		gp_Trsf rotateZ;
-		rotateZ.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), angleZ * M_PI / 180.0);
-		TopoDS_Shape rotatedShape = BRepBuilderAPI_Transform(shape, moveToOrigin * rotateZ).Shape();
-
-		return rotatedShape;
-	}
-
-	TopoDS_Shape RobotCore::ShapeMove(TopoDS_Shape shape, gp_Pnt movePoint)
-	{
-		// 平移
-		gp_Trsf moveToPoint;
-		moveToPoint.SetTranslation(movePoint.XYZ());
-		TopoDS_Shape movedShape = BRepBuilderAPI_Transform(shape, moveToPoint).Shape();
-
-		return movedShape;
-	}
-
-	Eigen::Vector3d RobotCore::rotateAroundZAxis(const Eigen::Vector3d& point, const Eigen::Vector3d& pivot, double theta)
-	{
-		// 将点移动到原点
-		Eigen::Vector3d translatedPoint = point - pivot;
-
-		// 构造绕Z轴旋转的矩阵
-		Eigen::Matrix3d rotationMatrix;
-		rotationMatrix << cos(theta), -sin(theta), 0,
-			sin(theta), cos(theta), 0,
-			0, 0, 1;
-
-		// 应用旋转矩阵
-		Eigen::Vector3d rotatedTranslatedPoint = rotationMatrix * translatedPoint;
-
-		// 将点移回原来的位置
-		Eigen::Vector3d rotatedPoint = rotatedTranslatedPoint + pivot;
-
-		return rotatedPoint;
-	}
-
-	Eigen::Vector3d RobotCore::rotateAroundYAxis(const Eigen::Vector3d& point, double theta)
-	{
-		// 构造绕Y轴旋转的矩阵
-		Eigen::Matrix3d rotationMatrix;
-		rotationMatrix << 
-			cos(theta), 0, sin(theta),
-			0, 1, 0,
-			-sin(theta), 0, cos(theta);
-
-		// 应用旋转矩阵
-		return rotationMatrix * point;
-	}
-
-	Eigen::Vector3d RobotCore::rotateAroundXAxis(const Eigen::Vector3d& point, double theta)
-	{
-		// 构造绕X轴旋转的矩阵
-		Eigen::Matrix3d rotationMatrix;
-		rotationMatrix << 
-			1, 0, 0,
-			0, cos(theta), -sin(theta),
-			0, sin(theta), cos(theta);
-
-		// 应用旋转矩阵
-		return rotationMatrix * point;
-	}
-
-	ADDROBOTDATA RobotCore::ShapesRotated(ADDROBOTDATA addRobotData, double angle)
-	{
-		QVector<TopoDS_Shape> vector = addRobotData.shapes;
-		QVector<Handle(AIS_Shape)> vectortemp;
-		QVector<Handle(AIS_Shape)> ShapesBox;
-		// 确保data.myAisShapes与vector同步
-		//assert(data.myAisShapes.size() == vector.size());
-
-		for (int i = 0; i < vector.size(); ++i)
+		// 递归结束，统一删除旧模型并添加新模型
+		for (auto& oldAisShape : addRobot.myAisShapes)
 		{
-			if (!addRobotData.myAisShapes.isEmpty())
-			{
-				myContext->Remove(addRobotData.myAisShapes[i], Standard_True); // 移除旧的形状
-			}
+			qDebug() << "remove old shape";
+			getContext()->Remove(oldAisShape, Standard_True);
+			TopoDS_Shape shape = oldAisShape->Shape();
 
-			// 保存原始位置，以便稍后恢复
-			gp_Pnt originalPosition = addRobotData.assemblyPoint;
+			gp_Dir dir = data.rotationAxis;
+			double newX = std::fabs(dir.X()); // 获取X分量的绝对值
+			newX = std::round(newX * 1000) / 1000;
 
-			// 将形状平移到原点
-			gp_Trsf moveToOrigin;
-			moveToOrigin.SetTranslation(gp_Pnt(0.0, 0.0, 0.0).XYZ());
-			TopoDS_Shape atOrigin = BRepBuilderAPI_Transform(vector[i], moveToOrigin).Shape();
+			double newY = std::fabs(dir.Y()); // 获取Y分量的绝对值
+			newY = std::round(newY * 1000) / 1000;
+
+			double newZ = std::fabs(dir.Z()); // 获取Z分量的绝对值
+			newZ = std::round(newZ * 1000) / 1000;
+
+			dir.SetX(newX); // 设置dir的X分量
+			dir.SetY(newY);
+			dir.SetZ(newZ);
+			// 获取当前模型的Y轴向量
+
+			gp_Trsf localRotationY1;
+			//localRotationY1.SetRotation(gp_Ax1(data.assemblyPoint, data.rotationAxis), (data.rotationAngle) / 180.0 * M_PI); // Y轴旋转
+			localRotationY1.SetRotation(gp_Ax1(data.assemblyPoint.XYZ() + data.assemblyPoint.XYZ(), data.rotationAxis), (data.rotationAngle) / 180.0 * M_PI); // Y轴旋转
+			TopoDS_Shape rotatedshape = BRepBuilderAPI_Transform(shape, localRotationY1).Shape();
+
+			// 旋转轴的累计量
+			gp_Dir roteY = addRobot.yDirCurrent;
+			gp_Dir roteYTemp = roteY.Transformed(localRotationY1);
+			addRobot.yDirCurrent = roteYTemp;
+
+			gp_Dir roteX = addRobot.xDirCurrent;
+			gp_Dir roteXTemp = roteX.Transformed(localRotationY1);
+			addRobot.xDirCurrent = roteXTemp;
+
+			gp_Dir roteZ = addRobot.zDirCurrent;
+			gp_Dir roteZTemp = roteZ.Transformed(localRotationY1);
+			addRobot.zDirCurrent = roteZTemp;
+
+
+
+			// 防位移跑偏
+			gp_Trsf localRotationDD;
+			localRotationDD.SetRotation(gp_Ax1(data.assemblyPoint.XYZ(), data.rotationAxis), (data.rotationAngle) / 180.0 * M_PI); // Y轴旋转
+			addRobot.assemblyPoint = assemblyPoint.Transformed(localRotationDD); // 更新装配点
 
 			// 角度偏移（现在是在局部坐标系中）
-			gp_Trsf localRotation;
-			localRotation.SetRotation(addRobotData.axisX, addRobotData.angleX / 180.0 * M_PI); // X轴旋转
-			TopoDS_Shape rotatedX = BRepBuilderAPI_Transform(atOrigin, localRotation).Shape();
 
-			localRotation.SetRotation(addRobotData.axisY, addRobotData.angleY / 180.0 * M_PI); // Y轴旋转
-			TopoDS_Shape rotatedXY = BRepBuilderAPI_Transform(rotatedX, localRotation).Shape();
+			// 平移部分
+			gp_Trsf finalTransformTemp;
+			finalTransformTemp.SetTranslation(gp_Vec(data.translation.XYZ()));
+			TopoDS_Shape finalshape = BRepBuilderAPI_Transform(rotatedshape, finalTransformTemp).Shape();
 
-			localRotation.SetRotation(addRobotData.axisZ, addRobotData.angleZ / 180.0 * M_PI); // Z轴旋转
-			TopoDS_Shape rotatedXYZ = BRepBuilderAPI_Transform(rotatedXY, localRotation).Shape();
+			// 更新 平移坐标
+			addRobot.assemblyPoint = addRobot.assemblyPoint.XYZ() + data.translation.XYZ(); // 更新装配点
 
-			// 将形状移回原始位置
-			gp_Trsf moveBack;
-			moveBack.SetTranslation(originalPosition.XYZ());
-			TopoDS_Shape transformedComponent = BRepBuilderAPI_Transform(rotatedXYZ, moveBack).Shape();
-
-			// 位移
-			gp_Trsf finalTransform;
-			finalTransform.SetTranslation(gp_Vec(addRobotData.assemblyPoint.XYZ()));
-			transformedComponent = BRepBuilderAPI_Transform(transformedComponent, finalTransform).Shape();
-
-
-
-			aisShape = new AIS_Shape(transformedComponent);
-			aisShape->SetColor(addRobotData.color);
-			myContext->Display(aisShape, Standard_True);
-			vectortemp.push_back(aisShape);
-
-			// 计算形状的边界框
-			Bnd_Box box;
-			BRepBndLib::Add(transformedComponent, box);
-			ShapesBox.push_back(aisShape);
-
-
+			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(finalshape);
+			aisShapeTemp->SetColor(addRobot.color);
+			getContext()->Display(aisShapeTemp, Standard_True);
+			newAisShapes.push_back(aisShapeTemp);
 		}
-		addRobotData.myAisShapes = vectortemp;
-		addRobotData.ShapesBox = ShapesBox;
-		return addRobotData;
+		// edit 
+		//addRobot.myAisShapes = newAisShapes;
+
+		robotMap.insert(name, addRobot);
+		// 递归处理下一个组件
+		if (!addRobot.nextShapeNames.isEmpty())
+		{
+			foreach(QString nextShapeName, addRobot.nextShapeNames)
+			{
+				if (robotMap.contains(nextShapeName))
+				{
+					TRANSFORMDATA dataSec = data;
+					dataSec.angleX = 0;
+					dataSec.angleY = 0;
+					dataSec.angleZ = 0;
+
+					ShapesTransformRecursively(robotMap, nextShapeName, data);
+				}
+			}
+		}
+		robotMap[name].myAisShapes = newAisShapes;
+	}
+	void RobotCore::ShapesTransform(QMap<QString, ADDROBOTDATA>& robotMap, TRANSFORMDATA data)
+	{
+		ADDROBOTDATA addRobot = robotMap.value(data.name);
+		// 实现动画效果
+		double x = data.translation.X();
+		double y = data.translation.Y();
+		double z = data.translation.Z();
+
+		double angleX = data.angleX;
+		double angleY = data.angleY;
+		double angleZ = data.angleZ;
+
+		if (x != 0)
+		{
+
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+		if (y != 0)
+		{
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+		if (z != 0)
+		{
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+
+
+		if (angleX != 0)
+		{
+			data.rotationAngle = angleX;
+			gp_Dir roteX = addRobot.xDirCurrent;
+			gp_Trsf trsf;
+			trsf.SetRotation(gp_Ax1((addRobot.assemblyPoint.XYZ() + addRobot.assemblyPoint.XYZ()), data.rotationAxis), data.angleX / 180.0 * M_PI); // X轴旋转
+			gp_Dir roteXTemp = roteX.Transformed(trsf);
+			data.rotationAxis = roteXTemp;
+			robotMap.insert(data.name, addRobot);
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+		if (angleY != 0)
+		{
+			data.rotationAngle = angleY;
+
+			gp_Dir roteY = addRobot.yDirCurrent;
+
+			data.rotationAxis = roteY;
+			robotMap.insert(data.name, addRobot);
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+		if (angleZ != 0)
+		{
+			data.rotationAngle = angleZ;
+			gp_Dir roteZ = addRobot.zDirCurrent;
+			gp_Trsf trsf;
+			trsf.SetRotation(gp_Ax1((addRobot.assemblyPoint.XYZ() + addRobot.assemblyPoint.XYZ()), data.rotationAxis), data.angleZ / 180.0 * M_PI); // Z轴旋转
+			gp_Dir roteZTemp = roteZ.Transformed(trsf);
+			data.rotationAxis = roteZTemp;
+			robotMap.insert(data.name, addRobot);
+			ShapesTransformRecursively(robotMap, data.name, data);
+		}
+	}
+	void RobotCore::ShapesCreateTransformAngle(
+		QMap<QString, ADDROBOTDATA>& robotMap, 
+		ADDROBOTDATA originData, 
+		double angle, 
+		MoveDirection moveType
+)
+	{
+		TRANSFORMDATA transformData;
+		transformData.name = originData.name;
+		transformData.assemblyPoint = originData.assemblyPoint;
+		transformData.rotationAngle = angle;
+
+		switch (moveType)
+		{
+		case MoveDirection::MoveDirection_XAxis:
+		{
+			transformData.rotationAxis = originData.xDirCurrent;
+			transformData.angleX = angle;
+			break;
+		}
+		case MoveDirection::MoveDirection_YAxis:
+		{
+			transformData.rotationAxis = originData.yDirCurrent;
+			transformData.angleY = angle;
+			break;
+		}
+		case MoveDirection::MoveDirection_ZAxis:
+		{
+			transformData.angleZ = angle;
+			transformData.rotationAxis = originData.zDirCurrent;
+			break;
+		}
+		default:
+			break;
+		}
+		ShapesTransform(robotMap, transformData);
+	}
+	void RobotCore::ShapesCreateTransformDistance(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA originData, double moveDistance, MoveDirection moveType)
+	{
+		TRANSFORMDATA transformData;
+		transformData.name = originData.name;
+		switch (moveType)
+		{
+		case MoveDirection::MoveDirection_XAxis:
+		{
+			transformData.rotationAxis = originData.xDirCurrent;
+			transformData.translation = gp_Pnt(moveDistance, 0, 0).XYZ();
+			break;
+		}
+		case MoveDirection::MoveDirection_YAxis:
+		{
+			transformData.rotationAxis = originData.yDirCurrent;
+			transformData.translation = gp_Pnt(0, moveDistance, 0).XYZ();
+			break;
+		}
+		case MoveDirection::MoveDirection_ZAxis:
+		{
+			transformData.rotationAxis = originData.zDirCurrent;
+			transformData.translation = gp_Pnt(0, 0, moveDistance).XYZ();
+			break;
+		}
+		default:
+			break;
+		}
+		ShapesTransform(robotMap, transformData);
 	}
 } // namespace TCP_ROBOT

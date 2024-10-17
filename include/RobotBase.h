@@ -322,48 +322,6 @@ namespace TCP_ROBOT
 		QRubberBand* myRectBand;
 		TopoDS_Shape shape;
 	};
-
-
-	class TCPROBOT_EXPORT ShapesTransform : public RobotBase
-	{
-		Q_OBJECT
-	public:
-		ShapesTransform(QWidget* parent = nullptr);
-		~ShapesTransform();
-
-		void slotUpdataRobotShaps(void) override;
-
-		// 显示功能区
-		void setContext(Handle(AIS_InteractiveContext) context);
-
-		// 添加形状
-		void setAddShapesStruct(ADDROBOTDATA data);
-
-		// 设置旋转中心
-		void setRotateCenter(gp_Pnt center);
-
-		// 设置旋转角度
-		void setRotateAngle(double angle);
-
-		void setMoveDirection(MoveDirection direction = MoveDirection_ZAxis);
-
-		// 开始旋转
-		void startRotate(gp_Pnt center = gp_Pnt(0.0, 0.0, 0.0), double angle = 0.0);
-
-		// 开始平移
-		void startMove(gp_Pnt center = gp_Pnt(0.0, 0.0, 0.0));
-
-		ADDROBOTDATA getAddRobotData() { return m_addRobotData; }
-
-	private:
-		Handle(AIS_InteractiveContext) m_context = nullptr;
-		ADDROBOTDATA m_addRobotData = ADDROBOTDATA();
-		gp_Pnt m_rotateCenter = gp_Pnt(0.0, 0.0, 0.0);
-		double m_rotateAngle = 0.0;
-		QVector<Handle(AIS_Shape)> m_shapes;
-
-		MoveDirection m_moveDirection = MoveDirection_ZAxis;
-	};
 }
 
 #endif // !
