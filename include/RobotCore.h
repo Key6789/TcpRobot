@@ -49,6 +49,13 @@ namespace TCP_ROBOT
 		void ShapesTransform(QMap<QString, ADDROBOTDATA>& robotMap, TRANSFORMDATA data);
 		void ShapesCreateTransformAngle(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA originData, double angle, MoveDirection moveType = MoveDirection::MoveDirection_ZAxis);
 		void ShapesCreateTransformDistance(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA originData, double moveDistance, MoveDirection moveType = MoveDirection::MoveDirection_ZAxis);
+	
+	
+
+	public:
+		// tools
+		// 文件读入
+		QVariantMap readJsonFileToMap(QString filePath);
 	};
 }
 #endif() // ROBOTPREVIEW_H_

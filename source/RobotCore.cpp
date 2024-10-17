@@ -61,8 +61,8 @@ namespace TCP_ROBOT
 	void RobotCore::slotShapesRotateShape(
 		QMap<QString, ADDROBOTDATA>& robotMap,
 		double angle,
-		ShapeType shapeType = ShapeType::ShapeType_Work,
-		MoveDirection moveType = MoveDirection::MoveDirection_ZAxis)
+		ShapeType shapeType,
+		MoveDirection moveType)
 	{
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
@@ -77,8 +77,8 @@ namespace TCP_ROBOT
 	void RobotCore::slotShapesMoveShape(
 		QMap<QString, ADDROBOTDATA>& robotMap,
 		double moveDistance,
-		ShapeType shapeType = ShapeType::ShapeType_Work,
-		MoveDirection moveType = MoveDirection::MoveDirection_ZAxis)
+		ShapeType shapeType,
+		MoveDirection moveType)
 	{
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
@@ -323,5 +323,27 @@ namespace TCP_ROBOT
 			break;
 		}
 		ShapesTransform(robotMap, transformData);
+	}
+	QVariantMap RobotCore::readJsonFileToMap(QString filePath)
+	{
+		QFile file(filePath);
+		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+		{
+			qDebug() << "open file failed";
+		}
+		QTextStream in(&file);
+		QString jsonStr = in.readAll();
+		file.close();
+
+		// 解析 json 格式
+		QJsonParseError jsonError;
+		QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonStr.toUtf8(), &jsonError);
+		if (jsonError.error != QJsonParseError::NoError)
+		{
+			qDebug() << "parse json failed";
+			return QVariantMap();
+		}
+		QVariantMap jsonMap = jsonDoc.object().toVariantMap();
+		return jsonMap;
 	}
 } // namespace TCP_ROBOT
