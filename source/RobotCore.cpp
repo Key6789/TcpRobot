@@ -14,41 +14,23 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::loadWorkShapes(QString filePath)
 	{
-		removeAllPreview();
+		//removeAllPreview();
 		// 读取文件内容 json 格式
-		QFile file(filePath);
-		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-		{
-			qDebug() << "open file failed";
-			return;
-		}
-		QTextStream in(&file);
-		QString jsonStr = in.readAll();
-		file.close();
-
-		// 解析 json 格式
-		QJsonParseError jsonError;
-		QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonStr.toUtf8(), &jsonError);
-		if (jsonError.error != QJsonParseError::NoError)
-		{
-			qDebug() << "parse json failed";
-			return;
-		}
-		QVariantMap jsonMap = jsonDoc.object().toVariantMap();
+		QVariantMap jsonMap = readJsonFileToMap(filePath);
 		foreach(QString key, jsonMap.keys())
 		{
 			QVariantMap shapeMap = jsonMap[key].toMap();
 			SHAPESTRUCT shapeStruct;
 			shapeStruct.setShapeVariantMap(shapeMap);
 			// 加载模型
-			slotReplaceModelByPath(shapeStruct);
+			loadShapesModel(m_shapesMap, shapeStruct);
 		}
 
 		QTimer* timer = new QTimer(this);
 		timer->setInterval(1000);
 		connect(timer, &QTimer::timeout, [=]() {
-			slotShapesRotateShape(m_mapPreviewData, 30);
-			slotShapesMoveShape(m_mapPreviewData, 1000);
+			slotShapesRotateShape(m_shapesMap, 30, ShapeType::ShapeType_Work);
+			slotShapesMoveShape(m_shapesMap, 1000, ShapeType::ShapeType_Work);
 			});
 		timer->start();
 
@@ -57,6 +39,15 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::loadRobotShape(QString filePath)
 	{
+		QVariantMap jsonMap = readJsonFileToMap(filePath);
+		foreach(QString key, jsonMap.keys())
+		{
+			QVariantMap shapeMap = jsonMap[key].toMap();
+			SHAPESTRUCT shapeStruct;
+			shapeStruct.setShapeVariantMap(shapeMap);
+			// 加载模型
+			loadShapesModel(m_shapesMap,shapeStruct);
+		}
 	}
 	void RobotCore::slotShapesRotateShape(
 		QMap<QString, ADDROBOTDATA>& robotMap,
@@ -259,11 +250,11 @@ namespace TCP_ROBOT
 		}
 	}
 	void RobotCore::ShapesCreateTransformAngle(
-		QMap<QString, ADDROBOTDATA>& robotMap, 
-		ADDROBOTDATA originData, 
-		double angle, 
+		QMap<QString, ADDROBOTDATA>& robotMap,
+		ADDROBOTDATA originData,
+		double angle,
 		MoveDirection moveType
-)
+	)
 	{
 		TRANSFORMDATA transformData;
 		transformData.name = originData.name;
@@ -324,6 +315,38 @@ namespace TCP_ROBOT
 		}
 		ShapesTransform(robotMap, transformData);
 	}
+	void RobotCore::loadShapesModel(QMap<QString, ADDROBOTDATA>& robotMap, SHAPESTRUCT shapeStruct)
+	{
+		ADDROBOTDATA robotData = createRobotData(shapeStruct);
+
+		// 移除旧模型
+		removeShapeModel(robotMap, robotData);
+		robotMap.insert(robotData.name, robotData);
+		displaySingalAddRobot(robotData);
+	}
+	void RobotCore::removeShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA data)
+	{
+		// 如果 robotMap 中包含指定的名称，则移除其对应的 AIS 形状并从 robotMap 中删除该名称
+		if (robotMap.contains(data.name))
+		{
+			foreach(Handle(AIS_Shape) aisShape, robotMap[data.name].myAisShapes)
+			{
+				getContext()->Remove(aisShape, Standard_True);
+			}
+			robotMap.remove(data.name);
+		}
+	}
+	void RobotCore::removeAllShapes()
+	{
+		// 移除所有模型
+		getContext()->EraseAll(Standard_True);
+		m_shapesMap.clear();
+
+		// 添加坐标轴
+		displayCoordinateAxes();
+		myView->FitAll();
+
+	}
 	QVariantMap RobotCore::readJsonFileToMap(QString filePath)
 	{
 		QFile file(filePath);
@@ -345,5 +368,23 @@ namespace TCP_ROBOT
 		}
 		QVariantMap jsonMap = jsonDoc.object().toVariantMap();
 		return jsonMap;
+	}
+	void RobotCore::slotChangeShapeColor(QString shapeName, QColor color)
+	{
+		// 改变指定名称的模型颜色
+		if (m_shapesMap.keys().contains(shapeName))
+		{
+			ADDROBOTDATA robotData = m_shapesMap[shapeName];
+
+			// 转换为Quantity_Color
+			Quantity_Color qColor(color.redF(), color.greenF(), color.blueF(), Quantity_TOC_sRGB);
+			// 修改颜色
+			for (auto shape : m_shapesMap[shapeName].myAisShapes)
+			{
+				shape->SetColor(qColor);
+			}
+			m_shapesMap.insert(shapeName, robotData);
+		}
+			//displaySingalAddRobot(robotData);
 	}
 } // namespace TCP_ROBOT
