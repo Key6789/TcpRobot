@@ -101,6 +101,8 @@ if(WIN32)
              "D:/Soft/OCC3/products/freeimage-3.17.0-vc14-64/include/"
              "D:/Soft/OCC3/products/freetype-2.5.5-vc14-64/include/"
              "D:/Soft/OCC3/products/tcltk-86-64/include/"
+             "D:/Soft/eigen-user/"
+
          )
         ### 库文件
         set(ADD_OTHER_LIB 

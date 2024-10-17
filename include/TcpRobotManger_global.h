@@ -2,7 +2,7 @@
 #ifndef TCPROBOTMANAGER_GLOBAL_H
 #define TCPROBOTMANAGER_GLOBAL_H
 
-
+#include <Eigen/Dense>
 #include <QtCore/qglobal.h>
 
 #include <Standard.hxx>
@@ -26,7 +26,7 @@
 #include <Geom_CylindricalSurface.hxx>
 
 #include <GCE2d_MakeSegment.hxx>
-
+#include <cmath> // for sin, cos
 #include <TopoDS.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -324,6 +324,14 @@ enum MoveDirection
 	MoveDirection_YAxis,
 	MoveDirection_ZAxis
 };
+enum ShapeType
+{
+	ShapeType_None = 0,
+	ShapeType_Work,
+	ShapeType_Hole,
+	ShapeType_Robot,
+	ShapeType_Link
+};
 
 // 获取图形驱动程序的静态实例
 static Handle(Graphic3d_GraphicDriver)& GetGraphicDriver()
@@ -354,6 +362,7 @@ struct Joint {
 struct addComponentRobotData {
 	QString name;
 
+	ShapeType shapeType = ShapeType_None;
 	QVector<TopoDS_Shape> shapes;
 	QVector<AIS_Shape> originalShapes;
 	QVector<Handle(AIS_Shape)> myAisShapes;
@@ -361,6 +370,7 @@ struct addComponentRobotData {
 	QVector<Handle(AIS_Shape)> ShapesBox;
 
 	QString nextShapeName;
+	QStringList nextShapeNames;
 	Quantity_Color color = Quantity_Color(179 / 255.0, 174 / 255.0, 170 / 255.0, Quantity_TOC_RGB);
 
 	gp_Pnt center = gp_Pnt(0, 0, 0);
@@ -396,21 +406,13 @@ struct addComponentRobotData {
 
 	double sacle = 1.0;
 
-	QVector<double> joints()
-	{
-		QVector<double> joints;
-		joints.push_back(a);
-		joints.push_back(alpha);
-		joints.push_back(d);
-		joints.push_back(theta);
-		return joints;
-	}
 	// x，y，z	
 	double x = 0.0;
 	double y = 0.0;
 	double z = 0.0;
 
 	QString path;
+
 
 } typedef ADDROBOTDATA;
 struct transformData
@@ -534,14 +536,6 @@ struct workAndHoleStruct
 
 }typedef WORKANDHOLE;
 
-enum ShapeType
-{
-	ShapeType_None = 0,
-	ShapeType_Work,
-	ShapeType_Hole,
-	ShapeType_Robot,
-	ShapeType_Link
-};
 
 struct ShapeLinkData
 {
@@ -563,6 +557,7 @@ struct ShapeDataStruct
 
 	//下一个形状名称
 	QString nextShapeName = QString();
+	QStringList nextShapeNames = QStringList();
 
 	// 焊缝颜色
 	QString ShapeColor = "#ffffff";
@@ -610,6 +605,7 @@ struct ShapeDataStruct
 		map.insert("ShapePath", ShapePath);
 		map.insert("ShapeType", shapeType);
 		map.insert("isChecked", ShapeLink);
+		map.insert("nextShapeNames", nextShapeNames);
 
 		QVariantMap linkMapTemp;
 		for (auto it = shapeLinkData.begin(); it != shapeLinkData.end(); ++it)
@@ -641,6 +637,7 @@ struct ShapeDataStruct
 		ShapePath = map.value("ShapePath").toString();
 		shapeType = ShapeType(map.value("ShapeType").toInt());
 		ShapeLink = map.value("isChecked").toBool();
+		nextShapeNames = map.value("nextShapeNames").toStringList();
 
 		QVariantMap linkMap = map.value("LinkData").toMap();
 		for (auto it = linkMap.begin(); it != linkMap.end(); ++it)

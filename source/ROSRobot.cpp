@@ -228,7 +228,11 @@ namespace TCP_ROBOT
 
 			});
 
-		connect(seletedWorkButton, &QPushButton::clicked, [=]() {});
+		connect(seletedWorkButton, &QPushButton::clicked, [=]() {
+			RobotCore * robotCore = new RobotCore();
+			robotCore->loadWorkShapes(WORKPATH.append("/").append(workListWidget->currentItem()->text()).append("/").append(WORKCONFIGPATH));
+			robotCore->show();
+			});
 		connect(saveButton, &QPushButton::clicked, [=]() {
 
 			QString key = workListWidget->currentItem()->text();
@@ -237,7 +241,18 @@ namespace TCP_ROBOT
 			QVariantMap variantMap;
 			m_shapeMap.insert(key, preViewWork->getShapeStruct());
 			preViewWork->getShapeStruct().ShapeAngleX;
-			qDebug() << __StandQString("工件保存角度X:").append(preViewWork->getShapeStruct().ShapeAngleX);
+			
+			SHAPESTRUCT shapeWorkStruct;
+			QStringList keys = QStringList();
+			foreach(QString key, m_shapeMap.keys())
+			{
+				SHAPESTRUCT shapeStruct = m_shapeMap[key];
+				if (shapeStruct.shapeType == ShapeType_Work)
+				{
+					shapeWorkStruct = shapeStruct;
+					break;
+				}
+			}
 			foreach(QString key, m_shapeMap.keys())
 			{
 				SHAPESTRUCT shapeStruct = m_shapeMap[key];
@@ -248,9 +263,12 @@ namespace TCP_ROBOT
 				else
 				{
 					variantMap.insert(key, shapeStruct.getShapeVariantMap());
+					keys.append(key);
 				}
 
 			}
+			shapeWorkStruct.nextShapeNames = keys;
+			variantMap.insert(WORKPATHNAME, shapeWorkStruct.getShapeVariantMap());
 			// 保存文件
 			if (file.open(QIODevice::WriteOnly))
 			{

@@ -419,6 +419,8 @@ namespace TCP_ROBOT
 
 	}
 
+
+
 	/********************************数据获取 ***************************************/
 	TopoDS_Shape RobotBase::getShape()
 	{
@@ -792,7 +794,7 @@ namespace TCP_ROBOT
 		{
 			return vector;
 		}
-		
+
 		STEPControl_Reader reader;
 		IFSelect_ReturnStatus status = reader.ReadFile(filePath.toStdString().c_str());
 		if (status != IFSelect_RetDone) {
@@ -1352,6 +1354,7 @@ namespace TCP_ROBOT
 		//myView->FitAll();
 
 	}
+	
 	TCollection_ExtendedString RobotBase::displayText(const char* theText)
 	{
 		//const char* gbStr = "焊缝标号-1";
@@ -1998,11 +2001,6 @@ namespace TCP_ROBOT
 			workTransformRecursively(addRobot.nextShapeName, data);
 		}
 		m_myRobotData[name].myAisShapes = newAisShapes;
-		/*for (const auto& shape : m_myRobotData[name].myAisShapes)
-		{
-			shape->SetColor(addRobot.color);
-			myContext->Display(shape, Standard_True);
-		}*/
 	}
 	gp_Vec RobotBase::getVectorByAngle(double angleX, double angleY, double angleZ)
 	{
@@ -2307,7 +2305,7 @@ namespace TCP_ROBOT
 
 		m_myRobotDHData.insert(ROBOT_4, addRobot4);
 
-		ADDROBOTDATA addRobot5; 
+		ADDROBOTDATA addRobot5;
 		addRobot5.a = jointData5_2.value("a").toDouble();
 		addRobot5.alpha = jointData5_2.value("alpha").toDouble();
 		addRobot5.d = jointData5_2.value("d").toDouble();
@@ -3854,6 +3852,7 @@ namespace TCP_ROBOT
 		ADDROBOTDATA robot;
 		robot.name = shapeStruct.ShapeName;
 
+		robot.shapeType = shapeStruct.shapeType;
 		// 机器人坐标
 		robot.x = shapeStruct.ShapePositionX.toDouble();
 		robot.y = shapeStruct.ShapePositionY.toDouble();
@@ -3866,6 +3865,9 @@ namespace TCP_ROBOT
 
 		// 机器人 路径
 		robot.path = shapeStruct.ShapePath;
+
+		// 下一级形状名称
+		robot.nextShapeNames = shapeStruct.nextShapeNames;
 
 		// 机器人连杆
 		/*robot.a = shapeStruct.aDistance;
@@ -3920,6 +3922,119 @@ namespace TCP_ROBOT
 			}
 			m_mapPreviewData.remove(addRobotData.name);
 		}
+	}
+	ShapesTransform::ShapesTransform(QWidget* parent)
+	{
+	}
+	ShapesTransform::~ShapesTransform()
+	{
+	}
+	void ShapesTransform::slotUpdataRobotShaps(void)
+	{
+		this->hide();
+	}
+	void ShapesTransform::setContext(Handle(AIS_InteractiveContext) context)
+	{
+		m_context = context;
+	}
+	void ShapesTransform::setAddShapesStruct(ADDROBOTDATA data)
+	{
+		m_addRobotData = data;
+	}
+	void ShapesTransform::setRotateCenter(gp_Pnt center)
+	{
+		m_rotateCenter = center;
+	}
+	void ShapesTransform::setRotateAngle(double angle)
+	{
+		m_rotateAngle = angle;
+	}
+	void ShapesTransform::setMoveDirection(MoveDirection direction)
+	{
+		m_moveDirection = direction;
+	}
+	void ShapesTransform::startRotate(gp_Pnt center, double angle)
+	{
+		setRotateCenter(center);
+		setRotateAngle(angle);
+
+		switch (m_moveDirection)
+		{
+		case MoveDirection_XAxis:
+			m_addRobotData.angleX += angle;
+			break;
+		case MoveDirection_YAxis:
+			m_addRobotData.angleY += angle;
+			break;
+		case MoveDirection_ZAxis:
+			m_addRobotData.angleZ += angle;
+			break;
+		default:
+			break;
+		}
+
+		QVector<TopoDS_Shape> vector = m_addRobotData.shapes;
+		QVector<Handle(AIS_Shape)> vectortemp;
+		QVector<Handle(AIS_Shape)> ShapesBox;
+		// 确保data.myAisShapes与vector同步
+		//assert(data.myAisShapes.size() == vector.size());
+
+		for (int i = 0; i < vector.size(); ++i)
+		{
+			if (!m_addRobotData.myAisShapes.isEmpty())
+			{
+				m_context->Erase(m_addRobotData.myAisShapes[i], Standard_True); // 移除旧的形状
+			}
+
+			// 保存原始位置，以便稍后恢复
+			gp_Pnt originalPosition = m_addRobotData.assemblyPoint;
+
+			// 将形状平移到原点
+			gp_Trsf moveToOrigin;
+			moveToOrigin.SetTranslation(gp_Pnt(0.0, 0.0, 0.0).XYZ());
+			TopoDS_Shape atOrigin = BRepBuilderAPI_Transform(vector[i], moveToOrigin).Shape();
+
+			// 角度偏移（现在是在局部坐标系中）
+			gp_Trsf localRotation;
+			localRotation.SetRotation(m_addRobotData.axisX, m_addRobotData.angleX / 180.0 * M_PI); // X轴旋转
+			TopoDS_Shape rotatedX = BRepBuilderAPI_Transform(atOrigin, localRotation).Shape();
+
+			localRotation.SetRotation(m_addRobotData.axisY, m_addRobotData.angleY / 180.0 * M_PI); // Y轴旋转
+			TopoDS_Shape rotatedXY = BRepBuilderAPI_Transform(rotatedX, localRotation).Shape();
+
+			localRotation.SetRotation(m_addRobotData.axisZ, m_addRobotData.angleZ / 180.0 * M_PI); // Z轴旋转
+			TopoDS_Shape rotatedXYZ = BRepBuilderAPI_Transform(rotatedXY, localRotation).Shape();
+
+			// 将形状移回原始位置
+			gp_Trsf moveBack;
+			moveBack.SetTranslation(originalPosition.XYZ());
+			TopoDS_Shape transformedComponent = BRepBuilderAPI_Transform(rotatedXYZ, moveBack).Shape();
+
+			// 位移
+			gp_Trsf finalTransform;
+			finalTransform.SetTranslation(gp_Vec(m_addRobotData.assemblyPoint.XYZ()));
+			transformedComponent = BRepBuilderAPI_Transform(transformedComponent, finalTransform).Shape();
+
+
+
+			Handle(AIS_Shape) aisShape = new AIS_Shape(transformedComponent);
+			aisShape->SetColor(m_addRobotData.color);
+			m_context->Display(aisShape, Standard_True);
+			vectortemp.push_back(aisShape);
+
+			// 计算形状的边界框
+			Bnd_Box box;
+			BRepBndLib::Add(transformedComponent, box);
+			ShapesBox.push_back(aisShape);
+
+
+		}
+
+		m_addRobotData.myAisShapes = vectortemp;
+		m_addRobotData.ShapesBox = ShapesBox;
+	}
+	void ShapesTransform::startMove(gp_Pnt center)
+	{
 	}
 }
 
