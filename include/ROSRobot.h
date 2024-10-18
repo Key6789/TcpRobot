@@ -21,9 +21,12 @@ namespace TCP_ROBOT
 		ROSRobot(QWidget* parent = nullptr);
 		~ROSRobot();
 
+		QWidget* show7103ShapePreview(QWidget* parent = nullptr);
+
 		// QWidget 用于显示预览
 		QWidget* showPreview(QWidget* parent = nullptr);
 		QWidget* showRobotPreview(QWidget* parent = nullptr);
+		QWidget* showGuidePreview(QWidget* parent = nullptr);
 
 	signals:
 		// 选中的工作名称变化信号
@@ -31,6 +34,8 @@ namespace TCP_ROBOT
 	private: // tool
 		// 创建目录
 		void createOrCheckDirectory(const QString& path);
+
+		void dealWithShapesPararmeter(QMap<QString, SHAPESTRUCT>& shapesMap);
 
 		// 删除目录
 		bool removeDirectory(const QString& path);
@@ -44,6 +49,7 @@ namespace TCP_ROBOT
 	private:
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
+		RobotPreview* m_robotPreview = nullptr;
 	};
 
 	class TCPROBOT_EXPORT ShapeCommondPreview : public QWidget
@@ -58,7 +64,7 @@ namespace TCP_ROBOT
 		// 设置形状结构体
 		void setShapeStruct(SHAPESTRUCT shapeStruct);
 		// 获取形状结构体
-		SHAPESTRUCT getShapeStruct() { return m_shapeStruct; };
+		SHAPESTRUCT getShapeStruct();
 
 		// 设置形状类型
 		void setShapeType(ShapeType shapeType);
@@ -102,6 +108,8 @@ namespace TCP_ROBOT
 		void readLinkADistance();
 		void readLinkIndex();
 
+		void readShapeLinkIndex();
+
 	private:
 		// 形状结构体
 		SHAPESTRUCT m_shapeStruct;
@@ -133,6 +141,7 @@ namespace TCP_ROBOT
 		QPushButton* m_addLinkButton = nullptr;
 		QPushButton* m_deleteLinkButton = nullptr;
 
+		QLineEdit* m_shapIndex = nullptr;
 		QLineEdit* m_linkName = nullptr;
 		QLineEdit* m_linkAlpha = nullptr;
 		QLineEdit* m_linkTheta = nullptr;

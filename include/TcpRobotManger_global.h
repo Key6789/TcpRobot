@@ -276,6 +276,7 @@
 
 #define   WORKPATH	QDir::currentPath().append("/RobotData/WorkPath")
 #define   ROBOTPATH	QDir::currentPath().append("/RobotData/RobotPath")
+#define   OTHERPATH	QDir::currentPath().append("/RobotData/OtherPath")
 
 #define OCCQT occQt
 
@@ -330,7 +331,11 @@ enum ShapeType
 	ShapeType_Work,
 	ShapeType_Hole,
 	ShapeType_Robot,
-	ShapeType_Link
+	ShapeType_Link,
+	ShapeType_LongGuide,
+	ShapeType_RotatingTable,
+	ShapeType_ShortGuide
+	
 };
 
 // 获取图形驱动程序的静态实例
@@ -547,6 +552,17 @@ struct ShapeLinkData
 	double aDistance = 0.0;
 	double theta = 0.0;
 	double dDistance = 0.0;
+
+	QVector<double> getDHParameter()
+	{
+		QVector<double> DHParameter;
+		DHParameter.append(aDistance);
+		DHParameter.append(alpha);
+		DHParameter.append(dDistance);
+		DHParameter.append(theta);
+		
+		return DHParameter;
+	}
 }typedef SHAPELINKDATA;
 // 定义焊缝数据结构
 struct ShapeDataStruct
@@ -587,6 +603,8 @@ struct ShapeDataStruct
 
 	bool ShapeLink = false;
 
+	int ShapeLinkIndex = -1;
+
 	QMap<QString, SHAPELINKDATA> shapeLinkData;
 
 	QVariantMap getShapeVariantMap()
@@ -606,6 +624,7 @@ struct ShapeDataStruct
 		map.insert("ShapeType", shapeType);
 		map.insert("isChecked", ShapeLink);
 		map.insert("nextShapeNames", nextShapeNames);
+		map.insert("ShapeLinkIndex", ShapeLinkIndex);
 
 		QVariantMap linkMapTemp;
 		for (auto it = shapeLinkData.begin(); it != shapeLinkData.end(); ++it)
@@ -638,6 +657,7 @@ struct ShapeDataStruct
 		shapeType = ShapeType(map.value("ShapeType").toInt());
 		ShapeLink = map.value("isChecked").toBool();
 		nextShapeNames = map.value("nextShapeNames").toStringList();
+		ShapeLinkIndex = map.value("ShapeLinkIndex").toInt();
 
 		QVariantMap linkMap = map.value("LinkData").toMap();
 		for (auto it = linkMap.begin(); it != linkMap.end(); ++it)
@@ -660,5 +680,6 @@ struct ShapeDataStruct
 #define  WORKPATHNAME         "WORK"
 #define  WORKCONFIGPATH       "WorkConfig.json"
 #define  ROBOTCONFIGPATH      "RobotConfig.json"
+#define  OTERDATAPATH         "OtherConfig.json"
 
 #define  ISNULLPOINTER(p)     if(p==nullptr){return;}

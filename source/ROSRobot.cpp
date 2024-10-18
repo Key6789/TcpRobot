@@ -12,6 +12,24 @@ namespace TCP_ROBOT
 	{
 	}
 
+	QWidget* ROSRobot::show7103ShapePreview(QWidget* parent)
+	{
+		QWidget* preview = new QWidget(parent);
+		QHBoxLayout* mainLayout = new QHBoxLayout(preview);
+
+		QTabWidget* tabWidget = new QTabWidget(preview);
+		mainLayout->addWidget(tabWidget,1);
+
+		m_robotPreview = new RobotPreview(preview);
+
+		tabWidget->addTab(showPreview(preview), __StandQString("工件配置"));
+		tabWidget->addTab(showGuidePreview(preview), __StandQString("导轨配置"));
+		tabWidget->addTab(showRobotPreview(preview), __StandQString("机器人配置"));
+
+		mainLayout->addWidget(m_robotPreview, 5);
+		return preview;
+	}
+
 	QWidget* ROSRobot::showPreview(QWidget* parent)
 	{
 		QWidget* preview = new QWidget(parent);
@@ -103,11 +121,11 @@ namespace TCP_ROBOT
 		preViewHole->setLinkIsVisable(false);
 		preViewWork->setLinkIsVisable(false);
 
-		RobotPreview* robotPreview = new RobotPreview(rightWidget);
-		mainLayout->addWidget(robotPreview, 5);
+		/*RobotPreview* robotPreview = new RobotPreview(rightWidget);
+		mainLayout->addWidget(robotPreview, 5);*/
 
-		preViewHole->setRobotPreviewPoint(robotPreview);
-		preViewWork->setRobotPreviewPoint(robotPreview);
+		preViewHole->setRobotPreviewPoint(m_robotPreview);
+		preViewWork->setRobotPreviewPoint(m_robotPreview);
 
 		{
 			// 读取工件列表
@@ -125,7 +143,7 @@ namespace TCP_ROBOT
 		connect(workListWidget, &QListWidget::itemClicked, [=](QListWidgetItem* item) {
 			// 读取文件
 			m_shapeMap.clear();
-			robotPreview->removeAllPreview();
+			// robotPreview->removeAllPreview();
 			QString fileName = WORKPATH.append("/").append(item->text()).append("/").append(WORKCONFIGPATH);
 			QFile file(fileName);
 			qDebug() << "工件配置文件:" << fileName;
@@ -229,7 +247,7 @@ namespace TCP_ROBOT
 			});
 
 		connect(seletedWorkButton, &QPushButton::clicked, [=]() {
-			RobotCore * robotCore = new RobotCore();
+			RobotCore* robotCore = new RobotCore();
 			robotCore->loadWorkShapes(WORKPATH.append("/").append(workListWidget->currentItem()->text()).append("/").append(WORKCONFIGPATH));
 			robotCore->show();
 			});
@@ -241,7 +259,7 @@ namespace TCP_ROBOT
 			QVariantMap variantMap;
 			m_shapeMap.insert(key, preViewWork->getShapeStruct());
 			preViewWork->getShapeStruct().ShapeAngleX;
-			
+
 			SHAPESTRUCT shapeWorkStruct;
 			QStringList keys = QStringList();
 			foreach(QString key, m_shapeMap.keys())
@@ -366,12 +384,43 @@ namespace TCP_ROBOT
 		preViewRobot->setLinkIsVisable(true);
 		layRight->addWidget(preViewRobot);
 
-		RobotPreview* robotPreview = new RobotPreview(rightWidget);
-		mainLayout->addWidget(robotPreview, 6);
+		/*RobotPreview* robotPreview = new RobotPreview(rightWidget);
+		mainLayout->addWidget(robotPreview, 6);*/
 
-		preViewRobot->setRobotPreviewPoint(robotPreview);
+		preViewRobot->setRobotPreviewPoint(m_robotPreview);
 		rightWidget->setEnabled(false);
 		saveButton->setEnabled(false);
+
+		{
+			QVariantMap variantMap;
+			// 读取机器人列表
+			createOrCheckDirectory(ROBOTPATH);
+			QString fileName = ROBOTPATH.append("/").append(ROBOTCONFIGPATH);
+			QFile file(fileName);
+			qDebug() << "机器人配置文件:" << fileName;
+			if (file.open(QIODevice::ReadOnly))
+			{
+				QTextStream in(&file);
+				QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+				QVariantMap variantMap = doc.toVariant().toMap();
+				if (!variantMap.isEmpty())
+				{
+
+					// 部件 
+					foreach(QString key, variantMap.keys())
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap[key].toMap());
+						m_robotMap.insert(key, shapeStruct);
+						preViewRobot->setShapeStruct(shapeStruct);
+
+						QListWidgetItem* item = new QListWidgetItem(key);
+						robotListWidget->addItem(item);
+					}
+					file.close();
+				}
+			}
+		}
 		connect(robotListWidget, &QListWidget::itemClicked, [=](QListWidgetItem* item) {
 			// 机器人显示
 			preViewRobot->setShapeStruct(m_robotMap[item->text()]);
@@ -409,9 +458,139 @@ namespace TCP_ROBOT
 			QVariantMap variantMap;
 			foreach(QString key, m_robotMap.keys())
 			{
+				dealWithShapesPararmeter(m_robotMap);
 				SHAPESTRUCT shapeStruct = m_robotMap[key];
 				variantMap.insert(key, shapeStruct.getShapeVariantMap());
 			}
+			if (file.open(QIODevice::WriteOnly))
+			{
+				QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+				QTextStream out(&file);
+				out << doc.toJson();
+			}
+			file.close();
+			});
+
+		return preview;
+	}
+
+	QWidget* ROSRobot::showGuidePreview(QWidget* parent)
+	{
+		QWidget* preview = new QWidget(parent);
+		preview->setWindowTitle(__StandQString("导轨配置"));
+
+		QTabWidget* tabWidget = new QTabWidget(preview);
+
+		ShapeCommondPreview* preViewLong = new ShapeCommondPreview(preview);
+		preViewLong->setShapeType(ShapeType_LongGuide);
+		preViewLong->setLinkIsVisable(false);
+
+		tabWidget->addTab(preViewLong, __StandQString("长轴"));
+
+		ShapeCommondPreview* preViewShort = new ShapeCommondPreview(preview);
+		preViewShort->setShapeType(ShapeType_ShortGuide);
+		preViewShort->setLinkIsVisable(false);
+
+		
+
+		tabWidget->addTab(preViewShort, __StandQString("短轴"));
+
+		ShapeCommondPreview* preViewRotation = new ShapeCommondPreview(preview);
+		preViewRotation->setShapeType(ShapeType_RotatingTable);
+		preViewRotation->setLinkIsVisable(false);
+
+		tabWidget->addTab(preViewRotation, __StandQString("转盘"));
+
+		preViewLong->setRobotPreviewPoint(m_robotPreview);
+		preViewShort->setRobotPreviewPoint(m_robotPreview);
+		preViewRotation->setRobotPreviewPoint(m_robotPreview);
+
+		QVBoxLayout* mainLayout = new QVBoxLayout(preview);
+		mainLayout->addWidget(tabWidget);
+
+		QPushButton* saveButton = new QPushButton(preview);
+		saveButton->setText(__StandQString("保存"));
+		mainLayout->addWidget(saveButton);
+		{
+			QVariantMap variantMap;
+			// 读取导轨列表
+			createOrCheckDirectory(OTHERPATH);
+			QString fileName = OTHERPATH.append("/").append(OTERDATAPATH);
+			QFile file(fileName);
+			qDebug() << "导轨配置文件:" << fileName;
+			if (file.open(QIODevice::ReadOnly))
+			{
+				QTextStream in(&file);
+				QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+				QVariantMap variantMap = doc.toVariant().toMap();
+				if (!variantMap.isEmpty())
+				{
+					// 长轴
+					if (variantMap.contains("long-guide"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["long-guide"].toMap());
+						shapeStruct.shapeType = ShapeType_LongGuide;
+						shapeStruct.ShapeName = "long-guide";
+						preViewLong->setShapeStruct(shapeStruct);
+					}
+					// 短轴
+					if (variantMap.contains("short-guide"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["short-guide"].toMap());
+						shapeStruct.shapeType = ShapeType_ShortGuide;
+						shapeStruct.ShapeName = "short-guide";
+
+						preViewShort->setShapeStruct(shapeStruct);
+					}
+					// 转盘
+					if (variantMap.contains("rotating-table"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["rotating-table"].toMap());
+						shapeStruct.shapeType = ShapeType_RotatingTable;
+						shapeStruct.ShapeName = "rotating-table";
+						preViewRotation->setShapeStruct(shapeStruct);
+					}
+					file.close();
+				}
+			}
+			else
+			{
+				SHAPESTRUCT shapeStruct;
+				shapeStruct.shapeType = ShapeType_LongGuide;
+				shapeStruct.ShapeName = "long-guide";
+				preViewLong->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_ShortGuide;
+				shapeStruct.ShapeName = "short-guide";
+				preViewShort->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_RotatingTable;
+				shapeStruct.ShapeName = "rotating-table";
+				preViewRotation->setShapeStruct(shapeStruct);
+			}
+
+		}
+
+		connect(saveButton, &QPushButton::clicked, [=]() {
+			QVariantMap variantMap;
+			SHAPESTRUCT longShapeStruct = preViewLong->getShapeStruct();
+			SHAPESTRUCT shortShapeStruct = preViewShort->getShapeStruct();
+			SHAPESTRUCT rotationShapeStruct = preViewRotation->getShapeStruct();
+
+			longShapeStruct.nextShapeNames.append(shortShapeStruct.ShapeName);
+			shortShapeStruct.nextShapeNames.append(rotationShapeStruct.ShapeName);
+
+			variantMap.insert(longShapeStruct.ShapeName, longShapeStruct.getShapeVariantMap());
+			variantMap.insert(shortShapeStruct.ShapeName, shortShapeStruct.getShapeVariantMap());
+			variantMap.insert(rotationShapeStruct.ShapeName, rotationShapeStruct.getShapeVariantMap());
+
+			createOrCheckDirectory(OTHERPATH);
+			QString fileName = OTHERPATH.append("/").append(OTERDATAPATH);
+			QFile file(fileName);
+
 			if (file.open(QIODevice::WriteOnly))
 			{
 				QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
@@ -432,6 +611,105 @@ namespace TCP_ROBOT
 			qDebug() << "创建文件夹" << path;
 			QDir().mkpath(path);
 		}
+	}
+
+	void ROSRobot::dealWithShapesPararmeter(QMap<QString, SHAPESTRUCT>& shapesMap)
+	{
+		// 根据序列处理 nextShapeNames
+
+		// 遍历 shapesMap 查找类型为 Robot
+
+		// 排序
+		QMap <int, QVector<SHAPESTRUCT>> tempMap;
+		foreach(QString key, shapesMap.keys())
+		{
+			SHAPESTRUCT shapeStruct = shapesMap[key];
+			if (shapeStruct.shapeType != ShapeType_Robot || shapeStruct.ShapeLinkIndex == -1)
+			{
+				continue;
+			}
+			// 如果找到索引
+			if (tempMap.keys().contains(shapeStruct.ShapeLinkIndex))
+			{
+				tempMap[shapeStruct.ShapeLinkIndex].push_back(shapeStruct);
+			}
+			else
+			{
+				QVector<SHAPESTRUCT> tempVec;
+				tempVec.push_back(shapeStruct);
+				tempMap.insert(shapeStruct.ShapeLinkIndex, tempVec);
+			}
+		}
+
+		// 处理并插值
+		QMap<QString, SHAPESTRUCT> resultMap;
+
+		QVector<QVector<double>> DHVec;
+		SDHRobot* robot = new SDHRobot();
+		for (auto it = tempMap.begin(); it != tempMap.end(); ++it)
+		{
+			QVector<SHAPESTRUCT> vec = it.value();
+			for (int i = 0; i < vec.size(); i++)
+			{
+				// DH 参数
+				QVector<double> DH;
+				QMap<QString, SHAPELINKDATA> linkData = vec[i].shapeLinkData;
+
+				QMap<int, SHAPELINKDATA> linkDataSorted;
+				foreach(QString key, linkData.keys())
+				{
+					SHAPELINKDATA link = linkData[key];
+					if (link.index == -1)
+					{
+						continue;
+					}
+					else
+					{
+						linkDataSorted.insert(link.index, link);
+					}
+				}
+				// 排序完成
+				for (auto it2 = linkDataSorted.begin(); it2 != linkDataSorted.end(); ++it2)
+				{
+					SHAPELINKDATA link = it2.value();
+					if (link.index == -1)
+					{
+						continue;
+					}
+					else
+					{
+						DHVec.push_back(link.getDHParameter());
+					}
+				}
+				robot->setDHParameters(DHVec);
+
+				// poxisitionX
+				QVector<double> position = robot->getCurrentExtractPosition(DHVec.size());
+
+				// 处理位置
+				vec[i].ShapePositionX = QString::number(position[0]);
+				vec[i].ShapePositionY = QString::number(position[1]);
+				vec[i].ShapePositionZ = QString::number(position[2]);
+
+				QVector<double> angle = robot->getCurrentExtractRotation(DHVec.size());
+				vec[i].ShapeAngleX = QString::number(angle[0]);
+				vec[i].ShapeAngleY = QString::number(angle[1]);
+				vec[i].ShapeAngleZ = QString::number(angle[2]);
+
+
+				// 下一个节点拼接
+				auto tempIt = it + 1;
+				if (tempIt != tempMap.end())
+				{
+					for (int j = 0; j < tempIt.value().size(); j++)
+					{
+						vec[i].nextShapeNames.append(tempIt.value()[j].ShapeName);
+					}
+				}
+				resultMap.insert(vec[i].ShapeName, vec[i]);
+			}
+		}
+		shapesMap = resultMap;
 	}
 
 	bool ROSRobot::removeDirectory(const QString& path)
@@ -464,13 +742,33 @@ namespace TCP_ROBOT
 
 	ShapeCommondPreview::ShapeCommondPreview(QWidget* parent)
 	{
-		QGridLayout* layout = new QGridLayout(this);
+		QHBoxLayout* mainLayout = new QHBoxLayout(this);
+
+		QVBoxLayout* leftLayout = new QVBoxLayout(this);
+		mainLayout->addLayout(leftLayout, 1);
+
+
+
 		QLabel* labelName = new QLabel(this);
 		labelName->setText(__StandQString("模型名称:"));
 		m_shapeName = new QLineEdit(this);
 		m_shapeName->setText(m_shapeStruct.ShapeName);
-		layout->addWidget(labelName, 0, 0, 1, 1);
-		layout->addWidget(m_shapeName, 0, 1, 1, 4);
+
+		QHBoxLayout* modeNameLayout = new QHBoxLayout(this);
+		modeNameLayout->addWidget(labelName, 1);
+		modeNameLayout->addWidget(m_shapeName, 3);
+		leftLayout->addLayout(modeNameLayout);
+
+		// 当前 模型索引
+		QHBoxLayout* linkIndexLayout = new QHBoxLayout(m_linkWidget);
+		QLabel* labelLinkIndexT = new QLabel(m_linkWidget);
+		labelLinkIndexT->setText(__StandQString("模型索引:"));
+		linkIndexLayout->addWidget(labelLinkIndexT, 1);
+		m_shapIndex = new QLineEdit(m_linkWidget);
+		m_shapIndex->setReadOnly(false);
+		linkIndexLayout->addWidget(m_shapIndex, 3);
+
+		leftLayout->addLayout(linkIndexLayout);
 
 		// 模型路径
 		QLabel* labelPath = new QLabel(this);
@@ -480,9 +778,13 @@ namespace TCP_ROBOT
 		m_shapePath->setReadOnly(true);
 		m_readShapePathButton = new QPushButton(this);
 		m_readShapePathButton->setText(__StandQString("选择路径"));
-		layout->addWidget(labelPath, 1, 0, 1, 1);
-		layout->addWidget(m_shapePath, 1, 1, 1, 3);
-		layout->addWidget(m_readShapePathButton, 1, 4, 1, 1);
+
+		QHBoxLayout* modePathLayout = new QHBoxLayout(this);
+		modePathLayout->addWidget(labelPath, 1);
+		modePathLayout->addWidget(m_shapePath, 2);
+		modePathLayout->addWidget(m_readShapePathButton, 1);
+		leftLayout->addLayout(modePathLayout);
+
 
 		// 模型颜色
 		QLabel* labelColor = new QLabel(this);
@@ -492,80 +794,111 @@ namespace TCP_ROBOT
 		m_shapeColor->setStyleSheet("background-color: " + m_shapeStruct.ShapeColor + ";");
 		m_readShapeColorButton = new QPushButton(this);
 		m_readShapeColorButton->setText(__StandQString("选择颜色"));
-		layout->addWidget(labelColor, 2, 0, 1, 1);
-		layout->addWidget(m_shapeColor, 2, 1, 1, 3);
-		layout->addWidget(m_readShapeColorButton, 2, 4, 1, 1);
+
+		QHBoxLayout* modeColorLayout = new QHBoxLayout(this);
+		modeColorLayout->addWidget(labelColor, 1);
+		modeColorLayout->addWidget(m_shapeColor, 2);
+		modeColorLayout->addWidget(m_readShapeColorButton, 1);
+		leftLayout->addLayout(modeColorLayout);
+
 
 		// 模型尺寸
 		QLabel* labelSize = new QLabel(this);
 		labelSize->setText(__StandQString("模型尺寸:"));
 		m_shapeScale = new QLineEdit(this);
 		m_shapeScale->setText(m_shapeStruct.ShapeScale);
-		layout->addWidget(labelSize, 3, 0, 1, 1);
-		layout->addWidget(m_shapeScale, 3, 1, 1, 4);
+
+		QHBoxLayout* modeSizeLayout = new QHBoxLayout(this);
+		modeSizeLayout->addWidget(labelSize, 1);
+		modeSizeLayout->addWidget(m_shapeScale, 3);
+		leftLayout->addLayout(modeSizeLayout);
 
 		// XYZ坐标
 		QLabel* labelX = new QLabel(this);
-		labelX->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
 		labelX->setText(__StandQString("模型-世界坐标X:"));
 		m_shapePosX = new QLineEdit(this);
 		m_shapePosX->setText(m_shapeStruct.ShapePositionX);
-		layout->addWidget(labelX, 4, 0, 1, 1);
-		layout->addWidget(m_shapePosX, 4, 1, 1, 4);
+
+		QHBoxLayout* modeXLayout = new QHBoxLayout(this);
+		modeXLayout->addWidget(labelX, 1);
+		modeXLayout->addWidget(m_shapePosX, 3);
+		leftLayout->addLayout(modeXLayout);
 
 		QLabel* labelY = new QLabel(this);
-		labelY->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
 		labelY->setText(__StandQString("模型-世界坐标Y:"));
 		m_shapePosY = new QLineEdit(this);
 		m_shapePosY->setText(m_shapeStruct.ShapePositionY);
-		layout->addWidget(labelY, 5, 0, 1, 1);
-		layout->addWidget(m_shapePosY, 5, 1, 1, 4);
+
+		QHBoxLayout* modeYLayout = new QHBoxLayout(this);
+		modeYLayout->addWidget(labelY, 1);
+		modeYLayout->addWidget(m_shapePosY, 3);
+		leftLayout->addLayout(modeYLayout);
 
 		QLabel* labelZ = new QLabel(this);
-		labelZ->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
 		labelZ->setText(__StandQString("模型-世界坐标Z:"));
 		m_shapePosZ = new QLineEdit(this);
 		m_shapePosZ->setText(m_shapeStruct.ShapePositionZ);
-		layout->addWidget(labelZ, 6, 0, 1, 1);
-		layout->addWidget(m_shapePosZ, 6, 1, 1, 4);
+
+		QHBoxLayout* modeZLayout = new QHBoxLayout(this);
+		modeZLayout->addWidget(labelZ, 1);
+		modeZLayout->addWidget(m_shapePosZ, 3);
+		leftLayout->addLayout(modeZLayout);
 
 		// 自转角度
 		QLabel* labelRotX = new QLabel(this);
-		labelRotX->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		labelRotX->setText(__StandQString("模型-自转角度X:"));
 		m_shapeAngleX = new QLineEdit(this);
 		m_shapeAngleX->setText(m_shapeStruct.ShapeAngleX);
-		layout->addWidget(labelRotX, 7, 0, 1, 1);
-		layout->addWidget(m_shapeAngleX, 7, 1, 1, 4);
+
+		QHBoxLayout* modeRotXLayout = new QHBoxLayout(this);
+		modeRotXLayout->addWidget(labelRotX, 1);
+		modeRotXLayout->addWidget(m_shapeAngleX, 3);
+		leftLayout->addLayout(modeRotXLayout);
 
 		QLabel* labelRotY = new QLabel(this);
-		labelRotY->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		labelRotY->setText(__StandQString("模型-自转角度Y:"));
 		m_shapeAngleY = new QLineEdit(this);
 		m_shapeAngleY->setText(m_shapeStruct.ShapeAngleY);
-		layout->addWidget(labelRotY, 8, 0, 1, 1);
-		layout->addWidget(m_shapeAngleY, 8, 1, 1, 4);
+
+		QHBoxLayout* modeRotYLayout = new QHBoxLayout(this);
+		modeRotYLayout->addWidget(labelRotY, 1);
+		modeRotYLayout->addWidget(m_shapeAngleY, 3);
+		leftLayout->addLayout(modeRotYLayout);
 
 		QLabel* labelRotZ = new QLabel(this);
-		labelRotZ->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		labelRotZ->setText(__StandQString("模型-自转角度Z:"));
 		m_shapeAngleZ = new QLineEdit(this);
 		m_shapeAngleZ->setText(m_shapeStruct.ShapeAngleZ);
-		layout->addWidget(labelRotZ, 9, 0, 1, 1);
-		layout->addWidget(m_shapeAngleZ, 9, 1, 1, 4);
+
+		QHBoxLayout* modeRotZLayout = new QHBoxLayout(this);
+		modeRotZLayout->addWidget(labelRotZ, 1);
+		modeRotZLayout->addWidget(m_shapeAngleZ, 3);
+		leftLayout->addLayout(modeRotZLayout);
 
 		// 开启连杆
 		m_checkLink = new QCheckBox(this);
 		m_checkLink->setText(__StandQString("开启连杆"));
 		m_checkLink->setChecked(m_shapeStruct.ShapeLink);
-		layout->addWidget(m_checkLink, 10, 0, 1, 1);
+
+		QHBoxLayout* modeLinkLayout = new QHBoxLayout(this);
+		modeLinkLayout->addWidget(m_checkLink);
+		leftLayout->addLayout(modeLinkLayout);
+
 
 		m_linkWidget = new QWidget(this);
-		layout->addWidget(m_linkWidget, 11, 0, 1, 5);
+
+		leftLayout->addWidget(m_linkWidget);
 
 		QHBoxLayout* linkLayout = new QHBoxLayout(m_linkWidget);
 
 		QVBoxLayout* linkLVLayout = new QVBoxLayout(m_linkWidget);
+
+
+
+
 		m_linkList = new QListWidget(m_linkWidget);
 		m_linkList->setSelectionMode(QAbstractItemView::SingleSelection);
 		linkLVLayout->addWidget(m_linkList);
@@ -588,6 +921,8 @@ namespace TCP_ROBOT
 		m_linkName = new QLineEdit(m_linkWidget);
 		//m_linkName->setPlaceholderText(__StandQString("请输入连杆名称"));
 		linkRVLayout->addWidget(m_linkName);
+
+
 
 		QLabel* labelLinkIndex = new QLabel(m_linkWidget);
 		labelLinkIndex->setText(__StandQString("连杆索引:"));
@@ -626,20 +961,33 @@ namespace TCP_ROBOT
 
 		linkLayout->addLayout(linkLVLayout);
 		linkLayout->addLayout(linkRVLayout);
+		linkLayout->addStretch(1);
 
 		m_checkLink->setChecked(false);
 
 		if (m_checkLink->isChecked())
 		{
 			m_linkWidget->setVisible(true);
+			m_shapePosX->setEnabled(false);
+			m_shapePosY->setEnabled(false);
+			m_shapePosZ->setEnabled(false);
+			m_shapeAngleX->setEnabled(false);
+			m_shapeAngleY->setEnabled(false);
+			m_shapeAngleZ->setEnabled(false);
 		}
 		else
 		{
 			m_linkWidget->setVisible(false);
+			m_shapePosX->setEnabled(true);
+			m_shapePosY->setEnabled(true);
+			m_shapePosZ->setEnabled(true);
+			m_shapeAngleX->setEnabled(true);
+			m_shapeAngleY->setEnabled(true);
+			m_shapeAngleZ->setEnabled(true);
 		}
 
 
-
+		leftLayout->addStretch(1);
 		initConnect();
 
 	}
@@ -670,6 +1018,8 @@ namespace TCP_ROBOT
 		m_shapeAngleY->setText(m_shapeStruct.ShapeAngleY);
 		m_shapeAngleZ->setText(m_shapeStruct.ShapeAngleZ);
 
+		m_shapIndex->setText(QString::number(m_shapeStruct.ShapeLinkIndex));
+
 		m_checkLink->setChecked(m_shapeStruct.ShapeLink);
 		m_linkWidget->setVisible(m_shapeStruct.ShapeLink);
 
@@ -680,15 +1030,27 @@ namespace TCP_ROBOT
 		}
 		SHAPELINKDATA linkData;
 		m_linkName->setText("");
-		m_linkIndex->setText(QString::number(linkData.index));
-		m_linkAlpha->setText(QString::number(linkData.alpha));
-		m_linkADistance->setText(QString::number(linkData.aDistance));
-		m_linkTheta->setText(QString::number(linkData.theta));
-		m_linkDDistance->setText(QString::number(linkData.dDistance));
+		m_linkIndex->setText("");
+		m_linkAlpha->setText("");
+		m_linkADistance->setText("");
+		m_linkTheta->setText("");
+		m_linkDDistance->setText("");
+
+		m_linkName->setEnabled(false);
+		m_linkIndex->setEnabled(false);
+		m_linkAlpha->setEnabled(false);
+		m_linkADistance->setEnabled(false);
+		m_linkTheta->setEnabled(false);
+		m_linkDDistance->setEnabled(false);
 
 
 		ISNULLPOINTER(m_robotPreview);
 		m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+	}
+
+	SHAPESTRUCT ShapeCommondPreview::getShapeStruct()
+	{
+		return m_shapeStruct;
 	}
 
 	void ShapeCommondPreview::setShapeType(ShapeType shapeType)
@@ -716,6 +1078,9 @@ namespace TCP_ROBOT
 		connect(m_addLinkButton, &QPushButton::clicked, this, &ShapeCommondPreview::addLink);
 		connect(m_deleteLinkButton, &QPushButton::clicked, this, &ShapeCommondPreview::deleteLink);
 		connect(m_linkList, &QListWidget::itemSelectionChanged, this, &ShapeCommondPreview::linkListItemChanged);
+		connect(m_shapIndex, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeLinkIndex);
+		connect(m_linkIndex, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readLinkIndex);
+
 	}
 	void ShapeCommondPreview::setLinkIsVisable(bool isVisable)
 	{
@@ -831,10 +1196,22 @@ namespace TCP_ROBOT
 		if (m_checkLink->checkState() == Qt::Checked)
 		{
 			m_linkWidget->setVisible(true);
+			m_shapePosX->setEnabled(false);
+			m_shapePosY->setEnabled(false);
+			m_shapePosZ->setEnabled(false);
+			m_shapeAngleX->setEnabled(false);
+			m_shapeAngleY->setEnabled(false);
+			m_shapeAngleZ->setEnabled(false);
 		}
 		else
 		{
 			m_linkWidget->setVisible(false);
+			m_shapePosX->setEnabled(true);
+			m_shapePosY->setEnabled(true);
+			m_shapePosZ->setEnabled(true);
+			m_shapeAngleX->setEnabled(true);
+			m_shapeAngleY->setEnabled(true);
+			m_shapeAngleZ->setEnabled(true);
 		}
 		m_shapeStruct.ShapeLink = m_checkLink->checkState() == Qt::Checked ? true : false;
 	}
@@ -847,6 +1224,13 @@ namespace TCP_ROBOT
 		}
 		QString linkName = m_linkList->item(row)->text();
 		SHAPELINKDATA linkData = m_shapeStruct.shapeLinkData.value(linkName);
+
+		m_linkName->setEnabled(true);
+		m_linkIndex->setEnabled(true);
+		m_linkAlpha->setEnabled(true);
+		m_linkADistance->setEnabled(true);
+		m_linkTheta->setEnabled(true);
+		m_linkDDistance->setEnabled(true);
 
 		m_linkName->setText(linkName);
 		m_linkIndex->setText(QString::number(linkData.index));
@@ -898,6 +1282,10 @@ namespace TCP_ROBOT
 		SHAPELINKDATA linkData = m_shapeStruct.shapeLinkData.value(linkName);
 		linkData.index = m_linkIndex->text().toInt();
 		m_shapeStruct.shapeLinkData.insert(linkName, linkData);
+	}
+	void ShapeCommondPreview::readShapeLinkIndex()
+	{
+		m_shapeStruct.ShapeLinkIndex = m_shapIndex->text().toInt();
 	}
 }
 
