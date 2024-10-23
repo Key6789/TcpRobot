@@ -4,11 +4,11 @@
 #include "TcpXViewBase.h"
 #include "TcpRobotManger_global.h"
 
-namespace TCPXVIEWBASE_NAMESPACE
+namespace TCP_ROBOT
 {
 	class RobotFrame;
 	// 通讯衍生类 TcpRobot
-	class TCPROBOT_EXPORT TcpRobotCommunication : public TcpXViewBase
+	class TCPROBOT_EXPORT TcpRobotCommunication : public TCPXVIEWBASE_NAMESPACE::TcpXViewBase
 	{
 		Q_OBJECT
 	public:
@@ -16,6 +16,8 @@ namespace TCPXVIEWBASE_NAMESPACE
 		virtual ~TcpRobotCommunication();
 
 		RobotFrame* createRobotFrame(QString robotName);
+
+		void sendValue(const QString& FrameName,const QString& command);
 
 		bool parseFrame(const QByteArray& byte) override;
 	};

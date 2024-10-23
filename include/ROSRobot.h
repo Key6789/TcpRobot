@@ -7,6 +7,7 @@
 #include "RobotBase.h"
 #include "RobotPreview.h"
 #include "RobotCore.h"
+#include "TcpRobot.h"
 
 class QMenu;
 class QRubberBand;
@@ -50,6 +51,8 @@ namespace TCP_ROBOT
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
 		RobotPreview* m_robotPreview = nullptr;
+
+		TcpRobotCommunication *m_tcpRobotCom = nullptr;
 	};
 
 	class TCPROBOT_EXPORT ShapeCommondPreview : public QWidget

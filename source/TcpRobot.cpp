@@ -1,7 +1,7 @@
 
 #include "../include/TcpRobot.h"
 
-namespace TCPXVIEWBASE_NAMESPACE
+namespace TCP_ROBOT
 {
 	TcpRobotCommunication::TcpRobotCommunication(QObject* parent)
 	{
@@ -14,7 +14,7 @@ namespace TCPXVIEWBASE_NAMESPACE
 		RobotFrame * ig = createRobotFrame("IG");
 		RobotFrame * gi = createRobotFrame("GI");
 
-		QMap<QString, StandFrame*> robotFrames;
+		QMap<QString, TCPXVIEWBASE_NAMESPACE::StandFrame*> robotFrames;
 		robotFrames.insert("PS", ps);
 		robotFrames.insert("GO", go);
 		robotFrames.insert("VC", vc);
@@ -46,6 +46,15 @@ namespace TCPXVIEWBASE_NAMESPACE
 
 		return robotFrame;
 	}
+	void TcpRobotCommunication::sendValue(const QString& FrameName, const QString& command)
+	{
+		RobotFrame* robotFrame = qobject_cast<RobotFrame*>(getStandFrame(FrameName));
+		if (robotFrame)
+		{
+			robotFrame->setFrameData(command);
+			robotFrame->sendStandValue();
+		}
+	}
 	bool TcpRobotCommunication::parseFrame(const QByteArray& byte)
 	{
 		QString reciveData = byte.data();
@@ -76,6 +85,18 @@ namespace TCPXVIEWBASE_NAMESPACE
 			setCurrentFrameIsReceived(false);
 		}
 		if (reciveData.contains("IG,OVER"))
+		{
+			setCurrentFrameIsReceived(true);
+		}
+		if (reciveData.contains("VC,OVER"))
+		{
+			setCurrentFrameIsReceived(true);
+		}
+		if (reciveData.contains("GO,OVER"))
+		{
+			setCurrentFrameIsReceived(true);
+		}
+		if (reciveData.contains("FT,OVER"))
 		{
 			setCurrentFrameIsReceived(true);
 		}
@@ -128,7 +149,12 @@ namespace TCPXVIEWBASE_NAMESPACE
 			if (dataList.count() == 10)
 			{
 				QStringList valueList = dataList.mid(1, 8);
-				emit signalReciveValue(valueList.join(",").toUtf8());
+				QString value = valueList.join(",");
+				emit signalReciveValue(value);
+			}
+			if (dataList.contains("OVER"))
+			{
+				emit signalReciveStatus(true);
 			}
 		}
 	}
