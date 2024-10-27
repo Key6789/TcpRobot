@@ -314,4 +314,74 @@ private:
 	QLineEdit* m_lineEdit = nullptr;
 	QPushButton* m_btn = nullptr;
 };
+
+// label、ComboBox组合控件
+class LabelComboBox : public QWidget
+{
+	Q_OBJECT
+public:
+	LabelComboBox(QWidget* parent = nullptr) : QWidget(parent) {
+		this->setContentsMargins(0, 0, 0, 0);
+
+		QHBoxLayout* layout = new QHBoxLayout(this);
+		layout->setContentsMargins(0, 0, 0, 0);
+		layout->setMargin(0);
+		layout->setSpacing(0);
+		m_label = new QLabel(this);
+		m_comboBox = new QComboBox(this);
+		layout->addWidget(m_label, 1);
+		layout->addWidget(m_comboBox, 3);
+	}
+
+	// 设置标签文本
+	void setLabelText(QString text) { m_label->setText(text); }
+	// 设置下拉框项
+	void setItems(QStringList items) { m_comboBox->clear(); m_comboBox->addItems(items); }
+	// 设置下拉框当前项
+	void setCurrentItem(int index) { m_comboBox->setCurrentIndex(index); }
+	// 获取下拉框当前项索引
+	int getCurrentItemIndex() { return m_comboBox->currentIndex(); }
+	// 获取下拉框当前项文本
+	QString getCurrentItemText() { return m_comboBox->currentText(); }
+	// 设置下拉框当前项文本
+	void setCurrentItemText(QString text) { m_comboBox->setCurrentText(text); }
+	// 设置下拉框当前项背景色
+	void setCurrentItemBackground(QColor color) { m_comboBox->setItemData(m_comboBox->currentIndex(), color, Qt::BackgroundRole); }
+	// 设置下拉框当前项前景色
+	void setCurrentItemForeground(QColor color) { m_comboBox->setItemData(m_comboBox->currentIndex(), color, Qt::ForegroundRole); }
+	// 设置下拉框当前项字体
+	void setCurrentItemFont(QFont font) { m_comboBox->setItemData(m_comboBox->currentIndex(), font, Qt::FontRole); }
+	// 设置下拉框当前项图标
+	void setCurrentItemIcon(QIcon icon) { m_comboBox->setItemData(m_comboBox->currentIndex(), icon, Qt::DecorationRole); }
+	// 设置下拉框当前项状态
+	void setCurrentItemStatus(bool status) { m_comboBox->setItemData(m_comboBox->currentIndex(), status, Qt::UserRole); }
+	// 设置下拉框项前景色
+	void setItemForeground(int index, QColor color) { m_comboBox->setItemData(index, color, Qt::ForegroundRole); }
+	// 设置下拉框项背景色
+	void setItemBackground(int index, QColor color) { m_comboBox->setItemData(index, color, Qt::BackgroundRole); }
+	// 设置下拉框项字体
+	void setItemFont(int index, QFont font) { m_comboBox->setItemData(index, font, Qt::FontRole); }
+	// 设置下拉框项图标
+	void setItemIcon(int index, QIcon icon) { m_comboBox->setItemData(index, icon, Qt::DecorationRole); }
+	// 设置下拉框项状态
+	void setItemStatus(int index, bool status) { m_comboBox->setItemData(index, status, Qt::UserRole); }
+	// 设置下拉框项文本
+	void setItemText(int index, QString text) { m_comboBox->setItemText(index, text); }
+	// 获取下拉框项数量
+	int count() { return m_comboBox->count(); }
+	// 获取下拉框项文本
+	QString itemText(int index) { return m_comboBox->itemText(index); }
+	// 获取下拉框项图标
+	QIcon itemIcon(int index) { return m_comboBox->itemData(index, Qt::DecorationRole).value<QIcon>(); }
+	// 获取下拉框项状态
+	bool itemStatus(int index) { return m_comboBox->itemData(index, Qt::UserRole).value<bool>(); }
+	// 获取下拉框当前项
+	QComboBox* currentItem() { return m_comboBox; }
+	// 获取所有项
+	QList<QComboBox*> items() { return m_comboBox->findChildren<QComboBox*>(); }
+
+private:
+	QLabel* m_label = nullptr;
+	QComboBox* m_comboBox = nullptr;
+};
 #endif // WIDGET_COMMON_H

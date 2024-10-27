@@ -256,7 +256,7 @@
 #include <Aspect_DisplayConnection.hxx>
 #include <V3d_View.hxx>
 #include <Prs3d_Drawer.hxx>
-
+#include <gp_Ax3.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <Bnd_Box.hxx>
 #include <Aspect_Handle.hxx>
@@ -368,8 +368,22 @@ enum ShapeType
 	ShapeType_Link,
 	ShapeType_LongGuide,
 	ShapeType_RotatingTable,
-	ShapeType_ShortGuide
-	
+	ShapeType_ShortGuide,
+	ShapeType_Table,
+	ShapeType_Robot_1,
+	ShapeType_Robot_2,
+	ShapeType_Robot_3,
+	ShapeType_Robot_4,
+	ShapeType_Robot_5,
+	ShapeType_Robot_6,
+	ShapeType_Robot_7,
+	ShapeType_Robot_8,
+	ShapeType_Robot_9,
+	ShapeType_Robot_10,
+	ShapeType_Robot_11,
+	ShapeType_Robot_12,
+	ShapeType_Robot_13
+
 };
 
 // 获取图形驱动程序的静态实例
@@ -411,7 +425,7 @@ struct addComponentRobotData {
 	QString nextShapeName;
 	QStringList nextShapeNames;
 	Quantity_Color color = Quantity_Color(179 / 255.0, 174 / 255.0, 170 / 255.0, Quantity_TOC_RGB);
-
+	int ShapeLinkIndex = -1;
 	gp_Pnt center = gp_Pnt(0, 0, 0);
 	gp_Dir xDir = gp_Dir(1, 0, 0);
 	gp_Dir yDir = gp_Dir(0, 1, 0);
@@ -452,6 +466,62 @@ struct addComponentRobotData {
 
 	QString path;
 
+	gp_Ax3 ShapeAxl3 = gp_Ax3();
+
+	void initShapeAx3()
+	{
+		ShapeAxl3 = gp_Ax3();
+		// 缩放
+		setShapeScale(sacle);
+		// 绕 X 轴旋转
+		setShapeRotate(ShapeAxl3.Location(), ShapeAxl3.XDirection(), angleX / 180.0 * M_PI);
+		// 绕 Y 轴旋转
+		setShapeRotate(ShapeAxl3.Location(), ShapeAxl3.YDirection(), angleY / 180.0 * M_PI);
+		// 绕 Z 轴旋转
+		setShapeRotate(ShapeAxl3.Location(), ShapeAxl3.Direction(), angleZ / 180.0 * M_PI);
+
+
+
+		// 平移
+		setShapeMoveX(assemblyPoint.X());
+		setShapeMoveY(assemblyPoint.Y());
+		setShapeMoveZ(assemblyPoint.Z());
+	}
+
+	// 当前坐标系  Z X Y 方向
+	gp_Dir ShapDirZ() { return ShapeAxl3.Direction(); }
+	gp_Dir ShapDirX() { return ShapeAxl3.XDirection(); }
+	gp_Dir ShapDirY() { return ShapeAxl3.YDirection(); }
+
+	// 获取 旋转轴
+	gp_Ax1 getRotationAxis() { return ShapeAxl3.Axis(); }
+
+	// 获取 旋转角度
+	// 当前坐标系  原点
+	gp_Pnt ShapPnt() { return ShapeAxl3.Location(); }
+	//  设置 变换 方向
+	void setShapDirZ(gp_Dir dir) { ShapeAxl3.SetDirection(dir); }
+	void setShapDirX(gp_Dir dir) { ShapeAxl3.SetXDirection(dir); }
+	void setShapDirY(gp_Dir dir) { ShapeAxl3.SetYDirection(dir); }
+	//  设置 变换 原点
+	void setShapPnt(gp_Pnt pnt) { ShapeAxl3.SetLocation(pnt); }
+
+	// 计算 X 方向 移动
+	void setShapeMoveX(double distance) { ShapeAxl3.Translate(gp_Vec(distance, 0, 0)); }
+	// 计算 Y 方向 移动
+	void setShapeMoveY(double distance) { ShapeAxl3.Translate(gp_Vec(0, distance, 0)); }
+	// 计算 Z 方向 移动
+	void setShapeMoveZ(double distance) { ShapeAxl3.Translate(gp_Vec(0, 0, distance)); }
+
+	// 计算旋转
+	void setShapeRotate(gp_Pnt pnt, gp_Dir dir, double angle) { ShapeAxl3.Rotate(gp_Ax1(pnt, dir), angle); }
+	void setShapeRotate(gp_Ax1 ax1, double angle) { ShapeAxl3.Rotate(ax1, angle); }
+
+	// 计算缩放
+	void setShapeScale(double scale) { ShapeAxl3 = ShapeAxl3.Scaled(ShapeAxl3.Location(), scale); }
+
+
+
 
 } typedef ADDROBOTDATA;
 struct transformData
@@ -484,6 +554,8 @@ struct transformData
 	double angleZ = 0.0;
 
 	gp_Pnt translation;
+
+	gp_Ax3 ShapeAxl3 = gp_Ax3();
 }typedef TRANSFORMDATA;
 
 struct RobotRotateData
@@ -594,7 +666,7 @@ struct ShapeLinkData
 		DHParameter.append(alpha);
 		DHParameter.append(dDistance);
 		DHParameter.append(theta);
-		
+
 		return DHParameter;
 	}
 }typedef SHAPELINKDATA;
@@ -604,6 +676,8 @@ struct ShapeDataStruct
 	ShapeType shapeType = ShapeType_None;
 	// 焊缝名称
 	QString ShapeName;
+
+	int ShapeIndex = -1; // 形状序号
 
 	//下一个形状名称
 	QString nextShapeName = QString();
@@ -659,6 +733,7 @@ struct ShapeDataStruct
 		map.insert("isChecked", ShapeLink);
 		map.insert("nextShapeNames", nextShapeNames);
 		map.insert("ShapeLinkIndex", ShapeLinkIndex);
+		map.insert("ShapeIndex", ShapeIndex);
 
 		QVariantMap linkMapTemp;
 		for (auto it = shapeLinkData.begin(); it != shapeLinkData.end(); ++it)
@@ -692,6 +767,7 @@ struct ShapeDataStruct
 		ShapeLink = map.value("isChecked").toBool();
 		nextShapeNames = map.value("nextShapeNames").toStringList();
 		ShapeLinkIndex = map.value("ShapeLinkIndex").toInt();
+		ShapeIndex = map.value("ShapeIndex").toInt();
 
 		QVariantMap linkMap = map.value("LinkData").toMap();
 		for (auto it = linkMap.begin(); it != linkMap.end(); ++it)
@@ -753,9 +829,9 @@ struct WorkpieceStruct
 	QStringList HoleModeNames = { "NULL" };
 
 
-	QStringList FTDirList = {"X", "Y", "Z","A","B","C"}; 
+	QStringList FTDirList = { "X", "Y", "Z","A","B","C" };
 	QString CurFTDir = "X"; // 当前方向
-	QStringList FTValueList = {"1","5","10"}; // 值列表
+	QStringList FTValueList = { "1","5","10" }; // 值列表
 	QString CurFTValue = "0.0"; // 当前值
 
 	// VC参数
@@ -775,15 +851,15 @@ struct WorkpieceStruct
 	QStringList getVCList()
 	{
 		QStringList vcList;
-		if (!VC0.isEmpty()) 
+		if (!VC0.isEmpty())
 		{
 			vcList << "VC0";
 		}
-		if (!VC1.isEmpty()) 
+		if (!VC1.isEmpty())
 		{
 			vcList << "VC1";
 		}
-		if (!VC2.isEmpty()) 
+		if (!VC2.isEmpty())
 		{
 			vcList << "VC2";
 		}
@@ -791,34 +867,34 @@ struct WorkpieceStruct
 	}; // VC列表
 	QString getVCValue(QString vcName)
 	{
-		if (vcName == "VC0") 
+		if (vcName == "VC0")
 		{
 			return VC0;
 		}
-		else if (vcName == "VC1") 
+		else if (vcName == "VC1")
 		{
 			return VC1;
 		}
-		else if (vcName == "VC2") 
+		else if (vcName == "VC2")
 		{
 			return VC2;
 		}
-		else 
+		else
 		{
 			return "";
 		}
 	}; // 获取VC值
 	void setVCValue(QString vcName, QString value)
 	{
-		if (vcName == "VC0") 
+		if (vcName == "VC0")
 		{
 			VcOB = value;
 		}
-		else if (vcName == "VC1") 
+		else if (vcName == "VC1")
 		{
 			VcOC = value;
 		}
-		else if (vcName == "VC2") 
+		else if (vcName == "VC2")
 		{
 			VcLen = value;
 		}
@@ -844,6 +920,7 @@ struct WorkpieceStruct
 		WorkpieceName = map.value("WorkpieceName").toString();
 		HolePosition = map.value("HolePosition").toString();
 		HoleModeName = map.value("HoleModeName").toString();
+		HoleModeNames = map.value("HoleModeNames").toStringList();
 		PostioName = map.value("PostioName").toString();
 		FTDirList = map.value("FTDirList").toStringList();
 		CurFTDir = map.value("CurFTDir").toString();
@@ -876,6 +953,7 @@ struct WorkpieceStruct
 		map.insert("WorkpieceName", WorkpieceName);
 		map.insert("HolePosition", HolePosition);
 		map.insert("HoleModeName", HoleModeName);
+		map.insert("HoleModeNames", HoleModeNames);
 		map.insert("PostioName", PostioName);
 		map.insert("FTDirList", FTDirList);
 		map.insert("CurFTDir", CurFTDir);
@@ -955,11 +1033,25 @@ struct SaftPointStruct
 		return map;
 	}
 };
-#define MOVESTRUCTPATH WORKPATH + "/" + TEACHDATAPATH
+#define MOVESTRUCTPATH(x) x.isEmpty()? WORKPATH + "/" +TEACHDATAPATH : WORKPATH + "/" + x + "/" +TEACHDATAPATH
+#define SHAPEMODEPATH(x) x.isEmpty()? WORKPATH + "/" +WORKCONFIGPATH : WORKPATH + "/" + x + "/" +WORKCONFIGPATH
+
 struct MoveStruct
 {
 	QMap<int, SaftPointStruct> MoveMap; // 点参数
+	QString WorkName = "NULL"; // 工作名称
 
+	QString getModeName(int saft, int work)
+	{
+		if (MoveMap.keys().contains(saft))
+		{
+			if (MoveMap[saft].SaftPointMap.contains(work))
+			{
+				return MoveMap[saft].SaftPointMap[work].HoleModeName;
+			}
+		}
+		return "NULL";
+	}
 	// 获取最大安全点索引
 	int getMaxSaftPointIndex()
 	{
@@ -1024,7 +1116,7 @@ struct MoveStruct
 		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
 			qDebug() << "open file error";
-			
+
 			//创建默认文件
 			MoveStruct move;
 			move.SaveJson(path);
@@ -1035,6 +1127,18 @@ struct MoveStruct
 		QVariantMap map = doc.toVariant().toMap();
 		setVariMap(map);
 		file.close();
+	}
+
+	void changedModeNames(QStringList modeNames)
+	{
+		for (auto it = MoveMap.begin(); it != MoveMap.end(); ++it)
+		{
+			for (auto it2 = it.value().SaftPointMap.begin(); it2 != it.value().SaftPointMap.end(); ++it2)
+			{
+				it2.value().HoleModeNames = modeNames;
+			}
+		}
+
 	}
 
 	// 获取安全点列表
@@ -1102,6 +1206,29 @@ struct treeItemStruct
 	int saftIndex = -1;
 	int workIndex = -1;
 	int trackIndex = -1;
+
+	bool isFindSaftAndWork(int saftIndex, int workIndex)
+	{
+		if (vecSoft.size() == 0)
+		{
+			return false;
+		}
+		for (int i = 0; i < vecSoft.size(); i++)
+		{
+			if (vecSoft[i].index == saftIndex)
+			{
+				for (int j = 0; j < vecSoft[i].vecwork.size(); j++)
+				{
+					if (vecSoft[i].vecwork[j].index == workIndex)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+
+	}
 
 	void getSaftIndexFromItem(QTreeWidgetItem* itemCompare)
 	{

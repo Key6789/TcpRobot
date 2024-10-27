@@ -19,7 +19,27 @@ namespace TCP_ROBOT
 
 	void Robot7103Grid::initOriginalParams()
 	{
-		m_moveStruct.LoadJson(MOVESTRUCTPATH);
+		//
+		QString fileName = WORKPATH.append("/").append("CurrentWork.json");
+		QFile file(fileName);
+		qDebug() << "工件配置文件:" << fileName;
+		if (file.open(QIODevice::ReadOnly))
+		{
+			QTextStream in(&file);
+			QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+			QVariantMap variantMap = doc.toVariant().toMap();
+			if (!variantMap.isEmpty())
+			{
+				// 工件
+				if (variantMap.contains("CurrentWork"))
+				{
+					QString workName = variantMap["CurrentWork"].toString();
+					m_currentWork = workName;
+				}
+				file.close();
+			}
+		}
+		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
 	}
 	void Robot7103Grid::initParamTableWidget()
 	{
@@ -56,7 +76,7 @@ namespace TCP_ROBOT
 		// 共计六列，分别为工艺、焊缝、位置
 		setColumnCount(7);
 		// 行数不确定，先设置一个大概的数值
-		setRowCount(10);
+		setRowCount(20);
 		// 仅选择单个单元格
 		setSelectionBehavior(QAbstractItemView::SelectItems);
 		//设置行标题隐藏
@@ -91,12 +111,12 @@ namespace TCP_ROBOT
 			{
 				WorkpieceStruct workPoint = saftPoint.SaftPointMap.value(saftIndex);
 				QStringList rowValues;
-				rowValues << workPoint.WorkpieceName << workPoint.WorkpieceName << workPoint.PostioName;
+				rowValues << m_currentWork << workPoint.WorkpieceName << workPoint.PostioName;
 				addWorkpieceJson(getRowIndex(), rowValues, index, saftIndex, -1);
 				/*foreach(int holeIndex, workPoint.TrajectoryMap.keys())
 				{
 					TrajectoryStruct trajectory = workPoint.TrajectoryMap.value(holeIndex);
-					
+
 				}*/
 			}
 		}
@@ -106,13 +126,7 @@ namespace TCP_ROBOT
 	{
 		connect(this, &QTableWidget::itemSelectionChanged, [=]() {selectRow(currentRow()); });
 		// 设置选中行 为绿色
-		connect(this, &QTableWidget::itemSelectionChanged, [=]() {
-			QList<QTableWidgetItem*> items = selectedItems();
-			foreach(QTableWidgetItem* item, items)
-			{
-				item->setBackground(QColor(0, 255, 0));
-			}
-		});
+		setStyleSheet("QTableWidget::item:selected{background-color:green}");
 	}
 
 	int Robot7103Grid::getRowIndex()
@@ -128,15 +142,6 @@ namespace TCP_ROBOT
 		return rowCount();
 	}
 
-	void Robot7103Grid::updataComboBox()
-	{
-	}
-
-
-
-	void Robot7103Grid::saveParamsToFile()
-	{
-	}
 
 	QString Robot7103Grid::getCurrentItemText()
 	{
@@ -156,7 +161,28 @@ namespace TCP_ROBOT
 		int workpieceIndex,
 		int trackIndex)
 	{
+		QSet<int> set = QSet<int>();
+		if (!m_rowMap.isEmpty())
+		{
+			if (m_rowMap.keys().contains(saftIndex))
+			{
+				set = m_rowMap[saftIndex];
+				if (m_rowMap[saftIndex].contains(workpieceIndex))
+				{
+					return;
+				}
+				else
+				{
+					set.insert(workpieceIndex);
 
+				}
+			}
+		}
+		else
+		{
+			set.insert(workpieceIndex);
+		}
+		m_rowMap.insert(saftIndex, set);
 		// 在当前行下方插入一行
 		insertRow(row);
 		int rowCount = rowValues.size();
@@ -196,11 +222,16 @@ namespace TCP_ROBOT
 			{
 				confirmBtn->setStyleSheet("background-color:red");
 				confirmBtn->setText(__StandQString("待确认"));
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#FF0000");
 			}
 			else
 			{
-				confirmBtn->setStyleSheet("background-color:green");
+				confirmBtn->setStyleSheet("background-color:gray");
 				confirmBtn->setText(__StandQString("确认"));
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				// 设为灰色
+				emit signalChangeShapeColor(modeName, "#808080");
 			}
 			});
 
@@ -214,7 +245,6 @@ namespace TCP_ROBOT
 		connect(locationBtn, &QPushButton::clicked, [=]() {slotLocationBtnClicked(saftIndex, workIndex, trackIndex); });
 		connect(calibrationBtn, &QPushButton::clicked, [=]() {slotcalibrationBtnClicked(saftIndex, workIndex, trackIndex); });
 		connect(fineTuningBtn, &QPushButton::clicked, [=]() {slotfineTuningBtnClicked(saftIndex, workIndex, trackIndex); });
-
 
 	}
 	void Robot7103Grid::slotLocationBtnClicked(
@@ -386,7 +416,7 @@ namespace TCP_ROBOT
 			SaftPointStruct saftPoint = m_moveStruct.MoveMap.value(saftIndex);
 			saftPoint.SaftPointMap = SaftPointMap;
 			m_moveStruct.MoveMap.insert(saftIndex, saftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			});
 		vcList->setBtnClicked(2, [=]() {m_calibrationDialog->close(); });
 		if (m_tcpRobotCom)
@@ -509,30 +539,26 @@ namespace TCP_ROBOT
 		m_fineTuningDialog->exec();
 	}
 
-	void Robot7103Grid::slotAddGrid(QStringList rowValues)
+	void Robot7103Grid::slotAddGrid(QStringList rowValues,
+		int saftIndex,
+		int workIndex,
+		int trackIndex)
 	{
 		if (rowValues.size() < 3) {
 			return;
 		}
 		blockSignals(true);
-		// 添加到有值的最后一行
-		int rowCount = this->rowCount();
-		for (int i = 0; i < rowCount; ++i) {
-			if (!item(i, 0) && !cellWidget(i, 0)) {
-				int row = i;
-				// 在当前行下方插入一行
-				insertRow(row);
-				// 设置新行的默认值
-				setItem(row, 0, new QTableWidgetItem(rowValues.at(0)));
-				setItem(row, 1, new QTableWidgetItem(rowValues.at(1)));
-				setItem(row, 2, new QTableWidgetItem(rowValues.at(2)));
-				addPushButtonClicked(row);
-
-				break;
-			}
-		}
-		updataComboBox();
+		addWorkpieceJson(getRowIndex(), rowValues, saftIndex, workIndex, trackIndex);
 		blockSignals(false);
+	}
+	void Robot7103Grid::slotSeletedWorkChanged(QString text)
+	{
+		if (text.isEmpty()) {
+			return;
+		}
+		m_currentWork = text;
+
+		initParamTableWidget();
 	}
 	RobotoDemonstrator::RobotoDemonstrator(QWidget* parent)
 	{
@@ -547,6 +573,26 @@ namespace TCP_ROBOT
 	void RobotoDemonstrator::setTcpCommunication(TcpRobotCommunication* tcpRobotCom)
 	{
 		m_tcpRobotCom = tcpRobotCom;
+	}
+	void RobotoDemonstrator::slotSeletedWorkChanged(QString text)
+	{
+		if (text.isEmpty()) {
+			return;
+		}
+		m_currentWork = text;
+
+		if (m_safePointWidget != nullptr)
+		{
+			m_safePointWidget->close();
+			m_safePointWidget = nullptr;
+		}
+		if (m_tableWidget != nullptr)
+		{
+			m_tableWidget->close();
+			m_tableWidget = nullptr;
+		}
+		initData();
+		initUI();
 	}
 	void RobotoDemonstrator::initUI()
 	{
@@ -607,7 +653,7 @@ namespace TCP_ROBOT
 
 		mainLayout->addWidget(m_safePointWidget);
 		mainLayout->addWidget(m_tableWidget);
-		
+
 		setLayout(mainLayout);
 
 	}
@@ -627,7 +673,7 @@ namespace TCP_ROBOT
 			m_lineEditSaftIndex->setText(QString::number(saftPoint.SaftPointIndex));
 			m_lineEditSafePosition->setText(saftPoint.SaftPointPosition);
 		}
-		
+
 	}
 	void RobotoDemonstrator::updateWorkpieceWidget(int saftindex, int workindex)
 	{
@@ -651,7 +697,7 @@ namespace TCP_ROBOT
 			m_comBoxMode->addItems(workPoint.HoleModeNames);
 			m_comBoxMode->setCurrentText(workPoint.HoleModeName);
 		}
-		
+
 	}
 	void RobotoDemonstrator::updateTrackWidget(int saftindex, int workindex, int trackindex)
 	{
@@ -743,7 +789,7 @@ namespace TCP_ROBOT
 		connect(m_lineEditSaftIndex, &QLineEdit::textChanged, [=]() {m_curSaftPoint.SaftPointIndex = m_lineEditSaftIndex->text().toInt(); });
 		connect(m_lineEditSafePosition, &QLineEdit::textChanged, [=]() { m_curSaftPoint.SaftPointPosition = m_lineEditSafePosition->text(); });*/
 
-		
+
 		// 添加、删除 按钮
 		QHBoxLayout* layoutSafeButton = new QHBoxLayout(tabWidgetSafe);
 		m_btnAddSafe = new QPushButton(__StandQString("确定"), tabWidgetSafe);
@@ -783,7 +829,7 @@ namespace TCP_ROBOT
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece); });*/
 
 
-		// 焊缝 + QComBox 可编辑可选择
+			// 焊缝 + QComBox 可编辑可选择
 		QHBoxLayout* layoutH = new QHBoxLayout(tabWidget);
 		QLabel* labelH = new QLabel(__StandQString("焊缝名称"), tabWidget);
 		m_lineEditH = new QLineEdit(tabWidget);
@@ -797,7 +843,7 @@ namespace TCP_ROBOT
 			m_curWorkpiece.HoleModeName = m_lineEditH->text();
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece); });*/
 
-		// 位置
+			// 位置
 		QHBoxLayout* layoutP = new QHBoxLayout(tabWidget);
 		QLabel* labelP = new QLabel(__StandQString("位置名称"), tabWidget);
 		m_lineEditP = new QLineEdit(tabWidget);
@@ -827,10 +873,12 @@ namespace TCP_ROBOT
 			m_curWorkpiece.HolePosition = m_lineEditHP->text();
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece); });*/
 
-		// 模型对应焊缝
+			// 模型对应焊缝
 		QHBoxLayout* layoutModel = new QHBoxLayout(tabWidget);
 		QLabel* labelModel = new QLabel(__StandQString("模型对应焊缝"), tabWidget);
 		m_comBoxMode = new QComboBox(tabWidget);
+
+
 
 		/*connect(m_comBoxMode, &QComboBox::currentTextChanged, [=]() {
 			m_curWorkpiece.HoleModeName = m_comBoxMode->currentText();
@@ -877,7 +925,7 @@ namespace TCP_ROBOT
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece); });*/
 
 
-		// 位置
+			// 位置
 		QHBoxLayout* layoutP = new QHBoxLayout(SafttabWidget);
 		QLabel* labelP = new QLabel(__StandQString("轨迹名称"), SafttabWidget);
 		m_lineEditTrackName = new QLineEdit(SafttabWidget);
@@ -905,7 +953,7 @@ namespace TCP_ROBOT
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece); });*/
 
 
-		// 添加确定/取消按钮
+			// 添加确定/取消按钮
 		QHBoxLayout* layoutButton = new QHBoxLayout(SafttabWidget);
 		m_btnAddWeld = new QPushButton(__StandQString("确定"), SafttabWidget);
 		m_btnDelWeld = new QPushButton(__StandQString("删除"), SafttabWidget);
@@ -924,7 +972,52 @@ namespace TCP_ROBOT
 	}
 	void RobotoDemonstrator::initData()
 	{
-		m_moveStruct.LoadJson(MOVESTRUCTPATH);
+		QString fileName = WORKPATH.append("/").append("CurrentWork.json");
+		QFile file(fileName);
+		qDebug() << "工件配置文件:" << fileName;
+		if (file.open(QIODevice::ReadOnly))
+		{
+			QTextStream in(&file);
+			QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+			QVariantMap variantMap = doc.toVariant().toMap();
+			if (!variantMap.isEmpty())
+			{
+				// 工件
+				if (variantMap.contains("CurrentWork"))
+				{
+					QString workName = variantMap["CurrentWork"].toString();
+					m_currentWork = workName;
+				}
+				file.close();
+			}
+		}
+		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
+
+		{
+			QVariantMap modelMap;
+			// 读取配置文件
+			QString fileName = WORKPATH.append("/").append(m_currentWork).append("/").append(WORKCONFIGPATH);
+			QFile file(fileName);
+			if (file.open(QIODevice::ReadOnly))
+			{
+				QTextStream in(&file);
+				QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+				modelMap = doc.toVariant().toMap();
+				file.close();
+			}
+			QStringList listValue;
+			for (auto it = modelMap.begin(); it != modelMap.end(); ++it)
+			{
+				ShapeDataStruct structData;
+				structData.setShapeVariantMap(it.value().toMap());
+				if (structData.shapeType == ShapeType::ShapeType_Hole)
+				{
+					listValue << it.key();
+				}
+			}
+
+			m_moveStruct.changedModeNames(listValue);
+		}
 	}
 	void RobotoDemonstrator::loadTreeWidget(QTreeWidget* treeWidget)
 	{
@@ -939,7 +1032,7 @@ namespace TCP_ROBOT
 			QTreeWidgetItem* item = new QTreeWidgetItem(treeWidget);
 			item->setText(0, safePoint.SaftPointName);
 			item->setData(0, Qt::UserRole, key);
-			
+
 			saftItemStruct saftItem;
 			saftItem.index = key;
 			saftItem.item = item;
@@ -972,7 +1065,7 @@ namespace TCP_ROBOT
 				}
 				workitem.vecTrack = vecTrack;
 				vecwork.append(workitem);
-				
+
 			}
 			saftItem.vecwork = vecwork;
 			vecSoft.append(saftItem);
@@ -1006,7 +1099,7 @@ namespace TCP_ROBOT
 		if (saftPoint.SaftPointIndex != -1)
 		{
 			m_moveStruct.MoveMap.insert(saftPoint.SaftPointIndex, saftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
 		}
 		else
@@ -1016,6 +1109,7 @@ namespace TCP_ROBOT
 
 		//addSafePoint();
 		m_treeWidget->expandAll();
+		emit sendMoveCommand(m_moveStruct);
 	}
 	void RobotoDemonstrator::onWorkpieceOk()
 	{
@@ -1035,13 +1129,17 @@ namespace TCP_ROBOT
 		{
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece);
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
+			QStringList list;
+			list << m_currentWork << workpiece.WorkpieceName << workpiece.PostioName;
+			emit sendWorkAndHole(list, m_curSaftPoint.SaftPointIndex, m_curWorkpiece.WorkpieceIndex);
 		}
 		else
 		{
 			QMessageBox::warning(this, __StandQString("警告"), __StandQString("请先设置工件序号！"));
 		}
+		emit sendMoveCommand(m_moveStruct);
 	}
 	void RobotoDemonstrator::onTrackOk()
 	{
@@ -1059,7 +1157,7 @@ namespace TCP_ROBOT
 			m_curWorkpiece.TrajectoryMap.insert(m_curTrack.swcIndex, m_curTrack);
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece);
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
 
 		}
@@ -1073,7 +1171,7 @@ namespace TCP_ROBOT
 		if (m_curSaftPoint.SaftPointIndex != -1)
 		{
 			m_moveStruct.MoveMap.remove(m_curSaftPoint.SaftPointIndex);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
 		}
 		else
@@ -1087,7 +1185,7 @@ namespace TCP_ROBOT
 		{
 			m_curSaftPoint.SaftPointMap.remove(m_curWorkpiece.WorkpieceIndex);
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
 		}
 		else
@@ -1102,7 +1200,7 @@ namespace TCP_ROBOT
 			m_curWorkpiece.TrajectoryMap.remove(m_curTrack.swcIndex);
 			m_curSaftPoint.SaftPointMap.insert(m_curWorkpiece.WorkpieceIndex, m_curWorkpiece);
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
-			m_moveStruct.SaveJson(MOVESTRUCTPATH);
+			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
 		}
 		else

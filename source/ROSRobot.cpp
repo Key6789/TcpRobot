@@ -7,6 +7,8 @@ namespace TCP_ROBOT
 	/**************************************** 构造/析构函数 ********************************************************/
 	ROSRobot::ROSRobot(QWidget* parent)
 	{
+		initUI();
+		initConnect();
 	}
 	ROSRobot::~ROSRobot()
 	{
@@ -18,7 +20,7 @@ namespace TCP_ROBOT
 		QHBoxLayout* mainLayout = new QHBoxLayout(preview);
 
 		QTabWidget* tabWidget = new QTabWidget(preview);
-		mainLayout->addWidget(tabWidget,1);
+		mainLayout->addWidget(tabWidget, 1);
 
 		m_robotPreview = new RobotPreview(preview);
 
@@ -27,6 +29,8 @@ namespace TCP_ROBOT
 		tabWidget->addTab(showRobotPreview(preview), __StandQString("机器人配置"));
 
 		mainLayout->addWidget(m_robotPreview, 5);
+		m_robotPreview->resize(600, 600);
+
 		return preview;
 	}
 
@@ -49,6 +53,7 @@ namespace TCP_ROBOT
 		workListWidget->setEditTriggers(QAbstractItemView::DoubleClicked);
 		workListWidget->setViewMode(QListView::ListMode);
 		layLeft->addWidget(workListWidget);
+		leftWidget->setFixedWidth(200);
 
 		QHBoxLayout* layoutButton = new QHBoxLayout(leftWidget);
 		QPushButton* seletedWorkButton = new QPushButton(leftWidget);
@@ -75,12 +80,10 @@ namespace TCP_ROBOT
 		// 右侧布局 QV
 		QWidget* rightWidget = new QWidget(preview);
 		mainLayout->addWidget(rightWidget, 1);
-
 		QVBoxLayout* layRight = new QVBoxLayout(rightWidget);
 		ShapeCommondPreview* preViewWork = new ShapeCommondPreview(rightWidget);
 		preViewWork->setShapeType(ShapeType_Work);
 		layRight->addWidget(preViewWork);
-
 		QWidget* leftHoleWidget = new QWidget(rightWidget);
 		layRight->addWidget(leftHoleWidget);
 
@@ -247,9 +250,11 @@ namespace TCP_ROBOT
 			});
 
 		connect(seletedWorkButton, &QPushButton::clicked, [=]() {
-			RobotCore* robotCore = new RobotCore();
-			robotCore->loadWorkShapes(WORKPATH.append("/").append(workListWidget->currentItem()->text()).append("/").append(WORKCONFIGPATH));
-			robotCore->show();
+			m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
+			m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
+			m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
+
+			emit seletedWorkChanged(workListWidget->currentItem()->text());
 			});
 		connect(saveButton, &QPushButton::clicked, [=]() {
 
@@ -439,13 +444,14 @@ namespace TCP_ROBOT
 			});
 
 		connect(deleteButton, &QPushButton::clicked, [=]() {
+			// 刷新预览
+			preViewRobot->setShapeStruct(SHAPESTRUCT());
+			m_robotMap.remove(robotListWidget->currentItem()->text());
 			// 删除列表项
 			int row = robotListWidget->currentRow();
 			robotListWidget->takeItem(row);
 
-			// 刷新预览
-			preViewRobot->setShapeStruct(SHAPESTRUCT());
-			m_robotMap.remove(robotListWidget->currentItem()->text());
+			
 			});
 
 		connect(saveButton, &QPushButton::clicked, [=]() {
@@ -471,6 +477,12 @@ namespace TCP_ROBOT
 			file.close();
 			});
 
+		connect(seletedRobotButton, &QPushButton::clicked, [=]() {
+			m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
+			m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
+			m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
+			});
+
 		return preview;
 	}
 
@@ -491,7 +503,7 @@ namespace TCP_ROBOT
 		preViewShort->setShapeType(ShapeType_ShortGuide);
 		preViewShort->setLinkIsVisable(false);
 
-		
+
 
 		tabWidget->addTab(preViewShort, __StandQString("短轴"));
 
@@ -603,6 +615,119 @@ namespace TCP_ROBOT
 		return preview;
 	}
 
+	QWidget* ROSRobot::showTable(QWidget* parent)
+	{
+		QWidget* table = new QWidget(parent);
+		QVBoxLayout* mainLayout = new QVBoxLayout(table);
+		LabelComboBox* labelComboBox = new LabelComboBox(table);
+		labelComboBox->setLabelText(__StandQString("选择工件:"));
+		labelComboBox->setItems(getSubDirectories(WORKPATH));
+		labelComboBox->setCurrentItemText(__StandQString("NULL"));
+		mainLayout->addWidget(labelComboBox);
+
+		connect(labelComboBox->currentItem(), &QComboBox::currentTextChanged, [=](const QString& text) {
+			emit seletedWorkChanged(text);
+			m_currentWork = text;
+			QVariantMap variantMap;
+			variantMap.insert("CurrentWork", text);
+			saveToJsonFile(variantMap, WORKPATH + "/" + "CurrentWork.json");
+			});
+
+		labelComboBox->setCurrentItemText(m_currentWork);
+
+		QLabel* label = new QLabel(table);
+		label->setText(__StandQString("工艺信息"));
+		m_robot7103Grid = new Robot7103Grid(table);
+		mainLayout->addWidget(label);
+		mainLayout->addWidget(m_robot7103Grid);
+
+		return table;
+	}
+
+	QWidget* ROSRobot::showCoreRobot(QWidget* parent)
+	{
+		QWidget* robotCore = new QWidget(parent);
+		robotCore->setWindowTitle(__StandQString("核心显示"));
+		QVBoxLayout* mainLayout = new QVBoxLayout(robotCore);
+		m_robotCore = new RobotCore(robotCore);
+		m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
+		m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
+		m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
+		mainLayout->addWidget(m_robotCore);
+		initConnect();
+		return robotCore;
+	}
+
+	QWidget* ROSRobot::showTeaching(QWidget* parent)
+	{
+		QWidget* teaching = new QWidget(parent);
+		teaching->setWindowTitle(__StandQString("示教模式"));
+		QVBoxLayout* mainLayout = new QVBoxLayout(teaching);
+		m_teaching = new RobotoDemonstrator(teaching);
+		mainLayout->addWidget(m_teaching);
+		initConnect();
+		return teaching;
+	}
+
+	void ROSRobot::setCommunicationPointer(TcpRobotCommunication* tcpRobotCom)
+	{
+		m_tcpRobotCom = tcpRobotCom;
+
+		initConnect();
+	}
+
+
+	void ROSRobot::initUI()
+	{
+		// 读取工件列表
+		createOrCheckDirectory(WORKPATH);
+		QString fileName = WORKPATH.append("/").append("CurrentWork.json");
+		QFile file(fileName);
+		qDebug() << "工件配置文件:" << fileName;
+		if (file.open(QIODevice::ReadOnly))
+		{
+			QTextStream in(&file);
+			QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+			QVariantMap variantMap = doc.toVariant().toMap();
+			if (!variantMap.isEmpty())
+			{
+				// 工件
+				if (variantMap.contains("CurrentWork"))
+				{
+					QString workName = variantMap["CurrentWork"].toString();
+					m_currentWork = workName;
+				}
+				file.close();
+			}
+		}
+
+	}
+
+	void ROSRobot::initConnect()
+	{
+		
+
+		disconnect(m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
+		disconnect(m_robotCore, &RobotCore::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
+		disconnect(m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
+		disconnect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
+		disconnect(m_robot7103Grid, &Robot7103Grid::signalChangeShapeColor, m_robotCore, &RobotCore::slotChangeShapeColor);
+		disconnect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);
+
+		connect(this, &ROSRobot::seletedWorkChanged, m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged);
+		connect(this, &ROSRobot::seletedWorkChanged, m_robotCore, &RobotCore::slotSeletedWorkChanged);
+		connect(this, &ROSRobot::seletedWorkChanged, m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged);
+		connect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
+		connect(m_robot7103Grid, &Robot7103Grid::signalChangeShapeColor, m_robotCore, &RobotCore::slotChangeShapeColor);
+
+		ISNULLPOINTER(m_tcpRobotCom);
+		m_standFrame = m_tcpRobotCom->getStandFrame("PS");
+		ISNULLPOINTER(m_standFrame);
+		connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);
+		/*connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, [=](QString data) {
+			qDebug() << "GO RECEIVE DATA:" << data;
+			});*/
+	}
 
 	void ROSRobot::createOrCheckDirectory(const QString& path)
 	{
@@ -624,7 +749,8 @@ namespace TCP_ROBOT
 		foreach(QString key, shapesMap.keys())
 		{
 			SHAPESTRUCT shapeStruct = shapesMap[key];
-			if (shapeStruct.shapeType != ShapeType_Robot || shapeStruct.ShapeLinkIndex == -1)
+			if (shapeStruct.shapeType != ShapeType_Robot|| 
+				shapeStruct.ShapeLinkIndex == -1)
 			{
 				continue;
 			}
@@ -769,6 +895,17 @@ namespace TCP_ROBOT
 		linkIndexLayout->addWidget(m_shapIndex, 3);
 
 		leftLayout->addLayout(linkIndexLayout);
+
+		//// 模型类型
+		//QHBoxLayout* shapeTypeLayout = new QHBoxLayout(this);
+		//QLabel* labelType = new QLabel(this);
+		//labelType->setText(__StandQString("预设类型:"));
+		//m_shapeTypeComboBox = new QComboBox(this);
+		//shapeTypeLayout->addWidget(labelType, 1);
+		//shapeTypeLayout->addWidget(m_shapeTypeComboBox, 3);
+		//leftLayout->addLayout(shapeTypeLayout);
+
+		
 
 		// 模型路径
 		QLabel* labelPath = new QLabel(this);
@@ -1018,10 +1155,38 @@ namespace TCP_ROBOT
 		m_shapeAngleY->setText(m_shapeStruct.ShapeAngleY);
 		m_shapeAngleZ->setText(m_shapeStruct.ShapeAngleZ);
 
+		//m_shapeTypeComboBox->clear();
+		/*m_shapeTypeComboBox->addItem(__StandQString("无类型"), ShapeType_None);
+		m_shapeTypeComboBox->addItem(__StandQString("工件"), ShapeType_Work);
+		m_shapeTypeComboBox->addItem(__StandQString("焊缝"), ShapeType_Hole);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人"), ShapeType_Robot);
+		m_shapeTypeComboBox->addItem(__StandQString("连杆"), ShapeType_Link);
+		m_shapeTypeComboBox->addItem(__StandQString("长导轨"), ShapeType_LongGuide);
+		m_shapeTypeComboBox->addItem(__StandQString("转台"), ShapeType_RotatingTable);
+		m_shapeTypeComboBox->addItem(__StandQString("短导轨"), ShapeType_ShortGuide);
+		m_shapeTypeComboBox->addItem(__StandQString("平台"), ShapeType_Table);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人1"), ShapeType_Robot_1);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人2"), ShapeType_Robot_2);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人3"), ShapeType_Robot_3);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人4"), ShapeType_Robot_4);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人5"), ShapeType_Robot_5);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人6"), ShapeType_Robot_6);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人7"), ShapeType_Robot_7);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人8"), ShapeType_Robot_8);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人9"), ShapeType_Robot_9);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人10"), ShapeType_Robot_10);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人11"), ShapeType_Robot_11);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人12"), ShapeType_Robot_12);
+		m_shapeTypeComboBox->addItem(__StandQString("机器人13"), ShapeType_Robot_13);
+
+		m_shapeTypeComboBox->setCurrentIndex(m_shapeStruct.shapeType);*/
+
 		m_shapIndex->setText(QString::number(m_shapeStruct.ShapeLinkIndex));
 
 		m_checkLink->setChecked(m_shapeStruct.ShapeLink);
 		m_linkWidget->setVisible(m_shapeStruct.ShapeLink);
+
+
 
 		m_linkList->clear();
 		for (auto linkName : m_shapeStruct.shapeLinkData.keys())
@@ -1080,7 +1245,7 @@ namespace TCP_ROBOT
 		connect(m_linkList, &QListWidget::itemSelectionChanged, this, &ShapeCommondPreview::linkListItemChanged);
 		connect(m_shapIndex, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeLinkIndex);
 		connect(m_linkIndex, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readLinkIndex);
-
+		//connect(m_shapeTypeComboBox, &QComboBox::currentTextChanged, this, &ShapeCommondPreview::readShapeType);
 	}
 	void ShapeCommondPreview::setLinkIsVisable(bool isVisable)
 	{
@@ -1286,6 +1451,10 @@ namespace TCP_ROBOT
 	void ShapeCommondPreview::readShapeLinkIndex()
 	{
 		m_shapeStruct.ShapeLinkIndex = m_shapIndex->text().toInt();
+	}
+	void ShapeCommondPreview::readShapeType()
+	{
+		m_shapeStruct.shapeType = (ShapeType)m_shapeTypeComboBox->currentIndex();
 	}
 }
 

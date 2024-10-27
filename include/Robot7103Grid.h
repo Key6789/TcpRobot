@@ -16,43 +16,47 @@ namespace TCP_ROBOT
 		Robot7103Grid(QWidget* parent = 0);
 		~Robot7103Grid();
 
-		QWidget * showTeachingWidget(QWidget* parent = nullptr);
+		QWidget* showTeachingWidget(QWidget* parent = nullptr);
 		void setTcpCommunication(TcpRobotCommunication* tcpRobotCom);
-		TcpRobotCommunication* getTcpCommunication() {return m_tcpRobotCom;};
+		TcpRobotCommunication* getTcpCommunication() { return m_tcpRobotCom; };
+
+		void setMoveStruct(MoveStruct moveStruct) { m_moveStruct = moveStruct; };
+		MoveStruct getMoveStruct() { return m_moveStruct; };
+	signals:
+		void signalChangeShapeColor(QString shapeName, QString colorName);
 	public: // 参数初始化
 		// 初始化原始参数
 		void initOriginalParams();
 
 		// 初始化参数表格
 		void initParamTableWidget();
-	private slots:
+	public slots:
 		void slotLocationBtnClicked(int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 		void slotcalibrationBtnClicked(int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 		void slotfineTuningBtnClicked(int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
-		void slotAddGrid(QStringList rowValues);
-
+		void slotAddGrid(QStringList rowValues, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
+		void slotSeletedWorkChanged(QString text);
 	private:
 		void initUI();
 		void initTable();
 		void initGirdItems();
 		void initConnections();
 
+		// 获取未使用的表格行号
 		int getRowIndex();
 
-		void updataComboBox();
-
-		
-		// 保存参数到文件
-		void saveParamsToFile();
 		QString getCurrentItemText();
 
 		// 
-		void addWorkpieceJson(int row, const QStringList& rowValues,int saftIndex = -1,int workIndex = -1,int trackIndex = -1);
+		void addWorkpieceJson(int row, const QStringList& rowValues, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 		void addPushButtonClicked(int row, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 
 
 	private:
 		MoveStruct m_moveStruct = MoveStruct();
+		QString m_currentWork = "";
+
+		QMap<int,QSet<int>> m_rowMap = QMap<int,QSet<int>>();
 
 		// 校准窗口
 		QDialog* m_calibrationDialog = nullptr;
@@ -63,55 +67,6 @@ namespace TCP_ROBOT
 		QMap<QString, QString> m_vcMap = QMap<QString, QString>();
 	};
 
-	class RobotTeachingWidget : public QWidget
-	{
-		Q_OBJECT
-	public:
-		RobotTeachingWidget(QString Name, QWidget* parent = nullptr)
-		{
-			this->setContentsMargins(0, 0, 0, 0);
-			
-			QHBoxLayout* saftLayout = new QHBoxLayout(this);
-			saftLayout->setContentsMargins(0, 0, 0, 0);
-			saftLayout->setMargin(0);
-			saftLayout->setSpacing(0);
-			m_saftPointList = new ListWidgetBtn(this);
-			m_saftPointList->setLabelText(__StandQString("%1").arg(Name).append(__StandQString("列表")));
-
-			m_saftPointDetailLayout = new QVBoxLayout(this);
-			m_saftPointDetailLayout->setContentsMargins(0, 0, 0, 0);
-			m_saftPointDetailLayout->setSpacing(0);
-			m_saftPointDetailLayout->setMargin(0);
-			m_saftName = new LabelLineString(this);
-			m_saftName->setLabelText(__StandQString("%1").arg(Name).append(__StandQString("名称：")));
-
-			m_saftIndex = new LabelDoubleSpinbox(this);
-			m_saftIndex->setLabelText(__StandQString("%1").arg(Name).append(__StandQString("序号：")));
-
-			m_saftPosition = new LabelLineEditBtn(this);
-			m_saftPosition->setLabelText(__StandQString("%1").arg(Name).append(__StandQString("坐标：")));
-			m_saftPosition->setBtnText(__StandQString("更新坐标"));
-
-			m_saftPointDetailLayout->addWidget(m_saftName);
-			m_saftPointDetailLayout->addWidget(m_saftIndex);
-			m_saftPointDetailLayout->addWidget(m_saftPosition);
-			m_saftPointDetailLayout->addStretch(1);
-			saftLayout->addWidget(m_saftPointList);
-			saftLayout->addLayout(m_saftPointDetailLayout);
-		}
-		~RobotTeachingWidget() {}
-
-		void setTcpCommunication(TcpRobotCommunication* tcpRobotCom) { m_tcpRobotCom = tcpRobotCom; }
-		void addWidget(RobotTeachingWidget* widget) { m_saftPointDetailLayout->addWidget(widget); m_saftPointDetailLayout->addStretch(1); }
-	private:
-		ListWidgetBtn* m_saftPointList = nullptr;
-		LabelLineString* m_saftName = nullptr;
-		LabelDoubleSpinbox* m_saftIndex = nullptr;
-		LabelLineEditBtn* m_saftPosition = nullptr;
-		TcpRobotCommunication* m_tcpRobotCom = nullptr;
-		QVBoxLayout* m_saftPointDetailLayout = nullptr;
-	};
-
 	class RobotoDemonstrator :public QWidget
 	{
 		Q_OBJECT
@@ -120,7 +75,12 @@ namespace TCP_ROBOT
 		~RobotoDemonstrator();
 
 		void setTcpCommunication(TcpRobotCommunication* tcpRobotCom);
+	signals:
+		void sendMoveCommand(MoveStruct moveStruct);
+		void sendWorkAndHole(QStringList values, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 
+		public slots:
+			void slotSeletedWorkChanged(QString text);
 	private:
 		// 初始化UI
 		void initUI();
@@ -151,10 +111,9 @@ namespace TCP_ROBOT
 		void initData();
 
 		// 加载树形控件
-		void loadTreeWidget(QTreeWidget * treeWidget);
+		void loadTreeWidget(QTreeWidget* treeWidget);
 
 		QString getCurrentPosition();
-
 		void onSafePointPosition();
 
 		void onSafePointOk();
@@ -167,6 +126,7 @@ namespace TCP_ROBOT
 
 		void updataWidgetComboBox();
 
+		QString m_currentWork = QString();
 		// 安全点
 		QLineEdit* m_lineEditSafe = nullptr;
 		QLineEdit* m_lineEditSaftIndex = nullptr;
@@ -197,18 +157,20 @@ namespace TCP_ROBOT
 		QTabWidget* m_tableWidget = nullptr;
 		QWidget* m_safePointWidget = nullptr;
 
+		LabelComboBox* m_labelComboBox = nullptr;
+
 		// 点位存储
 		MoveStruct m_moveStruct = MoveStruct();
-		TcpRobotCommunication * m_tcpRobotCom = nullptr;
+		TcpRobotCommunication* m_tcpRobotCom = nullptr;
 
 		SaftPointStruct m_curSaftPoint = SaftPointStruct();
 		WorkpieceStruct m_curWorkpiece = WorkpieceStruct();
 		TrajectoryStruct m_curTrack = TrajectoryStruct();
 
 		treeItemStruct m_treeItemStruct = treeItemStruct();
-		
+
 		QMap<int, QTreeWidgetItem*> m_treeSaftItemMap = QMap<int, QTreeWidgetItem*>();
-		
+
 	};
 }
 

@@ -20,11 +20,22 @@ namespace TCP_ROBOT
 		// 构造
 		RobotCore(QWidget* parent = nullptr);
 		~RobotCore();
+		void printTransform(const gp_Trsf& transform, const QString& message)
+		{
+			qDebug() << message.toStdString().c_str();
+			qDebug() << "Translation: " << transform.TranslationPart().X() << ", " << transform.TranslationPart().Y() << ", " << transform.TranslationPart().Z();
+			qDebug() << "Rotation Matrix:";
+			qDebug() << "  " << transform.Value(1, 1) << ", " << transform.Value(1, 2) << ", " << transform.Value(1, 3);
+			qDebug() << "  " << transform.Value(2, 1) << ", " << transform.Value(2, 2) << ", " << transform.Value(2, 3);
+			qDebug() << "  " << transform.Value(3, 1) << ", " << transform.Value(3, 2) << ", " << transform.Value(3, 3);
+		}
+		void slotShapMove(QString shapeValue);
 
 		void slotUpdataRobotShaps(void) override;
 
 		void loadWorkShapes(QString filePath);
 		void loadRobotShape(QString filePath);
+		void loadOtherShape(QString filePath);
 
 		// 工件移动
 
@@ -41,6 +52,22 @@ namespace TCP_ROBOT
 			double moveDistance,
 			ShapeType shapeType = ShapeType::ShapeType_None,
 			MoveDirection moveType = MoveDirection::MoveDirection_ZAxis);
+
+
+		void slotRobotRotateShape(
+			QMap<QString, ADDROBOTDATA>& robotMap,
+			double angle,
+			ShapeType shapeType = ShapeType::ShapeType_None,
+			MoveDirection moveType = MoveDirection::MoveDirection_ZAxis,
+			int index = -1);
+
+		// 工件 移动
+		void slotRobotMoveShape(
+			QMap<QString, ADDROBOTDATA>& robotMap,
+			double moveDistance,
+			ShapeType shapeType = ShapeType::ShapeType_None,
+			MoveDirection moveType = MoveDirection::MoveDirection_ZAxis,
+			int index = -1);
 		void ShapesLink();
 
 
@@ -60,9 +87,9 @@ namespace TCP_ROBOT
 		// 自适应显示
 		void slotFitAllView() { myView->FitAll(); };
 		// 修改指定工件颜色
-		void slotChangeShapeColor(QString shapeName, QColor color);
+		void slotChangeShapeColor(QString shapeName, QString color);
 		// 显示/隐藏指定工件
-
+		void slotSeletedWorkChanged(QString shapeName);
 
 	public:
 		// tools
@@ -71,6 +98,9 @@ namespace TCP_ROBOT
 
 		// 工件集合
 		QMap<QString, ADDROBOTDATA> m_shapesMap = QMap<QString, ADDROBOTDATA>();
+		QMap<QString, ADDROBOTDATA> m_robotMap = QMap<QString, ADDROBOTDATA>();
+		QMap<QString, ADDROBOTDATA> m_otherMap = QMap<QString, ADDROBOTDATA>();
+
 
 
 

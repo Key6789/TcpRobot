@@ -32,13 +32,15 @@ namespace TCP_ROBOT
 	}
 	RobotFrame* TcpRobotCommunication::createRobotFrame(QString robotName)
 	{
+		QString frameName = robotName.append(",");
 		RobotFrame *robotFrame = new RobotFrame(this);
 		robotFrame->setFrameName(robotName);
-		robotFrame->setFrameHeader(robotName.append(","));
+		robotFrame->setFrameHeader(frameName);
 		robotFrame->setFrameFooter(",J ");
 		robotFrame->setFrameData("0,0,0,0,0,0,0,0");
 
-		robotFrame->setReciveStandFrameHearder(robotName.append(","));
+
+		robotFrame->setReciveStandFrameHearder(frameName);
 		robotFrame->setReciveStandFrameFooter(",J ");
 		robotFrame->setReciveStandFrameOther("");
 
@@ -57,6 +59,7 @@ namespace TCP_ROBOT
 	}
 	bool TcpRobotCommunication::parseFrame(const QByteArray& byte)
 	{
+		qDebug() << "TcpRobotCommunication::parseFrame";
 		QString reciveData = byte.data();
 		reciveData = reciveData.trimmed();
 
@@ -141,16 +144,18 @@ namespace TCP_ROBOT
 	}
 	void RobotFrame::parseFrame(const QByteArray& byte)
 	{
+		
 		QString reciveData = byte.data();
 		reciveData = reciveData.trimmed();
-		if (reciveData.startsWith(getReciveStandFrameHearder()))
+		if (reciveData.contains(getReciveStandFrameHearder()))
 		{
 			QStringList dataList = reciveData.split(",");
-			if (dataList.count() == 10)
+			if (dataList.size() == 10)
 			{
 				QStringList valueList = dataList.mid(1, 8);
 				QString value = valueList.join(",");
 				emit signalReciveValue(value);
+				qDebug() << getReciveStandFrameHearder() << " Send Value " << value;
 			}
 			if (dataList.contains("OVER"))
 			{

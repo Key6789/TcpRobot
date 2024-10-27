@@ -8,7 +8,7 @@
 #include "RobotPreview.h"
 #include "RobotCore.h"
 #include "TcpRobot.h"
-
+#include "Robot7103Grid.h"
 class QMenu;
 class QRubberBand;
 namespace TCP_ROBOT
@@ -29,10 +29,23 @@ namespace TCP_ROBOT
 		QWidget* showRobotPreview(QWidget* parent = nullptr);
 		QWidget* showGuidePreview(QWidget* parent = nullptr);
 
+		// QWidget 用于显示表格
+		QWidget* showTable(QWidget* parent = nullptr);
+
+		QWidget* showCoreRobot(QWidget* parent = nullptr);
+
+		// 用于显示 示教
+		QWidget* showTeaching(QWidget* parent = nullptr);
+
+		void setCommunicationPointer(TcpRobotCommunication* tcpRobotCom);
+
 	signals:
 		// 选中的工作名称变化信号
 		void seletedWorkChanged(QString workName);
 	private: // tool
+
+		void initUI();
+		void initConnect();
 		// 创建目录
 		void createOrCheckDirectory(const QString& path);
 
@@ -50,9 +63,23 @@ namespace TCP_ROBOT
 	private:
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
-		RobotPreview* m_robotPreview = nullptr;
-
+		QMap<QString, SHAPESTRUCT> m_otherMap = QMap<QString, SHAPESTRUCT>();
+		
+		// 通讯管理器
 		TcpRobotCommunication *m_tcpRobotCom = nullptr;
+
+		// 模型预览
+		RobotPreview* m_robotPreview = nullptr;
+		// 模型核心
+		RobotCore* m_robotCore = nullptr;
+		// 表格
+		Robot7103Grid * m_robot7103Grid = nullptr;
+		// 示教
+		RobotoDemonstrator * m_teaching = nullptr;
+
+		QString m_currentWork = QString();
+
+		TCPXVIEWBASE_NAMESPACE::StandFrame* m_standFrame = nullptr;
 	};
 
 	class TCPROBOT_EXPORT ShapeCommondPreview : public QWidget
@@ -112,7 +139,7 @@ namespace TCP_ROBOT
 		void readLinkIndex();
 
 		void readShapeLinkIndex();
-
+		void readShapeType();
 	private:
 		// 形状结构体
 		SHAPESTRUCT m_shapeStruct;
@@ -150,6 +177,8 @@ namespace TCP_ROBOT
 		QLineEdit* m_linkTheta = nullptr;
 		QLineEdit* m_linkDDistance = nullptr;
 		QLineEdit* m_linkADistance = nullptr;
+
+		QComboBox* m_shapeTypeComboBox = nullptr;
 		
 		QCheckBox* m_checkLink = nullptr;
 
