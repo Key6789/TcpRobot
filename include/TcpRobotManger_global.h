@@ -521,7 +521,48 @@ struct addComponentRobotData {
 	void setShapeScale(double scale) { ShapeAxl3 = ShapeAxl3.Scaled(ShapeAxl3.Location(), scale); }
 
 
-
+	void printAll()
+	{
+		qDebug() << "name:" << name;
+		qDebug() << "shapeType:" << shapeType;
+		qDebug() << "shapes:" << shapes.size();
+		qDebug() << "originalShapes:" << originalShapes.size();
+		qDebug() << "myAisShapes:" << myAisShapes.size();
+		qDebug() << "disPlayShapes:" << disPlayShapes.size();
+		qDebug() << "ShapesBox:" << ShapesBox.size();
+		qDebug() << "nextShapeName:" << nextShapeName;
+		qDebug() << "nextShapeNames:" << nextShapeNames.size();
+		qDebug() << "color:" << color.Name();
+		qDebug() << "ShapeLinkIndex:" << ShapeLinkIndex;
+		qDebug() << "center:" << center.X() << center.Y() << center.Z();
+		qDebug() << "xDir:" << xDir.X() << xDir.Y() << xDir.Z();
+		qDebug() << "yDir:" << yDir.X() << yDir.Y() << yDir.Z();
+		qDebug() << "zDir:" << zDir.X() << zDir.Y() << zDir.Z();
+		qDebug() << "axisX:" << axisX.Location().X() << axisX.Location().Y() << axisX.Location().Z() << axisX.Direction().X() << axisX.Direction().Y() << axisX.Direction().Z();
+		qDebug() << "axisY:" << axisY.Location().X() << axisY.Location().Y() << axisY.Location().Z() << axisY.Direction().X() << axisY.Direction().Y() << axisY.Direction().Z();
+		qDebug() << "axisZ:" << axisZ.Location().X() << axisZ.Location().Y() << axisZ.Location().Z() << axisZ.Direction().X() << axisZ.Direction().Y() << axisZ.Direction().Z();
+		qDebug() << "lengthX:" << lengthX;
+		qDebug() << "lengthY:" << lengthY;
+		qDebug() << "lengthZ:" << lengthZ;
+		qDebug() << "assemblyPoint:" << assemblyPoint.X() << assemblyPoint.Y() << assemblyPoint.Z();
+		qDebug() << "nextAssemblyPoint:" << nextAssemblyPoint.X() << nextAssemblyPoint.Y() << nextAssemblyPoint.Z();
+		qDebug() << "translationPoint:" << translationPoint.X() << translationPoint.Y() << translationPoint.Z();
+		qDebug() << "angleX:" << angleX;
+		qDebug() << "angleY:" << angleY;
+		qDebug() << "angleZ:" << angleZ;
+		qDebug() << "xDirCurrent:" << xDirCurrent.X() << xDirCurrent.Y() << xDirCurrent.Z();
+		qDebug() << "yDirCurrent:" << yDirCurrent.X() << yDirCurrent.Y() << yDirCurrent.Z();
+		qDebug() << "zDirCurrent:" << zDirCurrent.X() << zDirCurrent.Y() << zDirCurrent.Z();
+		qDebug() << "a:" << a;
+		qDebug() << "alpha:" << alpha;
+		qDebug() << "d:" << d;
+		qDebug() << "theta:" << theta;
+		qDebug() << "sacle:" << sacle;
+		qDebug() << "x:" << x;
+		qDebug() << "y:" << y;
+		qDebug() << "z:" << z;
+		qDebug() << "ShapeAxl3:" << ShapeAxl3.Location().X() << ShapeAxl3.Location().Y() << ShapeAxl3.Location().Z() << ShapeAxl3.Direction().X() << ShapeAxl3.Direction().Y() << ShapeAxl3.Direction().Z() << ShapeAxl3.XDirection().X() << ShapeAxl3.XDirection().Y() << ShapeAxl3.XDirection().Z() << ShapeAxl3.YDirection().X() << ShapeAxl3.YDirection().Y() << ShapeAxl3.YDirection().Z();
+	}
 
 } typedef ADDROBOTDATA;
 struct transformData
@@ -556,6 +597,29 @@ struct transformData
 	gp_Pnt translation;
 
 	gp_Ax3 ShapeAxl3 = gp_Ax3();
+
+	void printAll()
+	{
+		qDebug() << "TRANSFORMDATA name:" << name;
+		qDebug() << "translationVec:" << translationVec.X() << translationVec.Y() << translationVec.Z();
+		qDebug() << "rotationCenter:" << rotationCenter.X() << rotationCenter.Y() << rotationCenter.Z();
+		qDebug() << "rotationAxis:" << rotationAxis.X() << rotationAxis.Y() << rotationAxis.Z();
+		qDebug() << "rotationAxisSEC:" << rotationAxisSEC.X() << rotationAxisSEC.Y() << rotationAxisSEC.Z();
+		qDebug() << "rotationAxisAll:" << rotationAxisAll.Location().X() << rotationAxisAll.Location().Y() << rotationAxisAll.Location().Z() << rotationAxisAll.Direction().X() << rotationAxisAll.Direction().Y() << rotationAxisAll.Direction().Z();
+		qDebug() << "xDir:" << xDir.X() << xDir.Y() << xDir.Z();
+		qDebug() << "yDir:" << yDir.X() << yDir.Y() << yDir.Z();
+		qDebug() << "zDir:" << zDir.X() << zDir.Y() << zDir.Z();
+		qDebug() << "assemblyPoint:" << assemblyPoint.X() << assemblyPoint.Y() << assemblyPoint.Z();
+		qDebug() << "orientationAngleX:" << orientationAngleX;
+		qDebug() << "orientationAngleY:" << orientationAngleY;
+		qDebug() << "orientationAngleZ:" << orientationAngleZ;
+		qDebug() << "rotationAngle:" << rotationAngle;
+		qDebug() << "rotationActiveAngle:" << rotationActiveAngle;
+		qDebug() << "angleX:" << angleX;
+		qDebug() << "angleY:" << angleY;
+		qDebug() << "angleZ:" << angleZ;
+		qDebug() << "ShapeAxl3:" << ShapeAxl3.Location().X() << ShapeAxl3.Location().Y() << ShapeAxl3.Location().Z() << ShapeAxl3.Direction().X() << ShapeAxl3.Direction().Y() << ShapeAxl3.Direction().Z() << ShapeAxl3.XDirection().X() << ShapeAxl3.XDirection().Y() << ShapeAxl3.XDirection().Z() << ShapeAxl3.YDirection().X() << ShapeAxl3.YDirection().Y() << ShapeAxl3.YDirection().Z();
+	}
 }typedef TRANSFORMDATA;
 
 struct RobotRotateData

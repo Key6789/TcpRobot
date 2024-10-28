@@ -1577,7 +1577,7 @@ namespace TCP_ROBOT
 	}
 	QVector<Handle(AIS_Shape)> RobotBase::RobotTransformParallelPreview(ADDROBOTDATA data)
 	{
-		data.initShapeAx3();
+		//data.initShapeAx3();
 		QVector<TopoDS_Shape> vector = data.shapes;
 		QVector<Handle(AIS_Shape)> vectortemp;
 
@@ -1595,44 +1595,10 @@ namespace TCP_ROBOT
 
 		for (int i = 0; i < vector.size(); ++i)
 		{
-
-			//// 保存原始位置，以便稍后恢复
-			//gp_Pnt originalPosition = data.assemblyPoint;
-
-			//// 将形状平移到原点
-			//gp_Trsf moveToOrigin;
-			//moveToOrigin.SetTranslation(gp_Pnt(0.0, 0.0, 0.0).XYZ());
-			//TopoDS_Shape atOrigin = BRepBuilderAPI_Transform(vector[i], moveToOrigin).Shape();
-
-			//// 角度偏移（现在是在局部坐标系中）
-			//gp_Trsf localRotation;
-			//localRotation.SetRotation(data.axisX, data.angleX / 180.0 * M_PI); // X轴旋转
-			//TopoDS_Shape rotatedX = BRepBuilderAPI_Transform(atOrigin, localRotation).Shape();
-
-			//localRotation.SetRotation(data.axisY, data.angleY / 180.0 * M_PI); // Y轴旋转
-			//TopoDS_Shape rotatedXY = BRepBuilderAPI_Transform(rotatedX, localRotation).Shape();
-
-			//localRotation.SetRotation(data.axisZ, data.angleZ / 180.0 * M_PI); // Z轴旋转
-			//TopoDS_Shape rotatedXYZ = BRepBuilderAPI_Transform(rotatedXY, localRotation).Shape();
-
-
-			//// 将形状移回原始位置
-			//gp_Trsf moveBack;
-			//moveBack.SetTranslation(originalPosition.XYZ());
-			//TopoDS_Shape transformedComponent = BRepBuilderAPI_Transform(rotatedXYZ, moveBack).Shape();
-
-			//// 位移
-			//gp_Trsf finalTransform;
-			//finalTransform.SetTranslation(gp_Vec(data.assemblyPoint.XYZ()));
-			//transformedComponent = BRepBuilderAPI_Transform(transformedComponent, finalTransform).Shape();
-			
 			gp_Trsf trsf;
 			trsf.SetTransformation(data.ShapeAxl3, gp_Ax3());
 			TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
-			// 创建一个 gp_Trsf 对象
-			//gp_Trsf transformation;
-			//transformation.SetScale(data.ShapeAxl3.Location(), data.sacle); // 放大两倍
-			//transformedShape = BRepBuilderAPI_Transform(transformedShape, transformation, true).Shape();
+			
 			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(transformedShape);
 			aisShapeTemp->SetColor(data.color);
 			vectortemp.push_back(aisShapeTemp);
@@ -3854,8 +3820,9 @@ namespace TCP_ROBOT
 		// 获取模型
 		robot.shapes = getShapesFromResult(robot.path, loadFilesInParallel({ robot.path }));
 		robot.shapes = scaleShapes(robot.shapes, robot.sacle);
+		robot.initShapeAx3();
 		robot.myAisShapes = RobotTransformParallelPreview(robot);
-
+		
 		//robot.initShapeAx3();
 		// 加入数据
 		return robot;
