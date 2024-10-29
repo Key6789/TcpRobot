@@ -18,7 +18,7 @@ namespace TCP_ROBOT
 		RobotFrame* createRobotFrame(QString robotName);
 
 		void sendValue(const QString& FrameName,const QString& command);
-
+		
 		bool parseFrame(const QByteArray& byte) override;
 	};
 
@@ -30,6 +30,7 @@ namespace TCP_ROBOT
 		virtual ~RobotFrame();
 
 		void parseFrame(const QByteArray& byte) override;
+		void sendStandValue() override;
 
 	
 	};

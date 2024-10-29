@@ -115,6 +115,8 @@ namespace TCP_ROBOT
 
 		QString getCurrentPosition();
 		void onSafePointPosition();
+		void onWorkpiecePosition();
+		void onTrackPosition();
 
 		void onSafePointOk();
 		void onWorkpieceOk();

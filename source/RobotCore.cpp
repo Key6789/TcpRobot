@@ -236,12 +236,6 @@ namespace TCP_ROBOT
 			{
 				if (robotMap.contains(nextShapeNameA))
 				{
-					qDebug() << "nextShapeNameA:" << nextShapeNameA;
-					TRANSFORMDATA dataSec = data;
-					dataSec.angleX = 0;
-					dataSec.angleY = 0;
-					dataSec.angleZ = 0;
-
 					ShapesTransformRecursively(robotMap, nextShapeNameA, data);
 				}
 			}

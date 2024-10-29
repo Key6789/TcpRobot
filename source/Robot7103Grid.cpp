@@ -387,9 +387,20 @@ namespace TCP_ROBOT
 					QString::number(B2Label->getValue()) <<
 					QString::number(L1Label->getValue());
 
+				qDebug() << "VC参数设置：" << applyList;
+				qDebug() << QString::number(obLabel->getValue());
+				qDebug() << QString::number(ocLabel->getValue());
+				qDebug() << QString::number(A0Label->getValue());
+				qDebug() << QString::number(A1Label->getValue());
+				qDebug() << QString::number(B1Label->getValue());
+				qDebug() << QString::number(A2Label->getValue());
+				qDebug() << QString::number(B2Label->getValue());
+				qDebug() << QString::number(L1Label->getValue());
+
 				QString VcValue = applyList.join(",");
 				if (getTcpCommunication())
 				{
+					qDebug() << "发送VC参数：" << VcValue;
 					getTcpCommunication()->sendValue("VC", VcValue);
 				}
 				m_vcMap.clear();
@@ -898,7 +909,7 @@ namespace TCP_ROBOT
 
 		connect(m_btnAddWorkpiece, &QPushButton::clicked, this, &RobotoDemonstrator::onWorkpieceOk);
 		connect(m_btnDelWorkpiece, &QPushButton::clicked, this, &RobotoDemonstrator::onWorkpieceCancel);
-
+		connect(btnHP, &QPushButton::clicked, this, &RobotoDemonstrator::onWorkpiecePosition);
 		mainLayout->addStretch();
 
 	}
@@ -963,7 +974,7 @@ namespace TCP_ROBOT
 
 		connect(m_btnAddWeld, &QPushButton::clicked, this, &RobotoDemonstrator::onTrackOk);
 		connect(m_btnDelWeld, &QPushButton::clicked, this, &RobotoDemonstrator::onTrackCancel);
-
+		connect(btnHP, &QPushButton::clicked, this, &RobotoDemonstrator::onTrackPosition);
 		mainLayout->addStretch();
 	}
 	void RobotoDemonstrator::initConnect()
@@ -1084,6 +1095,14 @@ namespace TCP_ROBOT
 	void RobotoDemonstrator::onSafePointPosition()
 	{
 		m_lineEditSafePosition->setText(getCurrentPosition());
+	}
+	void RobotoDemonstrator::onWorkpiecePosition()
+	{
+		m_lineEditHP->setText(getCurrentPosition());
+	}
+	void RobotoDemonstrator::onTrackPosition()
+	{
+		m_lineEditTrackPosition->setText(getCurrentPosition());
 	}
 	void RobotoDemonstrator::onSafePointOk()
 	{

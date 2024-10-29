@@ -163,4 +163,9 @@ namespace TCP_ROBOT
 			}
 		}
 	}
+	void RobotFrame::sendStandValue()
+	{
+
+		emit signalSendValue(getFrameHeader() + getFrameData() + getFrameFooter());
+	}
 }

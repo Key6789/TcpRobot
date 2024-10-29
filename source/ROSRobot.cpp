@@ -451,7 +451,7 @@ namespace TCP_ROBOT
 			int row = robotListWidget->currentRow();
 			robotListWidget->takeItem(row);
 
-			
+
 			});
 
 		connect(saveButton, &QPushButton::clicked, [=]() {
@@ -705,7 +705,7 @@ namespace TCP_ROBOT
 
 	void ROSRobot::initConnect()
 	{
-		
+
 
 		disconnect(m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_robotCore, &RobotCore::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
@@ -727,6 +727,14 @@ namespace TCP_ROBOT
 		/*connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, [=](QString data) {
 			qDebug() << "GO RECEIVE DATA:" << data;
 			});*/
+		if (m_robot7103Grid != nullptr)
+		{
+			m_robot7103Grid->setTcpCommunication(m_tcpRobotCom);
+		}
+		if (m_teaching != nullptr)
+		{
+			m_teaching->setTcpCommunication(m_tcpRobotCom);
+		}
 	}
 
 	void ROSRobot::createOrCheckDirectory(const QString& path)
@@ -749,7 +757,7 @@ namespace TCP_ROBOT
 		foreach(QString key, shapesMap.keys())
 		{
 			SHAPESTRUCT shapeStruct = shapesMap[key];
-			if (shapeStruct.shapeType != ShapeType_Robot|| 
+			if (shapeStruct.shapeType != ShapeType_Robot ||
 				shapeStruct.ShapeLinkIndex == -1)
 			{
 				continue;
@@ -905,7 +913,7 @@ namespace TCP_ROBOT
 		//shapeTypeLayout->addWidget(m_shapeTypeComboBox, 3);
 		//leftLayout->addLayout(shapeTypeLayout);
 
-		
+
 
 		// 模型路径
 		QLabel* labelPath = new QLabel(this);

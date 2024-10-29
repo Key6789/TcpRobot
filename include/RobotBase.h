@@ -18,24 +18,6 @@ namespace TCP_ROBOT
 		RobotBase(QWidget* parent = nullptr);
 		~RobotBase();
 
-	public:
-		// 机器人界面显示
-		// 创建工艺界面
-		virtual QWidget* createWorkView(QWidget* parent = nullptr);
-		virtual QWidget* createTopShapeView(QWidget* parent = nullptr);
-		// 示教窗口
-		virtual QWidget* createTeachView(QWidget* parent = nullptr);
-
-		virtual QWidget* showShapeView(QWidget* parent = nullptr);
-
-		// 机器人 模型设置
-		virtual QWidget* createRobotSettingView(QWidget* parent = nullptr);
-		virtual QWidget* createWorkSettingView(QWidget* parent = nullptr);
-	protected:
-		// 界面初始化 
-		virtual void initRobotView(void);
-
-		
 
 	public:
 		//  数据获取
@@ -44,10 +26,8 @@ namespace TCP_ROBOT
 
 		// 获取形状
 		TopoDS_Shape getShape();
-
-		void loadModel(const QString& filePath);
-
 	signals:
+
 		// 选择改变时调用的函数
 		void selectionChanged(void);
 
@@ -55,230 +35,81 @@ namespace TCP_ROBOT
 		void singalCollision(bool isCollision);
 
 
-	public:
-		// 工具函数
-		// 判断浮点数是否相等
-		bool isEqualDouble(double a, double b);
-
-		// 设置比较的值
-		void setEqualCompareValue(double value);
-
-		// 移动当前平台，接受一个移动值作为输入
-		bool platMoveCurrent(double moveValue);
-
-		// 旋转当前工作状态，接受一个角度作为输入
-		bool workRotateCurrent(double angle);
-
-		// 设置机器人的变换数据，接受一个字符串作为输入
-		bool setRobotTransform(QString data);
+	protected:
+		// 界面初始化 
+		virtual void initRobotView(void);
 
 	public slots:
-		// 接口封装
-		// 参数接入
-		// 平台平移
-		void platformMove(double moveValue, MoveDirection direction = MoveDirection_XAxis);
-
-		// 工件及底盘旋转
-		void workRotate(double angle, QString workName = QString(), MoveDirection direction = MoveDirection_ZAxis);
-
-
-
-		void initRobotRotateZero(QString zero);
-		void initRobotRotateZeroReStart(QString zero);
-		void addWorkMove(double moveValue, QString workName = QString(), MoveDirection direction = MoveDirection_XAxis);
-		void addWorkRotot(double moveValue, QString workName = QString(), MoveDirection direction = MoveDirection_ZAxis);
-		// 机器人旋转
-		void robotRotate(QVector<ROTATEDATA> data);
-		void removeRobotShapes(QVector<Handle(AIS_Shape)> shapes);
-		void removeRobotResult();
-		void initRobotRotateResult();
-
 		// 模型更新
-		void slotUpdateModel(WORKANDHOLE workAndHole);
-
-		// 根据路径读取替换模型
-		void slotReplaceModelByPath(SHAPESTRUCT shapeStruct);
-		void slotChangPreviewColor(SHAPESTRUCT shapeStruct);
-		void slotChangedPreviewScale(SHAPESTRUCT shapeStruct);
-		void slotChangedPreviewRotation(SHAPESTRUCT shapeStruct);
-		void slotChangedPreviewTranslation(SHAPESTRUCT shapeStruct);
-
-		void removePreview(SHAPESTRUCT shapeStruct);
-		void removeAllPreview();
-
-		// 读取参数
-		void slotReadShapesParameter();
-
-		// 单个模型更新
-		void slotUpdateSingleModel(WORKANDHOLE workAndHole, QString holeName);
-
-		ADDROBOTDATA createRobotData(SHAPESTRUCT shapeStruct);
-
-		void displaySingalAddRobot(ADDROBOTDATA addRobotData);
-		void RemovePreview(ADDROBOTDATA addRobotData);
-
-
 		virtual void slotUpdataRobotShaps(void);
-		// 设置旋转角度
-		void setRotateAngle(QVector<double> rotateAngle);
-		void setRotateAngle(QString name, int size);
-
-		void setRobotIsActive(bool isActive) { m_isRobotActive = isActive; };
-		bool getRobotIsActive() { return m_isRobotActive; };
-	private:
-
-		bool m_isRobotActive = true;
-		// 读取DH参数
-		void readRobotDhParameter(QVariantMap data);
-		SDHRobot* m_DHRobot = nullptr;
-		void initZeroParameter();
-		void initZeroPosition();
-		void initZeroOrientation();
-		QMap<QString, ADDROBOTDATA> m_myRobotDHData;
-
-		gp_Pnt getCurrentAssemblyPoint(int size);
-		gp_Pnt getCurrentRotationAngal(int size);
-
-
-		void showSetParameter();
-		QDialog* m_diaog = nullptr;
-		QMessageBox* m_messageBox = nullptr;
-
-
-	private:
-		// DH 参数兼容
-		void showRobotParameterSet();
 
 	public:
-		bool loadSTEPModel(const QString& filePath, TopoDS_Shape& shape);
-		QVector<TopoDS_Shape> loadWorkSTEPModel(const QString& filePath);
+
+		// 显示坐标轴
 		void displayCoordinateAxes();
-		QVector< LoadRobotTransformResult> m_CoordinateAxes;
+		// 显示添加机器人信号
+		void displaySingalAddRobot(ADDROBOTDATA addRobotData);
+		// 创建机器人数据
+		ADDROBOTDATA createRobotData(SHAPESTRUCT shapeStruct);
+		// 添加箭头到指定坐标轴
 		void addArrow(Standard_Real axisLength, gp_Pnt& origin, const gp_Dir& direction, Handle(AIS_InteractiveContext)& context);
-		QMap<QString, QVector<TopoDS_Shape>> m_myShapes;
-
-		// 组装机器人组件
-		void addComponentRobotALL();
-		void workTransform(TRANSFORMDATA data);
-		void workTransformRecursively(QString name, const TRANSFORMDATA& data);
-		// 向量计算，根据旋转三个旋转角度算向量
-		gp_Vec getVectorByAngle(double angleX, double angleY, double angleZ);
-
-		// 自身的平移旋转
-		void applyTranslation(ADDROBOTDATA data);
-		void applyRotation(gp_Trsf& trsf, const gp_Ax1& axis, double angle);
-		gp_Dir getTransformationMatrix(const ADDROBOTDATA& robot, gp_Dir axis);
-
-		void showAllShadBox();
-		void hideAllShadBox();
-		void updateALlShadBox();
-		void showOnceShadBox(ADDROBOTDATA data);
-		void hideOnceShadBox(ADDROBOTDATA data);
-		void updateOnceShadBox(ADDROBOTDATA data);
-		// 新方案 求各组件的装配点坐标变换，及坐标轴的角度变化
-		gp_Pnt getNewAssemblyPoint(const gp_Pnt& assemblyPoint, const TRANSFORMDATA& data);
-
-
-		//根据向量计算旋转角度
-		//void getEulerAngles(const gp_Vec& targetX, const gp_Vec& targetY, const gp_Vec& targetZ, double& angleX, double& angleY, double& angleZ);
-		// 设置模型颜色
-		void setMyShapColor();
-		QVector<TopoDS_Shape> getShapesFromResult(const QString& name, const QVector<LoadResult>& shapes);
-		QVector<TopoDS_Shape> findAndScaleShapes(const QString& name, double scale = 1.0);
+		// 缩放形状
 		QVector<TopoDS_Shape> scaleShapes(QVector<TopoDS_Shape> shapes, double scale = 1.0);
-		// 英文与中文转换，防止乱码
-		TCollection_ExtendedString displayText(const char* theText);
-		// 添加标题文本
-		void addShapeTitleText(const char* theText, gp_Pnt& point, Handle(AIS_Shape) aisShape);
-
-
 
 		// 设置碰撞检测
-		void setCollisionDetection();
 		void setCollisionDetection(Handle(AIS_Shape) shape1, Handle(AIS_Shape) shape2);
+		// 设置碰撞检测（重载方法）
 		void setCollisionDetection(ADDROBOTDATA data, ADDROBOTDATA data2);
+		// 设置碰撞检测（重载方法）
 		void setCollisionDetection(ADDROBOTDATA data, Handle(AIS_Shape) shape2);
 
-		void addComponentRobot(ADDROBOTDATA data);
-		
+		// 加载工作STEP模型
+		QVector<TopoDS_Shape> loadWorkSTEPModel(QString filePath);
+		// 从结果中获取形状
+		QVector<TopoDS_Shape> getShapesFromResult(const QString& name, const QVector<LoadResult>& shapes);
+		// 并行加载文件
+		QVector<LoadResult> loadFilesInParallel(const QStringList& filePaths);
+		// 并行预览机器人变换
+		QVector<Handle(AIS_Shape)> RobotTransformParallelPreview(ADDROBOTDATA data);
+
+		// 互斥量指针
+		QMutex* m_mutex = nullptr;
+		// 互斥量锁定器指针
+		QMutexLocker* m_locker = nullptr;
+		// 存储坐标轴的变换结果
+		QVector< LoadRobotTransformResult> m_CoordinateAxes;
 		// 地面形状
 		Handle(AIS_Shape) m_gridShape;
 
 
-		//! the occ viewer.
-		Handle(V3d_Viewer) myViewer;
-
-		Handle(AIS_Shape) aisShape;
-		//! the occ view.
-		Handle(V3d_View) myView;
-		Handle(V3d_View) myView2;
-
-		//! the occ context.
-		Handle(AIS_InteractiveContext) myContext;
-
-		QVector<LoadResult> loadFilesInParallel(const QStringList& filePaths);
-		QVector <LoadRobotTransformResult> loadRobotTransformInParallel();
-		QVector <LoadRobotTransformResult> loadRobotTransformInParallel(QString currentName);
-		void displayRobotShapes(LoadRobotTransformResult results);
-		void displayRobotShapes(QVector <AIS_Shape> results);
-		void displayAllRobotShapes(QVector <LoadRobotTransformResult> results);
-		void displayAllRobotShapes();
-		QVector<Handle(AIS_Shape)> RobotTransformParallel(ADDROBOTDATA data);
-		QVector<Handle(AIS_Shape)> RobotTransformParallelPreview(ADDROBOTDATA data);
-
-		QStringList getCurrentAndNextName(QString name);
-		
-
-		QMap<QString, ADDROBOTDATA> m_myRobotData;
-		QMap<QString, ADDROBOTDATA> m_initMyRobotData;
-
-		QMap<QString, TRANSFORMDATA> m_lastTransformData;
-		QMap<QString, TRANSFORMDATA> m_originTransformData;
-		int m_shortMove = 0;
-		int m_lastMove = 0;
-		int m_shortActiveMove = 0;
-		int m_workRotateAngle = 0;
-		int m_lastWorkRotateAngle = 0;
-		int m_workRotateActiveAngle = 0;
-
-		QString m_lastRobotRotateAngle = QString();
-
-		QString m_roboteLast = QString();
-
-
-		bool m_initRobot = false;
-
-		QMutex* m_mutex = nullptr;
-		QMutexLocker* m_locker = nullptr;
-		QVector<LoadRobotTransformResult> m_Robotresults;
-		QTimer m_updataTimer;
-
-		//  比较值
-		double m_equalCompareValue = 0.5;
-
-		QMap<QString, ADDROBOTDATA>  m_mapPreviewData = QMap<QString, ADDROBOTDATA>();
-
 		// 显示功能区
 	public slots:
+		// 平移操作
 		void pan(void);
+		// 适合所有内容
 		void fitAll(void);
+		// 重置视图
 		void reset(void);
+		// 放大缩小操作
 		void zoom(void);
+		// 旋转操作
 		void rotate(void);
 	protected:
+		// 返回画图引擎
 		virtual QPaintEngine* paintEngine() const;
 
-		// Paint events.
+		// 绘制事件处理
 		virtual void paintEvent(QPaintEvent* theEvent);
+		// 窗口调整事件处理
 		virtual void resizeEvent(QResizeEvent* theEvent);
 
-		// Mouse events.
+		// 鼠标事件处理
 		virtual void mousePressEvent(QMouseEvent* theEvent);
 		virtual void mouseReleaseEvent(QMouseEvent* theEvent);
 		virtual void mouseMoveEvent(QMouseEvent* theEvent);
 		virtual void wheelEvent(QWheelEvent* theEvent);
 
-		// Button events.
+		// 按钮事件处理
 		virtual void onLButtonDown(const int theFlags, const QPoint thePoint);
 		virtual void onMButtonDown(const int theFlags, const QPoint thePoint);
 		virtual void onRButtonDown(const int theFlags, const QPoint thePoint);
@@ -288,20 +119,30 @@ namespace TCP_ROBOT
 		virtual void onRButtonUp(const int theFlags, const QPoint thePoint);
 		virtual void onMouseMove(const int theFlags, const QPoint thePoint);
 
-		// Popup menu.
+		// 弹出菜单处理
 		virtual void addItemInPopup(QMenu* theMenu);
 
 	protected:
 
+		// 显示弹出菜单
 		void popup(const int x, const int y);
+		// 拖动事件处理
 		void dragEvent(const int x, const int y);
+		// 输入事件处理
 		void inputEvent(const int x, const int y);
+		// 移动事件处理
 		void moveEvent(const int x, const int y);
+		// 多点移动事件处理
 		void multiMoveEvent(const int x, const int y);
+		// 多点拖动事件处理
 		void multiDragEvent(const int x, const int y);
+		// 多点输入事件处理
 		void multiInputEvent(const int x, const int y);
+		// 绘制虚线框
 		void drawRubberBand(const int minX, const int minY, const int maxX, const int maxY);
+		// 通过中键平移
 		void panByMiddleButton(const QPoint& thePoint);
+
 
 	private:
 		//! save the mouse position.
@@ -321,6 +162,18 @@ namespace TCP_ROBOT
 		//! rubber rectangle for the mouse selection.
 		QRubberBand* myRectBand;
 		TopoDS_Shape shape;
+
+	public:
+		//! the occ viewer.
+		Handle(V3d_Viewer) myViewer;
+
+		Handle(AIS_Shape) aisShape;
+		//! the occ view.
+		Handle(V3d_View) myView;
+		Handle(V3d_View) myView2;
+
+		//! the occ context.
+		Handle(AIS_InteractiveContext) myContext;
 	};
 }
 
