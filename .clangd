@@ -1,0 +1,16 @@
+CompileFlags:
+    Add:
+        [
+            -Wunused-variable,
+            -Winfinite-recursion,
+            -Warray-bounds,
+            -Wreturn-stack-address,
+            -Werror=implicit-function-declaration,
+            -Wshadow,
+            -Wshadow-field-in-constructor-modified,
+            -Wshadow-ivar,
+            -Wuninitialized,
+            -Wunused-label,
+            -Wunused-lambda-capture,
+        ]
+    Compiler: clang++

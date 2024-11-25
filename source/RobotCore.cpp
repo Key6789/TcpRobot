@@ -4,6 +4,8 @@ namespace TCP_ROBOT
 {
 	RobotCore::RobotCore(QWidget* parent)
 	{
+		displayCoordinateAxes();
+		fitAll();
 	}
 	RobotCore::~RobotCore()
 	{
@@ -72,7 +74,8 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::slotUpdataRobotShaps(void)
 	{
-
+		// 添加箭头
+		
 	}
 	void RobotCore::loadWorkShapes(QString filePath)
 	{

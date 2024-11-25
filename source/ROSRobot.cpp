@@ -250,6 +250,43 @@ namespace TCP_ROBOT
 			});
 
 		connect(seletedWorkButton, &QPushButton::clicked, [=]() {
+			m_currentWork = workListWidget->currentItem()->text();
+
+			// 判断路径是否存在
+			if (!QDir().exists(WORKPATH.append("/").append(m_currentWork)))
+			{
+				// 创建文件夹
+				QDir().mkdir(WORKPATH.append("/").append(m_currentWork));
+				// 创建文件
+				QFile file(WORKPATH.append("/").append("CurrentWork.json"));
+
+				QVariantMap variantMap;
+				variantMap.insert("CurrentWork", m_currentWork);
+				if (file.open(QIODevice::WriteOnly))
+				{
+					QTextStream out(&file);
+					QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+					out << doc.toJson();
+					file.close();
+				}
+			}
+			else
+			{
+				QFile file(WORKPATH.append("/").append("CurrentWork.json"));
+
+				QVariantMap variantMap;
+				variantMap.insert("CurrentWork", m_currentWork);
+				if (file.open(QIODevice::WriteOnly))
+				{
+					QTextStream out(&file);
+					QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+					out << doc.toJson();
+					file.close();
+				}
+			}
+				
+
+
 			m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
 			m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
 			m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
@@ -676,6 +713,18 @@ namespace TCP_ROBOT
 		initConnect();
 	}
 
+	void ROSRobot::setIpAndPort(const QString& ip, const int& port)
+	{
+		if (m_tcpRobotCom == nullptr)
+		{
+			m_tcpRobotCom = new TcpRobotCommunication(this);
+			m_tcpRobotCom->setIPAndPort(ip, port);
+			initConnect();
+			return;
+		}
+		m_tcpRobotCom->setIPAndPort(ip, port);
+	}
+
 
 	void ROSRobot::initUI()
 	{
@@ -701,6 +750,8 @@ namespace TCP_ROBOT
 			}
 		}
 
+		m_tcpRobotCom = new TcpRobotCommunication(this);
+		m_tcpRobotCom->setIPAndPort("127.0.0.1", 8080);
 	}
 
 	void ROSRobot::initConnect()
@@ -817,20 +868,22 @@ namespace TCP_ROBOT
 				}
 				robot->setDHParameters(DHVec);
 
-				// poxisitionX
-				QVector<double> position = robot->getCurrentExtractPosition(DHVec.size());
+				if (DHVec.size() > 0)
+				{
+					// poxisitionX
+					QVector<double> position = robot->getCurrentExtractPosition(DHVec.size());
 
-				// 处理位置
-				vec[i].ShapePositionX = QString::number(position[0]);
-				vec[i].ShapePositionY = QString::number(position[1]);
-				vec[i].ShapePositionZ = QString::number(position[2]);
+					// 处理位置
+					vec[i].ShapePositionX = QString::number(position[0]);
+					vec[i].ShapePositionY = QString::number(position[1]);
+					vec[i].ShapePositionZ = QString::number(position[2]);
 
-				QVector<double> angle = robot->getCurrentExtractRotation(DHVec.size());
-				vec[i].ShapeAngleX = QString::number(angle[0]);
-				vec[i].ShapeAngleY = QString::number(angle[1]);
-				vec[i].ShapeAngleZ = QString::number(angle[2]);
+					QVector<double> angle = robot->getCurrentExtractRotation(DHVec.size());
+					vec[i].ShapeAngleX = QString::number(angle[0]);
+					vec[i].ShapeAngleY = QString::number(angle[1]);
+					vec[i].ShapeAngleZ = QString::number(angle[2]);
 
-
+				}
 				// 下一个节点拼接
 				auto tempIt = it + 1;
 				if (tempIt != tempMap.end())

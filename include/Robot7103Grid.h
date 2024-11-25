@@ -6,6 +6,8 @@
 #include "TcpRobotManger_global.h"
 #include "TcpRobot.h"
 #include "WidgetCommon.h"
+
+
 namespace TCP_ROBOT
 {
 	class TCPROBOT_EXPORT Robot7103Grid : public QTableWidget
@@ -65,6 +67,12 @@ namespace TCP_ROBOT
 		TcpRobotCommunication* m_tcpRobotCom = nullptr;
 
 		QMap<QString, QString> m_vcMap = QMap<QString, QString>();
+
+
+		// 用于设置当前的安全点、工件、轨迹的索引
+		int m_currentSaftIndex = ROBOTUNABLEVALUE;
+		int m_currentWorkIndex = ROBOTUNABLEVALUE;
+		int m_currentTrackIndex = ROBOTUNABLEVALUE;
 	};
 
 	class RobotoDemonstrator :public QWidget

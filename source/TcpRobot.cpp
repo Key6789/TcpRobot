@@ -14,6 +14,8 @@ namespace TCP_ROBOT
 		RobotFrame * ig = createRobotFrame("IG");
 		RobotFrame * gi = createRobotFrame("GI");
 
+		go->setSendFront(true);
+
 		QMap<QString, TCPXVIEWBASE_NAMESPACE::StandFrame*> robotFrames;
 		robotFrames.insert("PS", ps);
 		robotFrames.insert("GO", go);
@@ -66,14 +68,18 @@ namespace TCP_ROBOT
 		if (reciveData.contains("ST,MOVING"))
 		{
 			setCurrentFrameIsReceived(false);
+			emit signalRobotCommandFeedback(ST_MOVING);
 		}
 		if (reciveData.contains("ST,READY"))
 		{
 			setCurrentFrameIsReceived(true);
+			emit signalRobotCommandFeedback(ST_READY);
 		}
 		if (reciveData.contains("ST,VCING"))
 		{
 			setCurrentFrameIsReceived(false);
+			emit signalRobotCommandFeedback(ST_VCING);
+
 		}
 		if (reciveData.contains("ST,GI"))
 		{
@@ -94,14 +100,17 @@ namespace TCP_ROBOT
 		if (reciveData.contains("VC,OVER"))
 		{
 			setCurrentFrameIsReceived(true);
+			emit signalRobotCommandFeedback(VC_OVER);
 		}
 		if (reciveData.contains("GO,OVER"))
 		{
 			setCurrentFrameIsReceived(true);
+			emit signalRobotCommandFeedback(GO_OVER);
 		}
 		if (reciveData.contains("FT,OVER"))
 		{
 			setCurrentFrameIsReceived(true);
+			emit signalRobotCommandFeedback(FT_OVER);
 		}
 		if (reciveData.contains("ER"))
 		{
@@ -132,6 +141,105 @@ namespace TCP_ROBOT
 
 		return true;
 	}
+	QWidget* TcpRobotCommunication::commandFeedbackUI(QWidget* parent)
+	{
+		CWidgetHLay *hLay = new CWidgetHLay(parent);
+		hLay->setStyleSheet("QLabel{color: #0000FF;}");
+		QString midStr = __StandQString(">>");
+
+		QLabel *labelHeader = new QLabel(parent);
+		labelHeader->setText(__StandQString("准备完成 "));
+
+		QLabel *labelSend = new QLabel(parent);
+		labelSend->setText(__StandQString("发送 ").append(midStr));
+
+		QLabel *labelMove = new QLabel(parent);
+		labelMove->setText(__StandQString("移动 ").append(midStr));
+
+		QLabel* labelMoveEnd = new QLabel(parent);
+		labelMoveEnd->setText(__StandQString("待命中... ").append(midStr));
+
+		hLay->addWidget(labelHeader);
+		hLay->addWidget(labelMoveEnd);
+		hLay->addWidget(labelSend);
+		hLay->addWidget(labelMove);
+		
+
+		// 全部置灰
+		labelHeader->setEnabled(false);
+		labelSend->setEnabled(false);
+		labelMove->setEnabled(false);
+		labelMoveEnd->setEnabled(false);
+
+		connect(this, &TcpRobotCommunication::signalSendSuccessValue, [=](QByteArray value) {
+			QString strValue = value.data();
+			qDebug() << "TcpRobotCommunication::signalSendSuccessValue " << strValue;
+			if (strValue.contains("GO"))
+			{
+				labelSend->setText(__StandQString("位置信息发送... ").append(midStr));
+				labelSend->setEnabled(true);
+			}
+			else if (strValue.contains("VC"))
+			{
+				labelSend->setText(__StandQString("视觉控制发送... ").append(midStr));
+				labelSend->setEnabled(true);
+			}
+			else if (strValue.contains("FT"))
+			{
+				labelSend->setText(__StandQString("微调发送... ").append(midStr));
+				labelSend->setEnabled(true);
+			}
+			else
+			{
+				labelSend->setText(__StandQString("发送  ").append(midStr));
+				labelSend->setEnabled(false);
+			}
+			
+			});
+		connect(this, &TcpRobotCommunication::signalRobotCommandFeedback, [=](RobotState command) {
+			if (command == ST_MOVING)
+			{
+				labelMove->setText(__StandQString("移动中 ").append(midStr));
+				labelMove->setEnabled(true);
+			}
+			else if (command == ST_READY)
+			{
+				labelMove->setText(__StandQString("准备完成 ").append(midStr));
+				labelMove->setEnabled(false);
+				labelMoveEnd->setEnabled(true);
+			}
+			else if (command == ST_VCING)
+			{
+				labelMove->setText(__StandQString("视觉控制中 ").append(midStr));
+				labelMove->setEnabled(true);
+			}
+			else if (command == VC_OVER)
+			{
+				labelMove->setText(__StandQString("视觉控制结束 ").append(midStr));
+				labelMove->setEnabled(false);
+				labelMoveEnd->setEnabled(true);
+			}
+			else if (command == GO_OVER)
+			{
+				labelMove->setText(__StandQString("位置信息发送完成 ").append(midStr));
+				labelMove->setEnabled(false);
+				labelMoveEnd->setEnabled(true);
+			}
+			else if (command == FT_OVER)
+			{
+				labelMove->setText(__StandQString("微调完成 ").append(midStr));
+				labelMove->setEnabled(false);
+				labelMoveEnd->setEnabled(true);
+			}
+			else
+			{
+				labelMove->setText(__StandQString("移动 ").append(midStr));
+				labelMove->setEnabled(false);
+			}
+			});
+
+		return hLay;
+	}
 	RobotFrame::RobotFrame(QObject* parent)
 	{
 	}
@@ -154,6 +262,7 @@ namespace TCP_ROBOT
 			{
 				QStringList valueList = dataList.mid(1, 8);
 				QString value = valueList.join(",");
+				setFrameData(value);
 				emit signalReciveValue(value);
 				qDebug() << getReciveStandFrameHearder() << " Send Value " << value;
 			}

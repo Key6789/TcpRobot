@@ -305,6 +305,10 @@
 #include "TcpXViewBase.h"
 #include <QFormLayout>
 
+#include "QCusWidgetLib.h"
+
+using namespace QCUSWIDGETLIB;
+
 #define   WORKPATH	QDir::currentPath().append("/RobotData/WorkPath")
 #define   ROBOTPATH	QDir::currentPath().append("/RobotData/RobotPath")
 #define   OTHERPATH	QDir::currentPath().append("/RobotData/OtherPath")
@@ -335,7 +339,7 @@
 
 
 
-
+#define ROBOTUNABLEVALUE -1
 #if defined(TCPROBOT_LIBRARY)
 #define TCPROBOT_EXPORT Q_DECL_EXPORT
 #else
@@ -967,6 +971,31 @@ struct WorkpieceStruct
 
 	QMap<int, TrajectoryStruct> TrajectoryMap; // 轨迹参数
 
+	// 获取 进入 轨迹列表
+	QStringList getEnterTrajectoryList()
+	{
+		QStringList enterTrajectoryList;
+		for (auto it = TrajectoryMap.begin(); it != TrajectoryMap.end(); ++it)
+		{
+			if (it.value().swcIndex != -1)
+			{
+				enterTrajectoryList.append(it.value().trackPosition);
+			}
+		}
+		return enterTrajectoryList;
+	}
+	// 获取 离开 轨迹列表
+	QStringList getLeaveTrajectoryList()
+	{
+		QStringList leaveTrajectoryList;
+		QStringList enterTrajectoryList = getEnterTrajectoryList();
+		for (int i = enterTrajectoryList.size()-1; i >= 0; i--)
+		{
+			leaveTrajectoryList.append(enterTrajectoryList[i]);
+		}
+		return leaveTrajectoryList;
+	}
+
 	QStringList getTrajectoryList()
 	{
 		QStringList trajectoryList;
@@ -1104,6 +1133,101 @@ struct MoveStruct
 {
 	QMap<int, SaftPointStruct> MoveMap; // 点参数
 	QString WorkName = "NULL"; // 工作名称
+
+
+	QStringList getSendValueList(int saftCurrent, int workCurrent, int nextSaft, int nextWork)
+	{
+
+		QStringList sendValueList;
+		// 在同一个安全点下，工作件的切换
+		if (saftCurrent == nextSaft)
+		{
+			// 点击 同一位置 返回
+			if (workCurrent == nextWork)
+			{
+				return sendValueList;
+			}
+			// 获取当前工作件的 离开 轨迹列表
+			QStringList currentSaftList;
+			if (saftCurrent != -1 && workCurrent != -1)
+			{
+				currentSaftList = MoveMap[saftCurrent].SaftPointMap[workCurrent].getLeaveTrajectoryList();
+				currentSaftList.append(MoveMap[saftCurrent].SaftPointMap[workCurrent].HolePosition);
+			}
+
+			// 获取 下一个工作件的 进入 轨迹列表
+			QStringList nextSaftList;
+			if (nextSaft != -1 && nextWork != -1)
+			{
+				nextSaftList.append(MoveMap[nextSaft].SaftPointMap[nextWork].HolePosition);
+				nextSaftList.append(MoveMap[nextSaft].SaftPointMap[nextWork].getEnterTrajectoryList());
+			}
+			// 发送 离开 轨迹列表 进入 轨迹列表
+			sendValueList << currentSaftList << nextSaftList;
+		}
+		else
+		{
+			// 点击 不同位置 返回
+
+			// 获取当前工作件的 离开 轨迹列表
+			QStringList currentSaftList;
+			if (saftCurrent != -1 && workCurrent != -1)
+			{
+				currentSaftList = MoveMap[saftCurrent].SaftPointMap[workCurrent].getLeaveTrajectoryList();
+				currentSaftList.append(MoveMap[saftCurrent].SaftPointMap[workCurrent].HolePosition);
+			}
+
+			// 获取 下一个安全点的 进入 轨迹列表
+			QStringList nextSaftList;
+			if (nextSaft != -1 && nextWork != -1)
+			{
+				nextSaftList.append(MoveMap[nextSaft].SaftPointMap[nextWork].HolePosition);
+				nextSaftList.append(MoveMap[nextSaft].SaftPointMap[nextWork].getEnterTrajectoryList());
+			}
+
+			// 发送 离开 轨迹列表 安全点 进入 轨迹列表
+			QStringList saftIndexList;
+			if (saftCurrent != -1)
+			{
+				bool isEnter = saftCurrent < nextSaft ? true : false;
+				if (isEnter)
+				{
+					for (auto it = MoveMap.begin(); it != MoveMap.end(); ++it)
+					{
+						if (it.key() >= saftCurrent && it.key() <= nextSaft)
+						{
+							saftIndexList.append(MoveMap[it.key()].SaftPointPosition);
+						}
+					}
+				}
+				else
+				{
+					QStringList saftIndexListTemp;
+					for (auto it = MoveMap.begin(); it != MoveMap.end(); ++it)
+					{
+						if (it.key() >= nextSaft && it.key() <= saftCurrent)
+						{
+							saftIndexListTemp.append(MoveMap[it.key()].SaftPointPosition);
+						}
+					}
+					for (int i = saftIndexListTemp.size()-1; i >= 0; i--)
+					{
+						saftIndexList.append(saftIndexListTemp[i]);
+					}
+
+				}
+
+			}
+			else
+			{
+				saftIndexList.append(MoveMap[nextSaft].SaftPointPosition);
+			}
+			sendValueList << currentSaftList << saftIndexList << nextSaftList;
+		}
+
+		return sendValueList;
+
+	}
 
 	QString getModeName(int saft, int work)
 	{

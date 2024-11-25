@@ -19,6 +19,9 @@ namespace TCP_ROBOT
 
 	void Robot7103Grid::initOriginalParams()
 	{
+
+		m_tcpRobotCom = new TcpRobotCommunication(this);
+		m_tcpRobotCom->setIPAndPort("127.0.0.1", 8080);
 		//
 		QString fileName = WORKPATH.append("/").append("CurrentWork.json");
 		QFile file(fileName);
@@ -265,11 +268,34 @@ namespace TCP_ROBOT
 		calibrationBtn->setEnabled(true);
 		fineTuningBtn->setEnabled(true);
 
-		QString workpiece = item(row, 0)->text();
-		QString hole = item(row, 1)->text();
-		QString position = item(row, 2)->text();
-		QString command = workpiece + "," + hole + "," + position;
+		// 组装 指令 
+		if (m_currentSaftIndex == -1)
+		{
+			// 按钮 文本为 我已确认安全
+			QMessageBox * messageBox = new QMessageBox(
+				QMessageBox::Warning, 
+				__StandQString("警告"),
+				__StandQString("为确保安全,请手动移动到安全位置！"),
+				QMessageBox::Ok,this);
 
+			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
+			messageBox->exec();
+
+		}
+
+		QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
+
+		foreach(QString value, sendValueList)
+		{
+			if (getTcpCommunication())
+			{
+				getTcpCommunication()->sendValue("GO",value);
+			}
+		}
+		// 按照 安全点、工件、轨迹 进行定位
+		m_currentSaftIndex = saftIndex;
+		m_currentWorkIndex = workIndex;
+		m_currentTrackIndex = trackIndex;
 	}
 
 	void Robot7103Grid::slotcalibrationBtnClicked(
@@ -387,20 +413,10 @@ namespace TCP_ROBOT
 					QString::number(B2Label->getValue()) <<
 					QString::number(L1Label->getValue());
 
-				qDebug() << "VC参数设置：" << applyList;
-				qDebug() << QString::number(obLabel->getValue());
-				qDebug() << QString::number(ocLabel->getValue());
-				qDebug() << QString::number(A0Label->getValue());
-				qDebug() << QString::number(A1Label->getValue());
-				qDebug() << QString::number(B1Label->getValue());
-				qDebug() << QString::number(A2Label->getValue());
-				qDebug() << QString::number(B2Label->getValue());
-				qDebug() << QString::number(L1Label->getValue());
 
 				QString VcValue = applyList.join(",");
 				if (getTcpCommunication())
 				{
-					qDebug() << "发送VC参数：" << VcValue;
 					getTcpCommunication()->sendValue("VC", VcValue);
 				}
 				m_vcMap.clear();

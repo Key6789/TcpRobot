@@ -72,11 +72,35 @@ set(QT_VERSION_5 true)
 set(QT_VERSION_6 false)
 
 #### QT 核心模块
-set(THIS_QT_CORE Core Widgets Network Gui Concurrent)
+set(THIS_QT_CORE 
+    Core 
+    Widgets 
+    Network 
+    Gui 
+    Svg
+    Sql
+    Charts
+    OpenGL
+    Concurrent
+    3DRender
+    3DExtras
+)
 
 #### QT5 核心库
 if(QT_VERSION_5)
-    set(THIS_QT_CORE_LIB Qt5::Core Qt5::Widgets Qt5::Network Qt5::Gui Qt5::Concurrent)
+    set(THIS_QT_CORE_LIB 
+        Qt5::Core 
+        Qt5::Widgets 
+        Qt5::Network 
+        Qt5::Gui 
+        Qt5::Svg 
+        Qt5::Sql 
+        Qt5::Charts 
+        Qt5::OpenGL 
+        Qt5::Concurrent 
+        Qt5::3DRender 
+        Qt5::3DExtras
+    )
 endif()
 
 #### QT6 核心库
@@ -102,27 +126,29 @@ if(WIN32)
              "D:/Soft/OCC3/products/freetype-2.5.5-vc14-64/include/"
              "D:/Soft/OCC3/products/tcltk-86-64/include/"
              "D:/Soft/eigen-user/"
-
+             "D:/Soft/AtamiLib/QCusWidgetLib/include/"
          )
         ### 库文件
         set(ADD_OTHER_LIB 
             ## 库文件 lib 目录
-            "D:/Soft/AtamiLib/CommunicationModule/Lib/Debug/"
-            "D:/Soft/AtamiLib/TcpXViewModule/Lib/Debug/"
+            "D:/Soft/AtamiLib/CommunicationModule/Win64/Lib/Debug/"
+            "D:/Soft/AtamiLib/TcpXViewModule/Win64/Lib/Debug/"
             "D:/Soft/OCC3/OCCT/Debug/Win64/lib/"
             "D:/Soft/OCC3/products/freeimage-3.17.0-vc14-64/lib/"
             "D:/Soft/OCC3/products/freetype-2.5.5-vc14-64/lib/"
             "D:/Soft/OCC3/products/tcltk-86-64/lib/"
+            "D:/Soft/AtamiLib/QCusWidgetLib/Win64/Lib/Debug/"
          )
          ### 库文件 dll
         set(ADD_OTHER_DLL 
              ## 库文件 dll 目录
-             "D:/Soft/AtamiLib/CommunicationModule/Lib/Debug/"
+             "D:/Soft/AtamiLib/CommunicationModule/Win64/Lib/Debug/"
              "D:/Soft/OCC3/OCCT/Debug/Win64/bind/"
              "D:/Soft/OCC3/products/freeimage-3.17.0-vc14-64/"
              "D:/Soft/OCC3/products/freetype-2.5.5-vc14-64/"
              "D:/Soft/OCC3/products/tcltk-86-64/"
              "D:/Soft/OCC3/products/TBB2021/"
+             "D:/Soft/AtamiLib/QCusWidgetLib/Win64/Lib/Debug/"
         )
      else()
         ## 设置是否加载外部库 若为空，设置为 false
@@ -211,6 +237,12 @@ if(QT_OPEN)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${THIS_QT_CORE})
 endif()
 
+# 获取 Qt 的架构信息
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(QT_BIT "64")
+else()
+    set(QT_BIT "32")
+endif()
 
 ### 自动收集 .h .cpp
 if(AUTOFINDFILE)
@@ -284,7 +316,11 @@ else (WIN32)
 
     if(DEBUG_MODE)
         ## 调试模式
-        set(WIN_LIBRARY_OUTPUT_PATH ${WIN_LIBRARY_OUTPUT_PATH__ROOT}/Lib/Debug)
+        if(QT_BIT EQUAL 64)
+            set(WIN_LIBRARY_OUTPUT_PATH ${WIN_LIBRARY_OUTPUT_PATH__ROOT}/Win64/Lib/Debug)
+        else()
+            set(WIN_LIBRARY_OUTPUT_PATH ${WIN_LIBRARY_OUTPUT_PATH__ROOT}/Win32/Lib/Debug)
+        endif()
     else()
         ## 发布模式
         set(WIN_LIBRARY_OUTPUT_PATH ${WIN_LIBRARY_OUTPUT_PATH__ROOT}/Lib/Release)
@@ -375,9 +411,9 @@ else (WIN32)
                 RUNTIME DESTINATION ${WIN_LIBRARY_OUTPUT_PATH})
 
                 if(ADD_OTHER)
-                    install(DIRECTORY ${ADD_OTHER_HEADER} DESTINATION ${WIN_LIBRARY_INCLUDE_PATH}/include)
-                    install(DIRECTORY ${ADD_OTHER_LIB} DESTINATION ${WIN_LIBRARY_OUTPUT_PATH})
-                    install(DIRECTORY ${ADD_OTHER_DLL} DESTINATION ${WIN_LIBRARY_OUTPUT_PATH})
+                    #install(DIRECTORY ${ADD_OTHER_HEADER} DESTINATION ${WIN_LIBRARY_INCLUDE_PATH}/include)
+                    #install(DIRECTORY ${ADD_OTHER_LIB} DESTINATION ${WIN_LIBRARY_OUTPUT_PATH})
+                   # install(DIRECTORY ${ADD_OTHER_DLL} DESTINATION ${WIN_LIBRARY_OUTPUT_PATH})
                 endif()
 
     else()

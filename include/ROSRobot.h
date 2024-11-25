@@ -38,6 +38,8 @@ namespace TCP_ROBOT
 		QWidget* showTeaching(QWidget* parent = nullptr);
 
 		void setCommunicationPointer(TcpRobotCommunication* tcpRobotCom);
+		void setIpAndPort(const QString& ip, const int& port);
+		TcpRobotCommunication* getCommunicationPointer() {return m_tcpRobotCom; };
 
 	signals:
 		// 选中的工作名称变化信号
