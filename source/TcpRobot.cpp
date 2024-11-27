@@ -1,4 +1,4 @@
-
+ï»¿
 #include "../include/TcpRobot.h"
 
 namespace TCP_ROBOT
@@ -6,7 +6,7 @@ namespace TCP_ROBOT
 	TcpRobotCommunication::TcpRobotCommunication(QObject* parent)
 	{
 
-		// ´´½¨ ±ê×¼Ö¡
+		// åˆ›å»º æ ‡å‡†å¸§
 		RobotFrame * ps = createRobotFrame("PS");
 		RobotFrame * go = createRobotFrame("GO");
 		RobotFrame * vc = createRobotFrame("VC");
@@ -24,7 +24,7 @@ namespace TCP_ROBOT
 		robotFrames.insert("IG", ig);
 		robotFrames.insert("GI", gi);
 
-		// ×¢²áÍê³É
+		// æ³¨å†Œå®Œæˆ
 		setStandFrame(robotFrames);
 
 
@@ -117,23 +117,23 @@ namespace TCP_ROBOT
 			QStringList dataList = reciveData.split(",");
 			if (dataList.constLast() == "10")
 			{
-				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("´íÎó"), __StandQString("ÊÓ¾õÅÄÕÕÊ§°Ü!"));
+				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("é”™è¯¯"), __StandQString("è§†è§‰æ‹ç…§å¤±è´¥!"));
 				messageBox->exec();
-				//QMessageBox::warning(nullptr, "´íÎó", "µç»úÇý¶¯Ê§°Ü!");
+				//QMessageBox::warning(nullptr, "é”™è¯¯", "ç”µæœºé©±åŠ¨å¤±è´¥!");
 			}
 			if (dataList.constLast() == "20")
 			{
-				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("´íÎó"), __StandQString("µ¼¹ìÒÆ¶¯Ê§°Ü!"));
+				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("é”™è¯¯"), __StandQString("å¯¼è½¨ç§»åŠ¨å¤±è´¥!"));
 				messageBox->exec();
 			}
 			if (dataList.constLast() == "30")
 			{
-				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("´íÎó"), __StandQString("×ªÅÌÔËÐÐ´íÎó!"));
+				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("é”™è¯¯"), __StandQString("è½¬ç›˜è¿è¡Œé”™è¯¯!"));
 				messageBox->exec();
 			}
 			if (dataList.constLast() == "40")
 			{
-				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("´íÎó"), __StandQString("Î»ÖÃ²»¿É´ï!"));
+				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("é”™è¯¯"), __StandQString("ä½ç½®ä¸å¯è¾¾!"));
 				messageBox->exec();
 			}
 			setCurrentFrameIsReceived(true);
@@ -148,16 +148,16 @@ namespace TCP_ROBOT
 		QString midStr = __StandQString(">>");
 
 		QLabel *labelHeader = new QLabel(parent);
-		labelHeader->setText(__StandQString("×¼±¸Íê³É "));
+		labelHeader->setText(__StandQString("å‡†å¤‡å®Œæˆ "));
 
 		QLabel *labelSend = new QLabel(parent);
-		labelSend->setText(__StandQString("·¢ËÍ ").append(midStr));
+		labelSend->setText(__StandQString("å‘é€ ").append(midStr));
 
 		QLabel *labelMove = new QLabel(parent);
-		labelMove->setText(__StandQString("ÒÆ¶¯ ").append(midStr));
+		labelMove->setText(__StandQString("ç§»åŠ¨ ").append(midStr));
 
 		QLabel* labelMoveEnd = new QLabel(parent);
-		labelMoveEnd->setText(__StandQString("´ýÃüÖÐ... ").append(midStr));
+		labelMoveEnd->setText(__StandQString("å¾…å‘½ä¸­... ").append(midStr));
 
 		hLay->addWidget(labelHeader);
 		hLay->addWidget(labelMoveEnd);
@@ -165,7 +165,7 @@ namespace TCP_ROBOT
 		hLay->addWidget(labelMove);
 		
 
-		// È«²¿ÖÃ»Ò
+		// å…¨éƒ¨ç½®ç°
 		labelHeader->setEnabled(false);
 		labelSend->setEnabled(false);
 		labelMove->setEnabled(false);
@@ -176,22 +176,22 @@ namespace TCP_ROBOT
 			qDebug() << "TcpRobotCommunication::signalSendSuccessValue " << strValue;
 			if (strValue.contains("GO"))
 			{
-				labelSend->setText(__StandQString("Î»ÖÃÐÅÏ¢·¢ËÍ... ").append(midStr));
+				labelSend->setText(__StandQString("ä½ç½®ä¿¡æ¯å‘é€... ").append(midStr));
 				labelSend->setEnabled(true);
 			}
 			else if (strValue.contains("VC"))
 			{
-				labelSend->setText(__StandQString("ÊÓ¾õ¿ØÖÆ·¢ËÍ... ").append(midStr));
+				labelSend->setText(__StandQString("è§†è§‰æŽ§åˆ¶å‘é€... ").append(midStr));
 				labelSend->setEnabled(true);
 			}
 			else if (strValue.contains("FT"))
 			{
-				labelSend->setText(__StandQString("Î¢µ÷·¢ËÍ... ").append(midStr));
+				labelSend->setText(__StandQString("å¾®è°ƒå‘é€... ").append(midStr));
 				labelSend->setEnabled(true);
 			}
 			else
 			{
-				labelSend->setText(__StandQString("·¢ËÍ  ").append(midStr));
+				labelSend->setText(__StandQString("å‘é€  ").append(midStr));
 				labelSend->setEnabled(false);
 			}
 			
@@ -199,41 +199,41 @@ namespace TCP_ROBOT
 		connect(this, &TcpRobotCommunication::signalRobotCommandFeedback, [=](RobotState command) {
 			if (command == ST_MOVING)
 			{
-				labelMove->setText(__StandQString("ÒÆ¶¯ÖÐ ").append(midStr));
+				labelMove->setText(__StandQString("ç§»åŠ¨ä¸­ ").append(midStr));
 				labelMove->setEnabled(true);
 			}
 			else if (command == ST_READY)
 			{
-				labelMove->setText(__StandQString("×¼±¸Íê³É ").append(midStr));
+				labelMove->setText(__StandQString("å‡†å¤‡å®Œæˆ ").append(midStr));
 				labelMove->setEnabled(false);
 				labelMoveEnd->setEnabled(true);
 			}
 			else if (command == ST_VCING)
 			{
-				labelMove->setText(__StandQString("ÊÓ¾õ¿ØÖÆÖÐ ").append(midStr));
+				labelMove->setText(__StandQString("è§†è§‰æŽ§åˆ¶ä¸­ ").append(midStr));
 				labelMove->setEnabled(true);
 			}
 			else if (command == VC_OVER)
 			{
-				labelMove->setText(__StandQString("ÊÓ¾õ¿ØÖÆ½áÊø ").append(midStr));
+				labelMove->setText(__StandQString("è§†è§‰æŽ§åˆ¶ç»“æŸ ").append(midStr));
 				labelMove->setEnabled(false);
 				labelMoveEnd->setEnabled(true);
 			}
 			else if (command == GO_OVER)
 			{
-				labelMove->setText(__StandQString("Î»ÖÃÐÅÏ¢·¢ËÍÍê³É ").append(midStr));
+				labelMove->setText(__StandQString("ä½ç½®ä¿¡æ¯å‘é€å®Œæˆ ").append(midStr));
 				labelMove->setEnabled(false);
 				labelMoveEnd->setEnabled(true);
 			}
 			else if (command == FT_OVER)
 			{
-				labelMove->setText(__StandQString("Î¢µ÷Íê³É ").append(midStr));
+				labelMove->setText(__StandQString("å¾®è°ƒå®Œæˆ ").append(midStr));
 				labelMove->setEnabled(false);
 				labelMoveEnd->setEnabled(true);
 			}
 			else
 			{
-				labelMove->setText(__StandQString("ÒÆ¶¯ ").append(midStr));
+				labelMove->setText(__StandQString("ç§»åŠ¨ ").append(midStr));
 				labelMove->setEnabled(false);
 			}
 			});

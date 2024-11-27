@@ -751,7 +751,7 @@ namespace TCP_ROBOT
 		formLayoutSafe->setSpacing(8);
 
 		// 安全点名称 + QLineEdit 可编辑可选择
-		QLabel* labelSafe = new QLabel(__StandQString("安全点列表"), m_safePointWidget);
+		QLabel* labelSafe = new QLabel(__StandQString("HOME 列表"), m_safePointWidget);
 		formLayoutSafe->addRow(labelSafe);
 		m_treeWidget = new QTreeWidget(m_safePointWidget);
 		m_treeWidget->setHeaderHidden(true);
@@ -774,14 +774,14 @@ namespace TCP_ROBOT
 	{
 		// 添加标签页 安全点设定
 		QWidget* tabWidgetSafe = new QWidget(this);
-		m_tableWidget->addTab(tabWidgetSafe, __StandQString("设置安全点"));
+		m_tableWidget->addTab(tabWidgetSafe, __StandQString("HOME"));
 		QVBoxLayout* mainLayoutSafe = new QVBoxLayout(tabWidgetSafe);
 
 		// 安全点名称 + QLineEdit 可编辑可选择
 		QHBoxLayout* layoutSafe = new QHBoxLayout(tabWidgetSafe);
-		QLabel* labelSafe = new QLabel(__StandQString("安全点名称"), tabWidgetSafe);
+		QLabel* labelSafe = new QLabel(__StandQString("HOME 名称"), tabWidgetSafe);
 		m_lineEditSafe = new QLineEdit(tabWidgetSafe);
-		m_lineEditSafe->setText(__StandQString("安全点-%1").arg(m_moveStruct.getMaxSaftPointIndex() + 1));
+		m_lineEditSafe->setText(__StandQString("HOME-%1").arg(m_moveStruct.getMaxSaftPointIndex() + 1));
 
 
 
@@ -791,7 +791,7 @@ namespace TCP_ROBOT
 
 		// 安全点序号
 		QHBoxLayout* layoutSafeIndex = new QHBoxLayout(tabWidgetSafe);
-		QLabel* labelSafeIndex = new QLabel(__StandQString("安全点序号"), tabWidgetSafe);
+		QLabel* labelSafeIndex = new QLabel(__StandQString("HOME 序号"), tabWidgetSafe);
 		m_lineEditSaftIndex = new QLineEdit(tabWidgetSafe);
 		m_lineEditSaftIndex->setText(__StandQString("%1").arg(m_moveStruct.getMaxSaftPointIndex() + 1));
 
@@ -802,10 +802,10 @@ namespace TCP_ROBOT
 
 		// 安全点位置
 		QHBoxLayout* layoutSafePosition = new QHBoxLayout(tabWidgetSafe);
-		QLabel* labelSafePosition = new QLabel(__StandQString("安全坐标"), tabWidgetSafe);
+		QLabel* labelSafePosition = new QLabel(__StandQString("HOME 坐标"), tabWidgetSafe);
 		m_lineEditSafePosition = new QLineEdit(tabWidgetSafe);
 		m_lineEditSafePosition->setText(__StandQString(""));
-		m_btnSafePosition = new QPushButton(__StandQString("更新坐标"), tabWidgetSafe);
+		m_btnSafePosition = new QPushButton(__StandQString("更新 HOME 坐标"), tabWidgetSafe);
 		layoutSafePosition->addWidget(labelSafePosition);
 		layoutSafePosition->addWidget(m_lineEditSafePosition);
 		layoutSafePosition->addWidget(m_btnSafePosition);

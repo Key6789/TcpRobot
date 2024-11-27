@@ -1,7 +1,7 @@
 ﻿#pragma once
 #ifndef TCPROBOTMANAGER_GLOBAL_H
 #define TCPROBOTMANAGER_GLOBAL_H
-
+#include <QTimer>
 #include <Eigen/Dense>
 #include <QtCore/qglobal.h>
 #include <QTableWidget>
@@ -301,7 +301,7 @@
 #include <QTextStream>
 #include <QFileDialog>
 #include <QColorDialog>
-
+#include <QMessageBox>
 #include "TcpXViewBase.h"
 #include <QFormLayout>
 
@@ -342,8 +342,13 @@ using namespace QCUSWIDGETLIB;
 #define ROBOTUNABLEVALUE -1
 #if defined(TCPROBOT_LIBRARY)
 #define TCPROBOT_EXPORT Q_DECL_EXPORT
+#else 
+#if defined(TCPROBOT_EXE)
+#define TCPROBOT_EXPORT  
 #else
 #define TCPROBOT_EXPORT Q_DECL_IMPORT
+#endif
+
 #endif
 
 //! mouse actions.
@@ -989,7 +994,7 @@ struct WorkpieceStruct
 	{
 		QStringList leaveTrajectoryList;
 		QStringList enterTrajectoryList = getEnterTrajectoryList();
-		for (int i = enterTrajectoryList.size()-1; i >= 0; i--)
+		for (int i = enterTrajectoryList.size() - 1; i >= 0; i--)
 		{
 			leaveTrajectoryList.append(enterTrajectoryList[i]);
 		}
@@ -1210,7 +1215,7 @@ struct MoveStruct
 							saftIndexListTemp.append(MoveMap[it.key()].SaftPointPosition);
 						}
 					}
-					for (int i = saftIndexListTemp.size()-1; i >= 0; i--)
+					for (int i = saftIndexListTemp.size() - 1; i >= 0; i--)
 					{
 						saftIndexList.append(saftIndexListTemp[i]);
 					}

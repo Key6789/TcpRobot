@@ -4,7 +4,8 @@ namespace TCP_ROBOT
 {
 	RobotPreview::RobotPreview(QWidget* parent)
 	{
-
+		displayCoordinateAxes();
+		myView->FitAll();
 	}
 	RobotPreview::~RobotPreview()
 	{

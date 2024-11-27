@@ -466,6 +466,8 @@ namespace TCP_ROBOT
 		QVector<TopoDS_Shape> vector = data.shapes;
 		QVector<Handle(AIS_Shape)> vectortemp;
 
+		gp_Trsf trsf;
+		trsf.SetTransformation(data.ShapeAxl3, gp_Ax3());
 		// 去除旧有的显示
 		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
 		{
@@ -480,10 +482,8 @@ namespace TCP_ROBOT
 
 		for (int i = 0; i < vector.size(); ++i)
 		{
-			gp_Trsf trsf;
-			trsf.SetTransformation(data.ShapeAxl3, gp_Ax3());
-			TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
 			
+			TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
 			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(transformedShape);
 			aisShapeTemp->SetColor(data.color);
 			vectortemp.push_back(aisShapeTemp);

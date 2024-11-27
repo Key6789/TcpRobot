@@ -20,6 +20,10 @@ namespace TCP_ROBOT
 		// 构造
 		RobotCore(QWidget* parent = nullptr);
 		~RobotCore();
+
+		QWidget* initZeroWidget(QWidget* parent = nullptr);
+		void initZeroData();
+
 		void printTransform(const gp_Trsf& transform, const QString& message)
 		{
 			qDebug() << message.toStdString().c_str();
@@ -83,6 +87,9 @@ namespace TCP_ROBOT
 		void removeShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA data);
 		void removeAllShapes();
 
+	signals:
+		void signalUpdateRobotShaps(bool isUpdate);
+
 	public slots:
 		// 自适应显示
 		void slotFitAllView() { myView->FitAll(); };
@@ -95,6 +102,7 @@ namespace TCP_ROBOT
 		// tools
 		// 文件读入
 		QVariantMap readJsonFileToMap(QString filePath);
+		void writeJsonFileFromMap(QString filePath, QVariantMap map);
 
 		// 工件集合
 		QMap<QString, ADDROBOTDATA> m_shapesMap = QMap<QString, ADDROBOTDATA>();
@@ -102,7 +110,9 @@ namespace TCP_ROBOT
 		QMap<QString, ADDROBOTDATA> m_otherMap = QMap<QString, ADDROBOTDATA>();
 
 
-
+		QStringList m_currentPostion = QStringList();
+		bool m_isUpdate = true;
+		bool m_isActiveMove = false;
 
 
 	};

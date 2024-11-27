@@ -22,12 +22,12 @@ namespace TCP_ROBOT
 		QTabWidget* tabWidget = new QTabWidget(preview);
 		mainLayout->addWidget(tabWidget, 1);
 
-		m_robotPreview = new RobotPreview(preview);
+		m_robotPreview->setParent(preview);
 
 		tabWidget->addTab(showPreview(preview), __StandQString("工件配置"));
 		tabWidget->addTab(showGuidePreview(preview), __StandQString("导轨配置"));
 		tabWidget->addTab(showRobotPreview(preview), __StandQString("机器人配置"));
-
+		tabWidget->addTab(m_robotCore->initZeroWidget(preview), __StandQString("零点设置"));
 		mainLayout->addWidget(m_robotPreview, 5);
 		m_robotPreview->resize(600, 600);
 
@@ -284,7 +284,7 @@ namespace TCP_ROBOT
 					file.close();
 				}
 			}
-				
+
 
 
 			m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
@@ -355,14 +355,14 @@ namespace TCP_ROBOT
 
 			});
 		connect(deleteHoleButton, &QPushButton::clicked, [=]() {
-			// 删除列表项
-			int row = holeListWidget->currentRow();
-			holeListWidget->takeItem(row);
-
 			// 刷新预览
 			preViewHole->setShapeStruct(SHAPESTRUCT());
 			m_shapeMap.remove(holeListWidget->currentItem()->text());
 			saveButtonHole->setEnabled(false);
+
+			// 删除列表项
+			int row = holeListWidget->currentRow();
+			holeListWidget->takeItem(row);
 			});
 
 		connect(saveButtonHole, &QPushButton::clicked, [=]() {
@@ -629,8 +629,14 @@ namespace TCP_ROBOT
 			SHAPESTRUCT shortShapeStruct = preViewShort->getShapeStruct();
 			SHAPESTRUCT rotationShapeStruct = preViewRotation->getShapeStruct();
 
-			longShapeStruct.nextShapeNames.append(shortShapeStruct.ShapeName);
-			shortShapeStruct.nextShapeNames.append(rotationShapeStruct.ShapeName);
+			if (!longShapeStruct.nextShapeNames.contains(shortShapeStruct.ShapeName))
+			{
+				longShapeStruct.nextShapeNames.append(shortShapeStruct.ShapeName);
+			}
+			if (!shortShapeStruct.nextShapeNames.contains(rotationShapeStruct.ShapeName))
+			{
+				shortShapeStruct.nextShapeNames.append(rotationShapeStruct.ShapeName);
+			}
 
 			variantMap.insert(longShapeStruct.ShapeName, longShapeStruct.getShapeVariantMap());
 			variantMap.insert(shortShapeStruct.ShapeName, shortShapeStruct.getShapeVariantMap());
@@ -674,7 +680,7 @@ namespace TCP_ROBOT
 
 		QLabel* label = new QLabel(table);
 		label->setText(__StandQString("工艺信息"));
-		m_robot7103Grid = new Robot7103Grid(table);
+		m_robot7103Grid->setParent(table);
 		mainLayout->addWidget(label);
 		mainLayout->addWidget(m_robot7103Grid);
 
@@ -686,12 +692,12 @@ namespace TCP_ROBOT
 		QWidget* robotCore = new QWidget(parent);
 		robotCore->setWindowTitle(__StandQString("核心显示"));
 		QVBoxLayout* mainLayout = new QVBoxLayout(robotCore);
-		m_robotCore = new RobotCore(robotCore);
+		m_robotCore->setParent(robotCore);
 		m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
 		m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
 		m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
 		mainLayout->addWidget(m_robotCore);
-		initConnect();
+		//initConnect();
 		return robotCore;
 	}
 
@@ -700,9 +706,9 @@ namespace TCP_ROBOT
 		QWidget* teaching = new QWidget(parent);
 		teaching->setWindowTitle(__StandQString("示教模式"));
 		QVBoxLayout* mainLayout = new QVBoxLayout(teaching);
-		m_teaching = new RobotoDemonstrator(teaching);
+		m_teaching ->setParent(teaching);
 		mainLayout->addWidget(m_teaching);
-		initConnect();
+		//initConnect();
 		return teaching;
 	}
 
@@ -723,6 +729,14 @@ namespace TCP_ROBOT
 			return;
 		}
 		m_tcpRobotCom->setIPAndPort(ip, port);
+		if (m_robot7103Grid != nullptr)
+		{
+			m_robot7103Grid->setTcpCommunication(m_tcpRobotCom);
+		}
+		if (m_teaching != nullptr)
+		{
+			m_teaching->setTcpCommunication(m_tcpRobotCom);
+		}
 	}
 
 
@@ -752,24 +766,37 @@ namespace TCP_ROBOT
 
 		m_tcpRobotCom = new TcpRobotCommunication(this);
 		m_tcpRobotCom->setIPAndPort("127.0.0.1", 8080);
+
+		// 模型预览
+		m_robotPreview = new RobotPreview(this);
+		// 模型核心
+		m_robotCore = new RobotCore(this);
+		// 表格
+		m_robot7103Grid = new Robot7103Grid(this);
+		// 示教
+		m_teaching = new RobotoDemonstrator(this);
+
+		initConnect();
 	}
 
 	void ROSRobot::initConnect()
 	{
 
 
-		disconnect(m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
+		/*disconnect(m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_robotCore, &RobotCore::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
 		disconnect(m_robot7103Grid, &Robot7103Grid::signalChangeShapeColor, m_robotCore, &RobotCore::slotChangeShapeColor);
-		disconnect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);
+		disconnect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);*/
 
 		connect(this, &ROSRobot::seletedWorkChanged, m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged);
 		connect(this, &ROSRobot::seletedWorkChanged, m_robotCore, &RobotCore::slotSeletedWorkChanged);
 		connect(this, &ROSRobot::seletedWorkChanged, m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged);
 		connect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
 		connect(m_robot7103Grid, &Robot7103Grid::signalChangeShapeColor, m_robotCore, &RobotCore::slotChangeShapeColor);
+
+		connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);
 
 		ISNULLPOINTER(m_tcpRobotCom);
 		m_standFrame = m_tcpRobotCom->getStandFrame("PS");
@@ -829,8 +856,13 @@ namespace TCP_ROBOT
 		// 处理并插值
 		QMap<QString, SHAPESTRUCT> resultMap;
 
+		// DH 参数 列表
 		QVector<QVector<double>> DHVec;
+
+		// DH 类
 		SDHRobot* robot = new SDHRobot();
+
+		// 遍历排序后的map
 		for (auto it = tempMap.begin(); it != tempMap.end(); ++it)
 		{
 			QVector<SHAPESTRUCT> vec = it.value();
@@ -868,7 +900,7 @@ namespace TCP_ROBOT
 				}
 				robot->setDHParameters(DHVec);
 
-				if (DHVec.size() > 0)
+				if (vec[i].ShapeLink)
 				{
 					// poxisitionX
 					QVector<double> position = robot->getCurrentExtractPosition(DHVec.size());
@@ -890,7 +922,10 @@ namespace TCP_ROBOT
 				{
 					for (int j = 0; j < tempIt.value().size(); j++)
 					{
-						vec[i].nextShapeNames.append(tempIt.value()[j].ShapeName);
+						if (!vec[i].nextShapeNames.contains(tempIt.value()[j].ShapeName))
+						{
+							vec[i].nextShapeNames.append(tempIt.value()[j].ShapeName);
+						}
 					}
 				}
 				resultMap.insert(vec[i].ShapeName, vec[i]);
@@ -1184,9 +1219,18 @@ namespace TCP_ROBOT
 			m_shapeAngleZ->setEnabled(true);
 		}
 
+		QPushButton* applyButton = new QPushButton(this);
+		applyButton->setText(__StandQString("预览"));
+		leftLayout->addWidget(applyButton);
+
+		connect(applyButton, &QPushButton::clicked, [=]() {
+			// 触发应用
+			ISNULLPOINTER(m_robotPreview);
+			m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+			});
 
 		leftLayout->addStretch(1);
-		initConnect();
+		//initConnect();
 
 	}
 
@@ -1324,8 +1368,8 @@ namespace TCP_ROBOT
 			m_shapePath->setText(fileName);
 			m_shapeStruct.ShapePath = fileName;
 		}
-		ISNULLPOINTER(m_robotPreview);
-		m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
+		//ISNULLPOINTER(m_robotPreview);
+		//m_robotPreview->slotReplaceModelByPath(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeColor()
 	{
@@ -1337,42 +1381,42 @@ namespace TCP_ROBOT
 			m_shapeStruct.ShapeColor = color.name();
 			m_shapeColor->setText(color.name());
 		}
-		m_robotPreview->slotChangPreviewColor(m_shapeStruct);
+		//m_robotPreview->slotChangPreviewColor(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeScale()
 	{
 		m_shapeStruct.ShapeScale = m_shapeScale->text();
-		m_robotPreview->slotChangedPreviewScale(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewScale(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapePosX()
 	{
 		m_shapeStruct.ShapePositionX = m_shapePosX->text();
-		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapePosY()
 	{
 		m_shapeStruct.ShapePositionY = m_shapePosY->text();
-		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapePosZ()
 	{
 		m_shapeStruct.ShapePositionZ = m_shapePosZ->text();
-		m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewTranslation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeAngleX()
 	{
 		m_shapeStruct.ShapeAngleX = m_shapeAngleX->text();
-		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeAngleY()
 	{
 		m_shapeStruct.ShapeAngleY = m_shapeAngleY->text();
-		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeAngleZ()
 	{
 		m_shapeStruct.ShapeAngleZ = m_shapeAngleZ->text();
-		m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
+		//m_robotPreview->slotChangedPreviewRotation(m_shapeStruct);
 	}
 	void ShapeCommondPreview::readShapeName()
 	{

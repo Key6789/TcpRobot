@@ -40,7 +40,7 @@ namespace TCP_ROBOT
 		void setCommunicationPointer(TcpRobotCommunication* tcpRobotCom);
 		void setIpAndPort(const QString& ip, const int& port);
 		TcpRobotCommunication* getCommunicationPointer() {return m_tcpRobotCom; };
-
+		RobotCore* getRobotCore() { return m_robotCore; }
 	signals:
 		// 选中的工作名称变化信号
 		void seletedWorkChanged(QString workName);
@@ -61,7 +61,7 @@ namespace TCP_ROBOT
 
 		bool saveToJsonFile(const QVariantMap& data, const QString& filePath);
 
-
+		
 	private:
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
