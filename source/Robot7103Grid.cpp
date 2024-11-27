@@ -48,6 +48,7 @@ namespace TCP_ROBOT
 	{
 		// 全部清理
 		clear();
+		clearContents();
 		// 表头
 		initOriginalParams();
 
@@ -595,8 +596,24 @@ namespace TCP_ROBOT
 			return;
 		}
 		m_currentWork = text;
+		clear();
+		m_rowMap.clear();
+		m_vcMap.clear();
+		m_moveStruct.clear();
+		m_currentSaftIndex = ROBOTUNABLEVALUE;
+		m_currentWorkIndex = ROBOTUNABLEVALUE;
+		m_currentTrackIndex = ROBOTUNABLEVALUE;
 
-		initParamTableWidget();
+		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
+		// 刷新界面
+		qDebug() << "m_moveStruct.MoveMap.size():" << m_moveStruct.MoveMap[0].getWorkpieceList();
+		setColumnCount(0);
+		setRowCount(0);
+
+		initUI();
+		
+	
+
 	}
 	RobotoDemonstrator::RobotoDemonstrator(QWidget* parent)
 	{

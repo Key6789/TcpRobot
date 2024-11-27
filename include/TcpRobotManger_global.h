@@ -1139,6 +1139,11 @@ struct MoveStruct
 	QMap<int, SaftPointStruct> MoveMap; // 点参数
 	QString WorkName = "NULL"; // 工作名称
 
+	void clear()
+	{
+		MoveMap.clear();
+		WorkName = "NULL";
+	}
 
 	QStringList getSendValueList(int saftCurrent, int workCurrent, int nextSaft, int nextWork)
 	{
@@ -1305,6 +1310,7 @@ struct MoveStruct
 
 	void LoadJson(QString path)
 	{
+		clear();
 		QFile file(path);
 		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
