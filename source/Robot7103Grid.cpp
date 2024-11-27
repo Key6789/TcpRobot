@@ -272,24 +272,24 @@ namespace TCP_ROBOT
 		if (m_currentSaftIndex == -1)
 		{
 			// 按钮 文本为 我已确认安全
-			QMessageBox * messageBox = new QMessageBox(
-				QMessageBox::Warning, 
+			QMessageBox* messageBox = new QMessageBox(
+				QMessageBox::Warning,
 				__StandQString("警告"),
 				__StandQString("为确保安全,请手动移动到安全位置！"),
-				QMessageBox::Ok,this);
+				QMessageBox::Ok, this);
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
 			messageBox->exec();
 
 		}
-
+		
 		QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
 
 		foreach(QString value, sendValueList)
 		{
 			if (getTcpCommunication())
 			{
-				getTcpCommunication()->sendValue("GO",value);
+				getTcpCommunication()->sendValue("GO", value);
 			}
 		}
 		// 按照 安全点、工件、轨迹 进行定位
@@ -449,15 +449,19 @@ namespace TCP_ROBOT
 		if (m_tcpRobotCom)
 		{
 			RobotFrame* robotFrame = qobject_cast<RobotFrame*>(m_tcpRobotCom->getStandFrame("VC"));
-			connect(robotFrame, &RobotFrame::signalReciveValue, [=](QString vcName) {
+			connect(robotFrame, &RobotFrame::signalAllReceived, [=](QString vcName) {
+				qDebug() << "VC Name:" << vcName;
 				if (vcName.contains("VC0")) {
-					vcList->addItem("α"); m_vcMap.insert("α", vcName);
+					//vcList->addItem(__StandQString("α")); 
+					m_vcMap.insert(__StandQString("α"), vcName);
 				}
 				else if (vcName.contains("VC1")) {
-					vcList->addItem("β1"); m_vcMap.insert("β1", vcName);
+					//vcList->addItem(__StandQString("β1")); 
+					m_vcMap.insert(__StandQString("β1"), vcName);
 				}
 				else if (vcName.contains("VC2")) {
-					vcList->addItem("β2"); m_vcMap.insert("β2", vcName);
+					//vcList->addItem(__StandQString("β2")); 
+					m_vcMap.insert(__StandQString("β2"), vcName);
 				}
 				else {}
 				});
@@ -477,6 +481,12 @@ namespace TCP_ROBOT
 					return;
 				}
 				QString VcValue = m_vcMap[vcList->getCurrentItemText()];
+				VcValue.trimmed();
+				QStringList applyList = VcValue.split(",");
+				if (applyList.size() == 10) {
+					VcValue = applyList.mid(1,8).join(",");
+				}
+			
 				if (getTcpCommunication())
 				{
 					getTcpCommunication()->sendValue("GO", VcValue);
@@ -574,6 +584,7 @@ namespace TCP_ROBOT
 		if (rowValues.size() < 3) {
 			return;
 		}
+		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
 		blockSignals(true);
 		addWorkpieceJson(getRowIndex(), rowValues, saftIndex, workIndex, trackIndex);
 		blockSignals(false);
@@ -1139,7 +1150,7 @@ namespace TCP_ROBOT
 		}
 		else
 		{
-			QMessageBox::warning(this, __StandQString("警告"), __StandQString("请先设置安全点序号！"));
+			QMessageBox::warning(this, __StandQString("警告"), __StandQString("请先设置 HOME 序号！"));
 		}
 
 		//addSafePoint();

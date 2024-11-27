@@ -44,6 +44,9 @@ namespace TCP_ROBOT
 		void parseFrame(const QByteArray& byte) override;
 		void sendStandValue() override;
 
+	signals:
+			void signalAllReceived(const QString& command);
+
 
 	};
 }

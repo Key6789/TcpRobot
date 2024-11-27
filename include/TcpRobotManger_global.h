@@ -1083,7 +1083,7 @@ struct WorkpieceStruct
 struct SaftPointStruct
 {
 	int SaftPointIndex = -1; // 点序号
-	QString SaftPointName = __StandQString("安全点-").append(QString::number(SaftPointIndex)); // 点名称
+	QString SaftPointName = __StandQString("HOME-").append(QString::number(SaftPointIndex)); // 点名称
 	QString SaftPointJsonName = __StandQString("SaftPoint_").append(QString::number(SaftPointIndex)); // json点名称
 	QString SaftPointPosition = ""; // 点位置X
 

@@ -255,8 +255,10 @@ namespace TCP_ROBOT
 		
 		QString reciveData = byte.data();
 		reciveData = reciveData.trimmed();
+		emit signalAllReceived(reciveData);
 		if (reciveData.contains(getReciveStandFrameHearder()))
 		{
+			
 			QStringList dataList = reciveData.split(",");
 			if (dataList.size() == 10)
 			{
