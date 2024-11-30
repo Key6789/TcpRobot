@@ -37,10 +37,27 @@ namespace TCP_ROBOT
 		// 用于显示 示教
 		QWidget* showTeaching(QWidget* parent = nullptr);
 
+		// 设置通信指针
 		void setCommunicationPointer(TcpRobotCommunication* tcpRobotCom);
+
+		// 设置IP地址和端口
 		void setIpAndPort(const QString& ip, const int& port);
-		TcpRobotCommunication* getCommunicationPointer() {return m_tcpRobotCom; };
+
+		// 获取通信指针
+		TcpRobotCommunication* getCommunicationPointer() { return m_tcpRobotCom; };
+
+		// 获取机器人核心
 		RobotCore* getRobotCore() { return m_robotCore; }
+
+		// 获取机器人预览
+		RobotPreview* getRobotPreview() { return m_robotPreview; }
+
+		// 获取机器人7103网格
+		Robot7103Grid* getRobot7103Grid() { return m_robot7103Grid; }
+
+		// 获取教学演示器
+		RobotoDemonstrator* getTeaching() { return m_teaching; }
+
 	signals:
 		// 选中的工作名称变化信号
 		void seletedWorkChanged(QString workName);
@@ -61,23 +78,23 @@ namespace TCP_ROBOT
 
 		bool saveToJsonFile(const QVariantMap& data, const QString& filePath);
 
-		
+
 	private:
 		QMap<QString, SHAPESTRUCT> m_shapeMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_robotMap = QMap<QString, SHAPESTRUCT>();
 		QMap<QString, SHAPESTRUCT> m_otherMap = QMap<QString, SHAPESTRUCT>();
-		
+
 		// 通讯管理器
-		TcpRobotCommunication *m_tcpRobotCom = nullptr;
+		TcpRobotCommunication* m_tcpRobotCom = nullptr;
 
 		// 模型预览
 		RobotPreview* m_robotPreview = nullptr;
 		// 模型核心
 		RobotCore* m_robotCore = nullptr;
 		// 表格
-		Robot7103Grid * m_robot7103Grid = nullptr;
+		Robot7103Grid* m_robot7103Grid = nullptr;
 		// 示教
-		RobotoDemonstrator * m_teaching = nullptr;
+		RobotoDemonstrator* m_teaching = nullptr;
 
 		QString m_currentWork = QString();
 
@@ -91,7 +108,7 @@ namespace TCP_ROBOT
 		ShapeCommondPreview(QWidget* parent = nullptr);
 		~ShapeCommondPreview();
 
-		void setRobotPreviewPoint(RobotPreview* robotPreview );
+		void setRobotPreviewPoint(RobotPreview* robotPreview);
 
 		// 设置形状结构体
 		void setShapeStruct(SHAPESTRUCT shapeStruct);
@@ -181,7 +198,7 @@ namespace TCP_ROBOT
 		QLineEdit* m_linkADistance = nullptr;
 
 		QComboBox* m_shapeTypeComboBox = nullptr;
-		
+
 		QCheckBox* m_checkLink = nullptr;
 
 		QPushButton* m_readShapePathButton = nullptr;

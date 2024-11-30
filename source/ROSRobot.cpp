@@ -12,6 +12,11 @@ namespace TCP_ROBOT
 	}
 	ROSRobot::~ROSRobot()
 	{
+		if(m_tcpRobotCom)
+		{
+			delete m_tcpRobotCom;
+			m_tcpRobotCom = nullptr;
+		}
 	}
 
 	QWidget* ROSRobot::show7103ShapePreview(QWidget* parent)
@@ -1231,7 +1236,7 @@ namespace TCP_ROBOT
 			});
 
 		leftLayout->addStretch(1);
-		//initConnect();
+		initConnect();
 
 	}
 
@@ -1363,9 +1368,13 @@ namespace TCP_ROBOT
 	void ShapeCommondPreview::readShapePath()
 	{
 		// 打开文件选择对话框
-		QString fileName = QFileDialog::getOpenFileName(this, __StandQString("选择模型文件"), QDir::currentPath(), __StandQString("*.step"));
-		if (!fileName.isEmpty())
+		QFileDialog * fileDialog = new QFileDialog(this);
+		fileDialog->setFileMode(QFileDialog::ExistingFile);
+		fileDialog->setNameFilter(__StandQString("*.step"));
+		fileDialog->setViewMode(QFileDialog::Detail);
+		if (fileDialog->exec())
 		{
+			QString fileName = fileDialog->selectedFiles()[0];
 			m_shapePath->setText(fileName);
 			m_shapeStruct.ShapePath = fileName;
 		}

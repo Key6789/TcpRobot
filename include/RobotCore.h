@@ -114,6 +114,7 @@ namespace TCP_ROBOT
 		bool m_isUpdate = true;
 		bool m_isActiveMove = false;
 
+		double m_rowRate = 1.0;
 
 	};
 }

@@ -144,97 +144,70 @@ namespace TCP_ROBOT
 	QWidget* TcpRobotCommunication::commandFeedbackUI(QWidget* parent)
 	{
 		CWidgetHLay *hLay = new CWidgetHLay(parent);
-		hLay->setStyleSheet("QLabel{color: #0000FF;}");
-		QString midStr = __StandQString(">>");
 
-		QLabel *labelHeader = new QLabel(parent);
-		labelHeader->setText(__StandQString("准备完成 "));
+		QPushButton* buttonCommand = new QPushButton(hLay);
+		buttonCommand->setText(__StandQString("下发指令"));
+		hLay->addWidget(buttonCommand);
 
-		QLabel *labelSend = new QLabel(parent);
-		labelSend->setText(__StandQString("发送 ").append(midStr));
-
-		QLabel *labelMove = new QLabel(parent);
-		labelMove->setText(__StandQString("移动 ").append(midStr));
-
-		QLabel* labelMoveEnd = new QLabel(parent);
-		labelMoveEnd->setText(__StandQString("待命中... ").append(midStr));
-
-		hLay->addWidget(labelHeader);
-		hLay->addWidget(labelMoveEnd);
-		hLay->addWidget(labelSend);
-		hLay->addWidget(labelMove);
+		QPushButton* buttonReset = new QPushButton(hLay);
+		buttonReset->setText(__StandQString("指令状态"));
+		hLay->addWidget(buttonReset);
 		
-
-		// 全部置灰
-		labelHeader->setEnabled(false);
-		labelSend->setEnabled(false);
-		labelMove->setEnabled(false);
-		labelMoveEnd->setEnabled(false);
-
 		connect(this, &TcpRobotCommunication::signalSendSuccessValue, [=](QByteArray value) {
 			QString strValue = value.data();
 			qDebug() << "TcpRobotCommunication::signalSendSuccessValue " << strValue;
 			if (strValue.contains("GO"))
 			{
-				labelSend->setText(__StandQString("位置信息发送... ").append(midStr));
-				labelSend->setEnabled(true);
+				buttonCommand->setText(__StandQString("位置信息发送"));
 			}
 			else if (strValue.contains("VC"))
 			{
-				labelSend->setText(__StandQString("视觉控制发送... ").append(midStr));
-				labelSend->setEnabled(true);
+				buttonCommand->setText(__StandQString("视觉控制发送"));
 			}
 			else if (strValue.contains("FT"))
 			{
-				labelSend->setText(__StandQString("微调发送... ").append(midStr));
-				labelSend->setEnabled(true);
+				buttonCommand->setText(__StandQString("微调发送"));
 			}
 			else
 			{
-				labelSend->setText(__StandQString("发送  ").append(midStr));
-				labelSend->setEnabled(false);
+				buttonCommand->setText(__StandQString("指令发送"));
 			}
 			
 			});
 		connect(this, &TcpRobotCommunication::signalRobotCommandFeedback, [=](RobotState command) {
 			if (command == ST_MOVING)
 			{
-				labelMove->setText(__StandQString("移动中 ").append(midStr));
-				labelMove->setEnabled(true);
+				buttonReset->setText(__StandQString("移动中"));
 			}
 			else if (command == ST_READY)
 			{
-				labelMove->setText(__StandQString("准备完成 ").append(midStr));
-				labelMove->setEnabled(false);
-				labelMoveEnd->setEnabled(true);
+				buttonReset->setText(__StandQString("准备就绪"));
 			}
 			else if (command == ST_VCING)
 			{
-				labelMove->setText(__StandQString("视觉控制中 ").append(midStr));
-				labelMove->setEnabled(true);
+				buttonCommand->setText(__StandQString("视觉控制发送"));
+				buttonReset->setText(__StandQString("视觉控制中"));
 			}
 			else if (command == VC_OVER)
 			{
-				labelMove->setText(__StandQString("视觉控制结束 ").append(midStr));
-				labelMove->setEnabled(false);
-				labelMoveEnd->setEnabled(true);
+				buttonCommand->setText(__StandQString("视觉控制发送"));
+				buttonReset->setText(__StandQString("视觉控制完成"));
 			}
 			else if (command == GO_OVER)
 			{
-				labelMove->setText(__StandQString("位置信息发送完成 ").append(midStr));
-				labelMove->setEnabled(false);
-				labelMoveEnd->setEnabled(true);
+				buttonCommand->setText(__StandQString("位置信息发送"));
+				buttonReset->setText(__StandQString("位置信息完成"));
 			}
 			else if (command == FT_OVER)
 			{
-				labelMove->setText(__StandQString("微调完成 ").append(midStr));
-				labelMove->setEnabled(false);
-				labelMoveEnd->setEnabled(true);
+				buttonCommand->setText(__StandQString("微调发送"));
+				buttonReset->setText(__StandQString("微调完成"));
 			}
 			else
 			{
-				labelMove->setText(__StandQString("移动 ").append(midStr));
-				labelMove->setEnabled(false);
+				buttonCommand->setText(__StandQString("指令发送"));
+				buttonReset->setText(__StandQString("指令状态"));
+
 			}
 			});
 

@@ -28,7 +28,9 @@ namespace TCP_ROBOT
 			__StandQString("机器轴-3") <<
 			__StandQString("机器轴-4") <<
 			__StandQString("机器轴-5") <<
-			__StandQString("机器轴-6"));
+			__StandQString("机器轴-6") <<
+			__StandQString("外部轴-1") <<
+			__StandQString("外部轴-2"));
 
 		pTable->setItem(0, 0, new QTableWidgetItem(0));
 		pTable->setItem(1, 0, new QTableWidgetItem(0));
@@ -36,6 +38,8 @@ namespace TCP_ROBOT
 		pTable->setItem(3, 0, new QTableWidgetItem(0));
 		pTable->setItem(4, 0, new QTableWidgetItem(0));
 		pTable->setItem(5, 0, new QTableWidgetItem(0));
+		pTable->setItem(6, 0, new QTableWidgetItem(0));
+		pTable->setItem(7, 0, new QTableWidgetItem(0));
 
 		pTable->setItem(0, 1, new QTableWidgetItem(0));
 		pTable->setItem(1, 1, new QTableWidgetItem(0));
@@ -43,6 +47,17 @@ namespace TCP_ROBOT
 		pTable->setItem(3, 1, new QTableWidgetItem(0));
 		pTable->setItem(4, 1, new QTableWidgetItem(0));
 		pTable->setItem(5, 1, new QTableWidgetItem(0));
+		pTable->setItem(6, 1, new QTableWidgetItem(0));
+		pTable->setItem(7, 1, new QTableWidgetItem(0));
+
+		CLabDoubleSpinBox* pDoubleSpinBox = new CLabDoubleSpinBox(pLayout);
+		pDoubleSpinBox->setLabelText(__StandQString("行程比 360°: "));
+		pDoubleSpinBox->setRange(0.0, INT_MAX);
+		pDoubleSpinBox->setSingleStep(0.01);
+		pDoubleSpinBox->setValue(1.0);
+		pDoubleSpinBox->setSuffix(__StandQString("mm"));
+		pLayout->addWidget(pDoubleSpinBox);
+
 		QCheckBox* pCheckBox = new QCheckBox(__StandQString("模型刷新"), pLayout);
 		pCheckBox->setChecked(false);
 		connect(pCheckBox, &QCheckBox::stateChanged, [=](int state) {
@@ -60,12 +75,20 @@ namespace TCP_ROBOT
 					m_isUpdate = jsonMap[key].toBool();
 					continue;
 				}
+				if (key == "rowRatio")
+				{
+					pDoubleSpinBox->setValue(jsonMap[key].toDouble());
+					m_rowRate = jsonMap[key].toDouble();
+					continue;
+				}
 				QVariantMap shapeMap = jsonMap[key].toMap();
 				foreach(QString shapeName, shapeMap.keys()) {
 					pTable->item(key.toInt(), shapeName.toInt())->setText(shapeMap[shapeName].toString());
 				}
 			}
 		}
+
+
 
 		CBtnsHBox* pBtns = new CBtnsHBox(pLayout);
 		pBtns->setContentsMargins(0, 0, 0, 0);
@@ -75,14 +98,14 @@ namespace TCP_ROBOT
 		pBtns->addBtn(2, __StandQString("应用"));
 
 		pBtns->setConnect(2, [=]() {
-			if (m_currentPostion.size() < 6)
+			if (m_currentPostion.size() < 8)
 			{
 
 			}
 			else
 			{
 				// 更新 前六位
-				for (int i = 0; i < 6; i++)
+				for (int i = 0; i < 8; i++)
 				{
 					QTableWidgetItem* pItem_1 = pTable->item(i, 1);
 					if (pItem_1)
@@ -104,17 +127,17 @@ namespace TCP_ROBOT
 
 		pBtns->setConnect(0, [=]() {
 			// 更新
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < 8; i++)
 			{
-				if (m_currentPostion.size() < 6)
+				if (m_currentPostion.size() < 8)
 				{
 					// 自动补足
-					QMessageBox::warning(parent, __StandQString("警告"), __StandQString("当前坐标轴数量不足6个，请补足坐标轴！"));
+					QMessageBox::warning(parent, __StandQString("警告"), __StandQString("当前坐标轴数量不足8个，请补足坐标轴！"));
 					return;
 				}
 				else
 				{
-					for (int j = 0; j < 6; j++)
+					for (int j = 0; j < 8; j++)
 					{
 						QTableWidgetItem* pItem_1 = pTable->item(i, 1);
 						if (pItem_1)
@@ -129,7 +152,7 @@ namespace TCP_ROBOT
 			});
 		pBtns->setConnect(1, [=]() {
 			QVariantMap jsonMap;
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < 8; i++)
 			{
 				QTableWidgetItem* pItem_0 = pTable->item(i, 0);
 				QTableWidgetItem* pItem_1 = pTable->item(i, 1);
@@ -143,8 +166,14 @@ namespace TCP_ROBOT
 				jsonMap.insert(QString::number(i), shapeMap);
 			}
 			jsonMap.insert("update", pCheckBox->isChecked());
+			jsonMap.insert("rowRatio", pDoubleSpinBox->value());
 			writeJsonFileFromMap(ROBOTPATH.append("/").append("ZeroPoint.json"), jsonMap);
 			});
+
+		pLayout->addStretch();
+		// 
+
+
 		return pLayout;
 	}
 	void RobotCore::initZeroData()
@@ -163,12 +192,23 @@ namespace TCP_ROBOT
 				{
 					continue;
 				}
+				if (key == "rowRatio")
+				{
+					m_rowRate = jsonMap[key].toDouble();
+					continue;
+				}
 				QVariantMap shapeMap = jsonMap[key].toMap();
 				shapeNames.append(shapeMap["1"].toString());
 			}
+			// 如果小于 8 个 补足
+			if (shapeNames.size() < 8)
+			{
+				for (int i = 0; i < 9 - shapeNames.size(); i++)
+				{
+					shapeNames.append("0");
+				}
+			}
 			m_currentPostion = shapeNames;
-			m_currentPostion.append("0");
-			m_currentPostion.append("0");
 		}
 	}
 	void RobotCore::slotShapMove(QString shapeValue)
@@ -187,6 +227,7 @@ namespace TCP_ROBOT
 		// 判断 m_currentPostion = shapeValues 是否有变化
 		if (m_currentPostion == shapeValues)
 		{
+			emit signalUpdateRobotShaps(false);
 			// 无变化 退出
 			return;
 		}
@@ -197,17 +238,17 @@ namespace TCP_ROBOT
 		}
 
 		//emit signalUpdateRobotShaps(true);
-		
+
 		// 启动 定时器 20 ms 后开始触发，给界面反应时间
-		QTimer *timer = new QTimer(this);
+		QTimer* timer = new QTimer(this);
 		timer->start();
 
-		qDebug() << "timer.start:" ;
-		
+		qDebug() << "timer.start:";
+
 		connect(timer, &QTimer::timeout, [=]() {
 			// 取前6个参数
 			timer->stop();
-			qDebug() << "updateRobotShaps:" ;
+			qDebug() << "updateRobotShaps:";
 			double robot1 = shapeValues.at(0).toDouble() - m_currentPostion.at(0).toDouble();
 			double robot2 = shapeValues.at(1).toDouble() - m_currentPostion.at(1).toDouble();
 			double robot3 = shapeValues.at(2).toDouble() - m_currentPostion.at(2).toDouble();
@@ -254,16 +295,24 @@ namespace TCP_ROBOT
 
 			if (shortMove != 0.0)
 			{
-				slotShapesMoveShape(m_otherMap, shortMove, ShapeType::ShapeType_ShortGuide, MoveDirection_XAxis);
-				slotShapesMoveShape(m_shapesMap, shortMove, ShapeType::ShapeType_Work, MoveDirection_XAxis);
+				double moveDistance = shortMove / 360.0 * m_rowRate;
+				slotShapesMoveShape(m_otherMap, moveDistance, ShapeType::ShapeType_ShortGuide, MoveDirection_XAxis);
+				slotShapesMoveShape(m_shapesMap, moveDistance, ShapeType::ShapeType_Work, MoveDirection_XAxis);
 			}
 			if (TableAngle != 0.0)
 			{
 				slotShapesRotateShape(m_otherMap, TableAngle, ShapeType::ShapeType_RotatingTable);
 				slotShapesRotateShape(m_shapesMap, TableAngle, ShapeType::ShapeType_Work);
 			}
-			emit signalUpdateRobotShaps(false);
-			m_currentPostion = shapeValues;
+			//emit signalUpdateRobotShaps(false);
+
+			foreach(QString shapeName, m_shapesMap.keys())
+			{
+				foreach(QString robotName, m_robotMap.keys())
+				{
+					setCollisionDetection(m_shapesMap[shapeName], m_robotMap[robotName]);
+				}
+			}
 			});
 
 		timer->setInterval(20);

@@ -338,18 +338,17 @@ using namespace QCUSWIDGETLIB;
 #endif // TCPROBOTMANAGER_GLOBAL_H
 
 
+#  if defined(BUILD_EXE) // 不修改
+#    define TCPROBOT_EXPORT  // 根据自己的需求设置
+#  else
+#if defined(TCPROBOT_EXPORT)  // 根据自己的需求设置
+#  define TCPROBOT_EXPORT Q_DECL_EXPORT  // 根据自己的需求设置
+#else
+# define TCPROBOT_EXPORT Q_DECL_IMPORT  // 根据自己的需求设置
+#endif  
+#  endif
 
 #define ROBOTUNABLEVALUE -1
-#if defined(TCPROBOT_LIBRARY)
-#define TCPROBOT_EXPORT Q_DECL_EXPORT
-#else 
-#if defined(TCPROBOT_EXE)
-#define TCPROBOT_EXPORT  
-#else
-#define TCPROBOT_EXPORT Q_DECL_IMPORT
-#endif
-
-#endif
 
 //! mouse actions.
 enum CurrentAction3d
