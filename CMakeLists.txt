@@ -14,7 +14,7 @@ else()
 endif()
 
 ### 是否生成 exe
-set(BUILD_EXE true)
+set(BUILD_EXE false)
 
 #设置exe 的 main.cpp及其他 文件 路径
 set(EXE_MAIN_FILE 
@@ -54,11 +54,7 @@ set(THISPROJECTNAME TCPROBOT)
 #endif
 
 #### 库名称宏
-if(BUILD_EXE)
-    set(THIS_LIB_NAME TCPROBOT_EXE)
-else()
-    set(THIS_LIB_NAME TCPROBOT_LIBRARY)
-endif()
+ set(THIS_LIB_NAME TCPROBOT_LIBRARY)
 
 ###################### 必改项： 文件输出路径  ##############
 #### 库文件输出路径

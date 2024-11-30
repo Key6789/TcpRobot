@@ -58,20 +58,20 @@ namespace TCP_ROBOT
 		workListWidget->setEditTriggers(QAbstractItemView::DoubleClicked);
 		workListWidget->setViewMode(QListView::ListMode);
 		layLeft->addWidget(workListWidget);
-		leftWidget->setFixedWidth(200);
+		//leftWidget->setFixedWidth(200);
 
 		QHBoxLayout* layoutButton = new QHBoxLayout(leftWidget);
 		QPushButton* seletedWorkButton = new QPushButton(leftWidget);
-		seletedWorkButton->setText(__StandQString("选择工件"));
+		seletedWorkButton->setText(__StandQString("选择"));
 
 		QPushButton* addButton = new QPushButton(leftWidget);
-		addButton->setText(__StandQString("添加工件"));
+		addButton->setText(__StandQString("添加"));
 
 		QPushButton* deleteButton = new QPushButton(leftWidget);
-		deleteButton->setText(__StandQString("删除工件"));
+		deleteButton->setText(__StandQString("删除"));
 
 		QPushButton* saveButton = new QPushButton(leftWidget);
-		saveButton->setText(__StandQString("保存工件"));
+		saveButton->setText(__StandQString("保存"));
 		//saveButton->setEnabled(false);
 
 		layoutButton->addWidget(seletedWorkButton);
@@ -1377,6 +1377,15 @@ namespace TCP_ROBOT
 			QString fileName = fileDialog->selectedFiles()[0];
 			m_shapePath->setText(fileName);
 			m_shapeStruct.ShapePath = fileName;
+
+			if (fileName.endsWith(".step") || fileName.endsWith(".STEP"))
+			{
+				// 拷贝到运行目录下 Models 文件夹
+				QDir dir;
+				dir.mkpath(QCoreApplication::applicationDirPath() + "/Models");
+				QFile::copy(fileName, QCoreApplication::applicationDirPath() + "/Models/" + fileName.split("/").last());
+				m_shapeStruct.ShapePath =  "/Models/" + fileName.split("/").last();
+			}
 		}
 		//ISNULLPOINTER(m_robotPreview);
 		//m_robotPreview->slotReplaceModelByPath(m_shapeStruct);

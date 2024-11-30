@@ -240,15 +240,15 @@ namespace TCP_ROBOT
 		//emit signalUpdateRobotShaps(true);
 
 		// 启动 定时器 20 ms 后开始触发，给界面反应时间
-		QTimer* timer = new QTimer(this);
-		timer->start();
+		//QTimer* timer = new QTimer(this);
+		//timer->start();
 
-		qDebug() << "timer.start:";
+		//qDebug() << "timer.start:";
 
-		connect(timer, &QTimer::timeout, [=]() {
-			// 取前6个参数
-			timer->stop();
-			qDebug() << "updateRobotShaps:";
+		//connect(timer, &QTimer::timeout, [=]() {
+		//	// 取前6个参数
+		//	timer->stop();
+		//	qDebug() << "updateRobotShaps:";
 			double robot1 = shapeValues.at(0).toDouble() - m_currentPostion.at(0).toDouble();
 			double robot2 = shapeValues.at(1).toDouble() - m_currentPostion.at(1).toDouble();
 			double robot3 = shapeValues.at(2).toDouble() - m_currentPostion.at(2).toDouble();
@@ -306,6 +306,36 @@ namespace TCP_ROBOT
 			}
 			//emit signalUpdateRobotShaps(false);
 
+			// 统一刷新
+			foreach(QString shapeName, m_shapesMap.keys())
+			{
+				if (m_shapesMap[shapeName].isChanged)
+				{
+					m_shapesMap[shapeName].isChanged = false;
+					updateShapeModel(m_shapesMap, shapeName);
+				}
+			}
+			foreach(QString shapeName, m_robotMap.keys())
+			{
+				if (m_robotMap[shapeName].isChanged)
+				{
+					m_robotMap[shapeName].isChanged = false;
+					updateShapeModel(m_robotMap, shapeName);
+				}
+			}
+			foreach(QString shapeName, m_otherMap.keys())
+			{
+				if (m_otherMap[shapeName].isChanged)
+				{
+					m_otherMap[shapeName].isChanged = false;
+					updateShapeModel(m_otherMap, shapeName);
+				}
+			}
+			// 刷新界面
+			emit signalUpdateRobotShaps(false);
+			// 关闭定时器
+			//timer->deleteLater();
+
 			foreach(QString shapeName, m_shapesMap.keys())
 			{
 				foreach(QString robotName, m_robotMap.keys())
@@ -313,9 +343,9 @@ namespace TCP_ROBOT
 					setCollisionDetection(m_shapesMap[shapeName], m_robotMap[robotName]);
 				}
 			}
-			});
+			//});
 
-		timer->setInterval(20);
+		//timer->setInterval(20);
 	}
 	void RobotCore::slotUpdataRobotShaps(void)
 	{
@@ -471,8 +501,8 @@ namespace TCP_ROBOT
 		addRobot.setShapeMoveY(data.translation.Y());
 		addRobot.setShapeMoveZ(data.translation.Z());
 
-		addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
-
+		//addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
+		addRobot.isChanged = true;
 		robotMap.insert(name, addRobot);
 		// 递归处理下一个组件
 		if (!addRobot.nextShapeNames.isEmpty())
@@ -485,10 +515,10 @@ namespace TCP_ROBOT
 				}
 			}
 		}
-		for (auto& newAisShape : addRobot.myAisShapes)
+		/*for (auto& newAisShape : addRobot.myAisShapes)
 		{
 			getContext()->Display(newAisShape, Standard_True);
-		}
+		}*/
 	}
 	void RobotCore::ShapesTransform(QMap<QString, ADDROBOTDATA>& robotMap, TRANSFORMDATA data)
 	{
@@ -633,6 +663,17 @@ namespace TCP_ROBOT
 		displayCoordinateAxes();
 		myView->FitAll();
 
+	}
+	void RobotCore::updateShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, QString shapeName)
+	{
+		ADDROBOTDATA addRobot = robotMap.value(shapeName);
+		// 移除旧模型
+		addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
+		robotMap.insert(shapeName, addRobot);
+		for (auto& newAisShape : addRobot.myAisShapes)
+		{
+			getContext()->Update(newAisShape, Standard_True);
+		}
 	}
 	QVariantMap RobotCore::readJsonFileToMap(QString filePath)
 	{

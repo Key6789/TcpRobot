@@ -668,6 +668,87 @@ namespace TCP_ROBOT
 
 	void RobotBase::popup(const int /*x*/, const int /*y*/)
 	{
+		QMenu* aMenu = new QMenu(this);
+
+		QAction* aAction = new QAction(__StandQString("窗口适应"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_F);
+		aAction->setStatusTip(__StandQString("窗口适应"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(fitAll()));
+		aMenu->addAction(aAction);
+
+		// 窗口重置
+		aAction = new QAction(__StandQString("窗口重置"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_R);
+		aAction->setStatusTip(__StandQString("窗口重置"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(fitAll()));
+		aMenu->addAction(aAction);
+
+		// 正视图
+		aAction = new QAction(__StandQString("正视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_1);
+		aAction->setStatusTip(__StandQString("正视图"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(reset()));
+		aMenu->addAction(aAction);
+
+		// 侧视图
+		aAction = new QAction(__StandQString("侧视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_2);
+		aAction->setStatusTip(__StandQString("侧视图"));
+		
+		// 功能尚未实现
+		connect(aAction, &QAction::triggered, [this]() { 
+			fitAll();
+			// 沿Z轴旋转 90°
+			//定义轴的起点 
+			gp_Pnt oriPoint(0, 0, 0);
+			//定义方向
+			gp_Dir dir(0, 0, 1);
+			//定义旋转轴
+			gp_Ax1 ax(oriPoint, dir);
+			//定义一个变换
+			gp_Trsf trsf;
+			//设置旋转轴和旋转角度，这里以90°为例
+			trsf.SetRotation(ax, 90 * 3.14 / 180);
+
+			//执行旋转变换
+			//获取要操作的shape
+			TopoDS_Shape tempshape = getShape();
+			BRepBuilderAPI_Transform aBRespTrsf(tempshape, trsf, true);
+			aBRespTrsf.Build();
+			TopoDS_Shape resShape = aBRespTrsf.Shape();
+			});
+		aMenu->addAction(aAction);
+
+		// 俯视图
+		aAction = new QAction(__StandQString("俯视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_3);
+		aAction->setStatusTip(__StandQString("俯视图"));
+		// 功能尚未实现
+		connect(aAction, &QAction::triggered, [this]() {
+			fitAll();
+			// 沿Y轴旋转 180°
+			//定义轴的起点
+			gp_Pnt oriPoint(0, 0, 0);
+			//定义方向
+			gp_Dir dir(0, 1, 0);
+			//定义旋转轴
+			gp_Ax1 ax(oriPoint, dir);
+			//定义一个变换
+			gp_Trsf trsf;
+			//设置旋转轴和旋转角度，这里以180°为例
+			trsf.SetRotation(ax, 180 * 3.14 / 180);
+
+			//执行旋转变换
+			//获取要操作的shape
+			TopoDS_Shape tempshape = getShape();
+			BRepBuilderAPI_Transform aBRespTrsf(tempshape, trsf, true);
+			aBRespTrsf.Build();
+			TopoDS_Shape resShape = aBRespTrsf.Shape();
+			});
+		aMenu->addAction(aAction);
+
+
+		aMenu->popup(QCursor::pos());
 	}
 
 	void RobotBase::onLButtonUp(const int theFlags, const QPoint thePoint)
@@ -885,8 +966,9 @@ namespace TCP_ROBOT
 
 		// 机器人坐标系
 
-		// 获取模型
-		robot.shapes = getShapesFromResult(robot.path, loadFilesInParallel({ robot.path }));
+		// 获取模型  修改为相对路径
+		QString robotPath = QCoreApplication::applicationDirPath() + shapeStruct.ShapePath;
+		robot.shapes = getShapesFromResult(robotPath, loadFilesInParallel({ robotPath }));
 		robot.shapes = scaleShapes(robot.shapes, robot.sacle);
 		robot.initShapeAx3();
 		robot.myAisShapes = RobotTransformParallelPreview(robot);

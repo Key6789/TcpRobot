@@ -87,6 +87,9 @@ namespace TCP_ROBOT
 		void removeShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, ADDROBOTDATA data);
 		void removeAllShapes();
 
+
+		// 刷新 工件显示
+		void updateShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, QString shapeName);
 	signals:
 		void signalUpdateRobotShaps(bool isUpdate);
 

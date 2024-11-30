@@ -338,10 +338,10 @@ using namespace QCUSWIDGETLIB;
 #endif // TCPROBOTMANAGER_GLOBAL_H
 
 
-#  if defined(BUILD_EXE) // 不修改
-#    define TCPROBOT_EXPORT  // 根据自己的需求设置
+# if (defined(BUILD_EXE) && BUILD_EXE == 1) // 不修改
+#   define TCPROBOT_EXPORT  // 根据自己的需求设置
 #  else
-#if defined(TCPROBOT_EXPORT)  // 根据自己的需求设置
+#if defined(TCPROBOT_LIBRARY)  // 根据自己的需求设置
 #  define TCPROBOT_EXPORT Q_DECL_EXPORT  // 根据自己的需求设置
 #else
 # define TCPROBOT_EXPORT Q_DECL_IMPORT  // 根据自己的需求设置
@@ -349,6 +349,7 @@ using namespace QCUSWIDGETLIB;
 #  endif
 
 #define ROBOTUNABLEVALUE -1
+
 
 //! mouse actions.
 enum CurrentAction3d
@@ -429,6 +430,8 @@ struct addComponentRobotData {
 	QVector<Handle(AIS_Shape)> myAisShapes;
 	QVector<Handle(AIS_Shape)> disPlayShapes;
 	QVector<Handle(AIS_Shape)> ShapesBox;
+
+	bool isChanged = false;
 
 	QString nextShapeName;
 	QStringList nextShapeNames;
