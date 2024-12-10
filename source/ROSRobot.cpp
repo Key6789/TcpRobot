@@ -7,11 +7,13 @@ namespace TCP_ROBOT
 	/**************************************** 构造/析构函数 ********************************************************/
 	ROSRobot::ROSRobot(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		initUI();
 		initConnect();
 	}
 	ROSRobot::~ROSRobot()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		if(m_tcpRobotCom)
 		{
 			delete m_tcpRobotCom;
@@ -21,6 +23,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::show7103ShapePreview(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* preview = new QWidget(parent);
 		QHBoxLayout* mainLayout = new QHBoxLayout(preview);
 
@@ -41,6 +44,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showPreview(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* preview = new QWidget(parent);
 		preview->setWindowTitle(__StandQString("工件预览"));
 		/*********************************************************/
@@ -379,6 +383,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showRobotPreview(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* preview = new QWidget(parent);
 		preview->setWindowTitle(__StandQString("机器人预览"));
 		/**********/
@@ -530,6 +535,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showGuidePreview(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* preview = new QWidget(parent);
 		preview->setWindowTitle(__StandQString("导轨配置"));
 
@@ -665,6 +671,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showTable(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* table = new QWidget(parent);
 		QVBoxLayout* mainLayout = new QVBoxLayout(table);
 		LabelComboBox* labelComboBox = new LabelComboBox(table);
@@ -674,11 +681,11 @@ namespace TCP_ROBOT
 		mainLayout->addWidget(labelComboBox);
 
 		connect(labelComboBox->currentItem(), &QComboBox::currentTextChanged, [=](const QString& text) {
-			emit seletedWorkChanged(text);
 			m_currentWork = text;
 			QVariantMap variantMap;
 			variantMap.insert("CurrentWork", text);
 			saveToJsonFile(variantMap, WORKPATH + "/" + "CurrentWork.json");
+			emit seletedWorkChanged(text);
 			});
 
 		labelComboBox->setCurrentItemText(m_currentWork);
@@ -694,6 +701,7 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showCoreRobot(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QWidget* robotCore = new QWidget(parent);
 		robotCore->setWindowTitle(__StandQString("核心显示"));
 		QVBoxLayout* mainLayout = new QVBoxLayout(robotCore);
@@ -708,17 +716,29 @@ namespace TCP_ROBOT
 
 	QWidget* ROSRobot::showTeaching(QWidget* parent)
 	{
-		QWidget* teaching = new QWidget(parent);
-		teaching->setWindowTitle(__StandQString("示教模式"));
-		QVBoxLayout* mainLayout = new QVBoxLayout(teaching);
-		m_teaching ->setParent(teaching);
-		mainLayout->addWidget(m_teaching);
-		//initConnect();
+		LOG_FUNCTION_LINE_MESSAGE;
+		CWidgetVLay *teaching = new CWidgetVLay(parent);
+		teaching->setWindowTitle(__StandQString("示教界面"));
+		if (!m_teaching)
+		{
+			m_teaching->close();
+			
+		}
+		m_teaching = new RobotoDemonstrator(parent);
+		teaching->addWidget(m_teaching);
+		//connect(this, &ROSRobot::seletedWorkChanged, m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged);
+		connect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
+		if (m_teaching != nullptr)
+		{
+			m_teaching->setTcpCommunication(m_tcpRobotCom);
+		}
+		
 		return teaching;
 	}
 
 	void ROSRobot::setCommunicationPointer(TcpRobotCommunication* tcpRobotCom)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		m_tcpRobotCom = tcpRobotCom;
 
 		initConnect();
@@ -726,6 +746,7 @@ namespace TCP_ROBOT
 
 	void ROSRobot::setIpAndPort(const QString& ip, const int& port)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		if (m_tcpRobotCom == nullptr)
 		{
 			m_tcpRobotCom = new TcpRobotCommunication(this);
@@ -747,6 +768,7 @@ namespace TCP_ROBOT
 
 	void ROSRobot::initUI()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 读取工件列表
 		createOrCheckDirectory(WORKPATH);
 		QString fileName = WORKPATH.append("/").append("CurrentWork.json");
@@ -788,7 +810,7 @@ namespace TCP_ROBOT
 	void ROSRobot::initConnect()
 	{
 
-
+		LOG_FUNCTION_LINE_MESSAGE;
 		/*disconnect(m_robot7103Grid, &Robot7103Grid::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_robotCore, &RobotCore::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
 		disconnect(m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged, this, &ROSRobot::seletedWorkChanged);
@@ -823,6 +845,7 @@ namespace TCP_ROBOT
 
 	void ROSRobot::createOrCheckDirectory(const QString& path)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		if (!QDir(path).exists())
 		{
 			qDebug() << "创建文件夹" << path;
@@ -832,6 +855,7 @@ namespace TCP_ROBOT
 
 	void ROSRobot::dealWithShapesPararmeter(QMap<QString, SHAPESTRUCT>& shapesMap)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 根据序列处理 nextShapeNames
 
 		// 遍历 shapesMap 查找类型为 Robot
@@ -942,18 +966,21 @@ namespace TCP_ROBOT
 
 	bool ROSRobot::removeDirectory(const QString& path)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QDir dir(path);
 		return dir.removeRecursively();
 	}
 
 	QStringList ROSRobot::getSubDirectories(const QString& path)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QDir dir(path);
 		return dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 	}
 
 	bool ROSRobot::saveToJsonFile(const QVariantMap& data, const QString& filePath)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QJsonDocument doc = QJsonDocument::fromVariant(data);
 		QFile file(filePath);
 		if (file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -970,6 +997,7 @@ namespace TCP_ROBOT
 
 	ShapeCommondPreview::ShapeCommondPreview(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QHBoxLayout* mainLayout = new QHBoxLayout(this);
 
 		QVBoxLayout* leftLayout = new QVBoxLayout(this);
@@ -1242,6 +1270,7 @@ namespace TCP_ROBOT
 
 	ShapeCommondPreview::~ShapeCommondPreview()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 	}
 
 	void ShapeCommondPreview::setRobotPreviewPoint(RobotPreview* robotPreview)
@@ -1253,6 +1282,7 @@ namespace TCP_ROBOT
 
 	void ShapeCommondPreview::setShapeStruct(SHAPESTRUCT shapeStruct)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		m_shapeStruct = shapeStruct;
 		m_shapeName->setText(m_shapeStruct.ShapeName);
 		m_shapePath->setText(m_shapeStruct.ShapePath);
@@ -1326,15 +1356,18 @@ namespace TCP_ROBOT
 
 	SHAPESTRUCT ShapeCommondPreview::getShapeStruct()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		return m_shapeStruct;
 	}
 
 	void ShapeCommondPreview::setShapeType(ShapeType shapeType)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		m_shapeStruct.shapeType = shapeType;
 	}
 	void ShapeCommondPreview::initConnect()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		connect(m_shapeName, &QLineEdit::editingFinished, this, &ShapeCommondPreview::readShapeName);
 		connect(m_readShapePathButton, &QPushButton::clicked, this, &ShapeCommondPreview::readShapePath);
 		connect(m_readShapeColorButton, &QPushButton::clicked, this, &ShapeCommondPreview::readShapeColor);
@@ -1360,6 +1393,7 @@ namespace TCP_ROBOT
 	}
 	void ShapeCommondPreview::setLinkIsVisable(bool isVisable)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		m_checkLink->setChecked(isVisable);
 		m_checkLink->setVisible(isVisable);
 		m_shapeStruct.ShapeLink = isVisable;

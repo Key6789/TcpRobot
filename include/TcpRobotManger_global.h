@@ -306,13 +306,14 @@
 #include <QFormLayout>
 
 #include "QCusWidgetLib.h"
+#include "LoggerInterface.h"
 
 using namespace QCUSWIDGETLIB;
 
-#define   WORKPATH	QDir::currentPath().append("/RobotData/WorkPath")
-#define   ROBOTPATH	QDir::currentPath().append("/RobotData/RobotPath")
-#define   OTHERPATH	QDir::currentPath().append("/RobotData/OtherPath")
-#define   TEACHPATH	QDir::currentPath().append("/RobotData/TeachPath")
+#define   WORKPATH	QApplication::applicationDirPath().append("/RobotData/WorkPath")
+#define   ROBOTPATH	QApplication::applicationDirPath().append("/RobotData/RobotPath")
+#define   OTHERPATH	QApplication::applicationDirPath().append("/RobotData/OtherPath")
+#define   TEACHPATH	QApplication::applicationDirPath().append("/RobotData/TeachPath")
 
 
 

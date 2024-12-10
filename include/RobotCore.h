@@ -24,6 +24,8 @@ namespace TCP_ROBOT
 		QWidget* initZeroWidget(QWidget* parent = nullptr);
 		void initZeroData();
 
+		QVector<double> getChangedPostion(QString shapeValue);
+
 		void printTransform(const gp_Trsf& transform, const QString& message)
 		{
 			qDebug() << message.toStdString().c_str();
@@ -114,6 +116,7 @@ namespace TCP_ROBOT
 
 
 		QStringList m_currentPostion = QStringList();
+		QString m_lastCurrentPostion = "";
 		bool m_isUpdate = true;
 		bool m_isActiveMove = false;
 

@@ -36,6 +36,7 @@ namespace TCP_ROBOT
 		myDegenerateModeIsOn(Standard_True),
 		myRectBand(NULL)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 在没有背景的情况下设置背景角色为NoRole
 		setBackgroundRole(QPalette::NoRole);
 		// 将焦点策略设置为StrongFocus，以便从键盘处理QContextMenuEvent
@@ -59,6 +60,7 @@ namespace TCP_ROBOT
 	/**************************************** 界面初始化 **********/
 	void RobotBase::initRobotView()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 创建互斥锁和锁定器的过程
 		m_mutex = new QMutex();
 		m_locker = new QMutexLocker(m_mutex);
@@ -277,6 +279,7 @@ namespace TCP_ROBOT
 	
 	void RobotBase::setCollisionDetection(Handle(AIS_Shape) shape1, Handle(AIS_Shape) shape2)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 计算每个实体的边界框
 		/*Bnd_Box box1, box2;
 		box1 =  shape1->BoundingBox();
@@ -293,6 +296,7 @@ namespace TCP_ROBOT
 			// 相交结果为空，且边界框不相交，说明实体不相交
 			//QMessageBox::information(this, "Information", "No collision detected between shapes: ");
 			emit singalCollision(false);
+			LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
 		}
 		bool isIntersecting = box1.IsOut(box2) || box2.IsOut(box1);
 		// 检查是否发生碰撞
@@ -305,11 +309,13 @@ namespace TCP_ROBOT
 			//QMessageBox::warning(this, "Warning", "碰撞");
 
 			emit singalCollision(false);
+			LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
 		}
 	}
 
 	void RobotBase::setCollisionDetection(ADDROBOTDATA data, ADDROBOTDATA data2)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		//hideOnceShadBox(data);
 		//hideOnceShadBox(data2);
 		// 计算每个实体的边界框
@@ -327,6 +333,7 @@ namespace TCP_ROBOT
 					// 相交结果为空，且边界框不相交，说明实体不相交
 					//QMessageBox::information(this, "Information", "No collision detected between shapes: ");
 					emit singalCollision(false);
+					LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
 				}
 				bool isIntersecting = box1.IsOut(box2) || box2.IsOut(box1);
 				// 检查是否发生碰撞
@@ -340,6 +347,7 @@ namespace TCP_ROBOT
 					// 相交结果不为空，或边界框相交，说明实体相交
 					//QMessageBox::warning(this, "Warning", "碰撞");
 					emit singalCollision(false);
+					LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
 				}
 			}
 		}
@@ -347,6 +355,7 @@ namespace TCP_ROBOT
 
 	void RobotBase::setCollisionDetection(ADDROBOTDATA data, Handle(AIS_Shape) shape2)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		//hideOnceShadBox(data);
 		// 计算每个实体的边界框
 		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
@@ -362,6 +371,7 @@ namespace TCP_ROBOT
 				// 相交结果为空，且边界框不相交，说明实体不相交
 				//QMessageBox::information(this, "Information", "No collision detected between shapes: ");
 				emit singalCollision(false);
+				LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
 			}
 			bool isIntersecting = box1.IsOut(box2) || box2.IsOut(box1);
 			// 检查是否发生碰撞
@@ -374,6 +384,8 @@ namespace TCP_ROBOT
 				// 相交结果不为空，或边界框相交，说明实体相交
 				//QMessageBox::warning(this, "Warning", "碰撞");
 				emit singalCollision(false);
+				LOG_FUNCTION_LINE_INFO("No collision detected between shapes: ");
+
 			}
 		}
 	}
@@ -381,6 +393,7 @@ namespace TCP_ROBOT
 	
 	QVector<TopoDS_Shape> RobotBase::scaleShapes(QVector<TopoDS_Shape> shapes, double scale)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QVector<TopoDS_Shape> SacleShapes = shapes;
 		for (auto& shape : SacleShapes) {
 			// 创建一个 gp_Trsf 对象
@@ -560,7 +573,7 @@ namespace TCP_ROBOT
 
 	void RobotBase::slotUpdataRobotShaps(void)
 	{
-		
+		LOG_FUNCTION_LINE_MESSAGE;
 	}
 
 
@@ -690,62 +703,6 @@ namespace TCP_ROBOT
 		connect(aAction, SIGNAL(triggered()), this, SLOT(reset()));
 		aMenu->addAction(aAction);
 
-		// 侧视图
-		aAction = new QAction(__StandQString("侧视图"), aMenu);
-		aAction->setShortcut(Qt::CTRL + Qt::Key_2);
-		aAction->setStatusTip(__StandQString("侧视图"));
-		
-		// 功能尚未实现
-		connect(aAction, &QAction::triggered, [this]() { 
-			fitAll();
-			// 沿Z轴旋转 90°
-			//定义轴的起点 
-			gp_Pnt oriPoint(0, 0, 0);
-			//定义方向
-			gp_Dir dir(0, 0, 1);
-			//定义旋转轴
-			gp_Ax1 ax(oriPoint, dir);
-			//定义一个变换
-			gp_Trsf trsf;
-			//设置旋转轴和旋转角度，这里以90°为例
-			trsf.SetRotation(ax, 90 * 3.14 / 180);
-
-			//执行旋转变换
-			//获取要操作的shape
-			TopoDS_Shape tempshape = getShape();
-			BRepBuilderAPI_Transform aBRespTrsf(tempshape, trsf, true);
-			aBRespTrsf.Build();
-			TopoDS_Shape resShape = aBRespTrsf.Shape();
-			});
-		aMenu->addAction(aAction);
-
-		// 俯视图
-		aAction = new QAction(__StandQString("俯视图"), aMenu);
-		aAction->setShortcut(Qt::CTRL + Qt::Key_3);
-		aAction->setStatusTip(__StandQString("俯视图"));
-		// 功能尚未实现
-		connect(aAction, &QAction::triggered, [this]() {
-			fitAll();
-			// 沿Y轴旋转 180°
-			//定义轴的起点
-			gp_Pnt oriPoint(0, 0, 0);
-			//定义方向
-			gp_Dir dir(0, 1, 0);
-			//定义旋转轴
-			gp_Ax1 ax(oriPoint, dir);
-			//定义一个变换
-			gp_Trsf trsf;
-			//设置旋转轴和旋转角度，这里以180°为例
-			trsf.SetRotation(ax, 180 * 3.14 / 180);
-
-			//执行旋转变换
-			//获取要操作的shape
-			TopoDS_Shape tempshape = getShape();
-			BRepBuilderAPI_Transform aBRespTrsf(tempshape, trsf, true);
-			aBRespTrsf.Build();
-			TopoDS_Shape resShape = aBRespTrsf.Shape();
-			});
-		aMenu->addAction(aAction);
 
 
 		aMenu->popup(QCursor::pos());
@@ -922,6 +879,7 @@ namespace TCP_ROBOT
 	
 	ADDROBOTDATA RobotBase::createRobotData(SHAPESTRUCT shapeStruct)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		ADDROBOTDATA robot;
 		robot.name = shapeStruct.ShapeName;
 
@@ -979,6 +937,7 @@ namespace TCP_ROBOT
 	}
 	void RobotBase::displaySingalAddRobot(ADDROBOTDATA addRobotData)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		// 显示机器人
 		for (auto shape : addRobotData.myAisShapes)
 		{

@@ -4,6 +4,7 @@ namespace TCP_ROBOT
 {
 	RobotCore::RobotCore(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		displayCoordinateAxes();
 		fitAll();
 
@@ -14,6 +15,7 @@ namespace TCP_ROBOT
 	}
 	QWidget* RobotCore::initZeroWidget(QWidget* parent)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		CWidgetVLay* pLayout = new CWidgetVLay(parent);
 		pLayout->setContentsMargins(0, 0, 0, 0);
 		pLayout->setLaySpacing(0);
@@ -178,6 +180,7 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::initZeroData()
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QStringList shapeNames;
 		// 读取文件内容 json 格式
 		QVariantMap jsonMap = readJsonFileToMap(ROBOTPATH.append("/").append("ZeroPoint.json"));
@@ -211,9 +214,24 @@ namespace TCP_ROBOT
 			m_currentPostion = shapeNames;
 		}
 	}
+	QVector<double> RobotCore::getChangedPostion(QString shapeValue)
+	{
+		LOG_FUNCTION_LINE_MESSAGE;
+		QVector<double> changedPostion;
+		QStringList shapeValues = shapeValue.split(",");
+		if (shapeValues.size() < 8)
+		{
+			for (int i = 0; i < 8 - shapeValues.size(); i++)
+			{
+				shapeValues.append("0");
+			}
+		}
+		return QVector<double>();
+	}
 	void RobotCore::slotShapMove(QString shapeValue)
 	{
 		TCPXVIEWMODULE_LOG;
+		LOG_FUNCTION_LINE_MESSAGE;
 		QStringList shapeValues = shapeValue.split(",");
 		if (shapeValues.size() < 6)
 		{
@@ -236,116 +254,103 @@ namespace TCP_ROBOT
 			emit signalUpdateRobotShaps(true);
 			//m_currentPostion = shapeValues;
 		}
+		double robot1 = shapeValues.at(0).toDouble() - m_currentPostion.at(0).toDouble();
+		double robot2 = shapeValues.at(1).toDouble() - m_currentPostion.at(1).toDouble();
+		double robot3 = shapeValues.at(2).toDouble() - m_currentPostion.at(2).toDouble();
+		double robot4 = shapeValues.at(3).toDouble() - m_currentPostion.at(3).toDouble();
+		double robot5 = shapeValues.at(4).toDouble() - m_currentPostion.at(4).toDouble();
+		double robot6 = shapeValues.at(5).toDouble() - m_currentPostion.at(5).toDouble();
 
-		//emit signalUpdateRobotShaps(true);
+		// 取出导轨移动
+		double shortMove = shapeValues.at(6).toDouble() - m_currentPostion.at(6).toDouble();
 
-		// 启动 定时器 20 ms 后开始触发，给界面反应时间
-		//QTimer* timer = new QTimer(this);
-		//timer->start();
+		// 取出旋转角度
+		double TableAngle = shapeValues.at(7).toDouble() - m_currentPostion.at(7).toDouble();
+		// 机器人旋转
+		if (robot1 != 0.0)
+		{
+			qDebug() << "robot1:" << robot1;
+			slotRobotRotateShape(m_robotMap, robot1, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 2);
+		}
+		if (robot2 != 0.0)
+		{
+			qDebug() << "robot2:" << robot2;
+			slotRobotRotateShape(m_robotMap, robot2, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 3);
+		}
+		if (robot3 != 0.0)
+		{
+			qDebug() << "robot3:" << robot3;
+			slotRobotRotateShape(m_robotMap, robot3, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 4);
+		}
+		if (robot4 != 0.0)
+		{
+			qDebug() << "robot4:" << robot4;
+			slotRobotRotateShape(m_robotMap, robot4, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 5);
+		}
+		if (robot5 != 0.0)
+		{
+			qDebug() << "robot5:" << robot5;
+			slotRobotRotateShape(m_robotMap, robot5, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 6);
+		}
+		if (robot6 != 0.0)
+		{
+			qDebug() << "robot6:" << robot6;
+			slotRobotRotateShape(m_robotMap, robot6, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 7);
+		}
 
-		//qDebug() << "timer.start:";
+		if (shortMove != 0.0)
+		{
+			double moveDistance = shortMove / 360.0 * m_rowRate;
+			slotShapesMoveShape(m_otherMap, moveDistance, ShapeType::ShapeType_ShortGuide, MoveDirection_XAxis);
+			slotShapesMoveShape(m_shapesMap, moveDistance, ShapeType::ShapeType_Work, MoveDirection_XAxis);
+		}
+		if (TableAngle != 0.0)
+		{
+			slotShapesRotateShape(m_otherMap, TableAngle, ShapeType::ShapeType_RotatingTable);
+			slotShapesRotateShape(m_shapesMap, TableAngle, ShapeType::ShapeType_Work);
+		}
+		//emit signalUpdateRobotShaps(false);
 
-		//connect(timer, &QTimer::timeout, [=]() {
-		//	// 取前6个参数
-		//	timer->stop();
-		//	qDebug() << "updateRobotShaps:";
-			double robot1 = shapeValues.at(0).toDouble() - m_currentPostion.at(0).toDouble();
-			double robot2 = shapeValues.at(1).toDouble() - m_currentPostion.at(1).toDouble();
-			double robot3 = shapeValues.at(2).toDouble() - m_currentPostion.at(2).toDouble();
-			double robot4 = shapeValues.at(3).toDouble() - m_currentPostion.at(3).toDouble();
-			double robot5 = shapeValues.at(4).toDouble() - m_currentPostion.at(4).toDouble();
-			double robot6 = shapeValues.at(5).toDouble() - m_currentPostion.at(5).toDouble();
+		// 统一刷新
+		foreach(QString shapeName, m_shapesMap.keys())
+		{
+			if (m_shapesMap[shapeName].isChanged)
+			{
+				m_shapesMap[shapeName].isChanged = false;
+				updateShapeModel(m_shapesMap, shapeName);
+			}
+		}
+		foreach(QString shapeName, m_robotMap.keys())
+		{
+			if (m_robotMap[shapeName].isChanged)
+			{
+				m_robotMap[shapeName].isChanged = false;
+				updateShapeModel(m_robotMap, shapeName);
+			}
+		}
+		foreach(QString shapeName, m_otherMap.keys())
+		{
+			if (m_otherMap[shapeName].isChanged)
+			{
+				m_otherMap[shapeName].isChanged = false;
+				updateShapeModel(m_otherMap, shapeName);
+			}
+		}
+		// 刷新界面
+		emit signalUpdateRobotShaps(false);
+		// 关闭定时器
+		//timer->deleteLater();
 
-			// 取出导轨移动
-			double shortMove = shapeValues.at(6).toDouble() - m_currentPostion.at(6).toDouble();
-
-			// 取出旋转角度
-			double TableAngle = shapeValues.at(7).toDouble() - m_currentPostion.at(7).toDouble();
-			// 机器人旋转
-			if (robot1 != 0.0)
+		foreach(QString shapeName, m_shapesMap.keys())
+		{
+			foreach(QString robotName, m_robotMap.keys())
 			{
-				qDebug() << "robot1:" << robot1;
-				slotRobotRotateShape(m_robotMap, robot1, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 2);
+				setCollisionDetection(m_shapesMap[shapeName], m_robotMap[robotName]);
 			}
-			if (robot2 != 0.0)
-			{
-				qDebug() << "robot2:" << robot2;
-				slotRobotRotateShape(m_robotMap, robot2, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 3);
-			}
-			if (robot3 != 0.0)
-			{
-				qDebug() << "robot3:" << robot3;
-				slotRobotRotateShape(m_robotMap, robot3, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 4);
-			}
-			if (robot4 != 0.0)
-			{
-				qDebug() << "robot4:" << robot4;
-				slotRobotRotateShape(m_robotMap, robot4, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 5);
-			}
-			if (robot5 != 0.0)
-			{
-				qDebug() << "robot5:" << robot5;
-				slotRobotRotateShape(m_robotMap, robot5, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 6);
-			}
-			if (robot6 != 0.0)
-			{
-				qDebug() << "robot6:" << robot6;
-				slotRobotRotateShape(m_robotMap, robot6, ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, 7);
-			}
-
-			if (shortMove != 0.0)
-			{
-				double moveDistance = shortMove / 360.0 * m_rowRate;
-				slotShapesMoveShape(m_otherMap, moveDistance, ShapeType::ShapeType_ShortGuide, MoveDirection_XAxis);
-				slotShapesMoveShape(m_shapesMap, moveDistance, ShapeType::ShapeType_Work, MoveDirection_XAxis);
-			}
-			if (TableAngle != 0.0)
-			{
-				slotShapesRotateShape(m_otherMap, TableAngle, ShapeType::ShapeType_RotatingTable);
-				slotShapesRotateShape(m_shapesMap, TableAngle, ShapeType::ShapeType_Work);
-			}
-			//emit signalUpdateRobotShaps(false);
-
-			// 统一刷新
-			foreach(QString shapeName, m_shapesMap.keys())
-			{
-				if (m_shapesMap[shapeName].isChanged)
-				{
-					m_shapesMap[shapeName].isChanged = false;
-					updateShapeModel(m_shapesMap, shapeName);
-				}
-			}
-			foreach(QString shapeName, m_robotMap.keys())
-			{
-				if (m_robotMap[shapeName].isChanged)
-				{
-					m_robotMap[shapeName].isChanged = false;
-					updateShapeModel(m_robotMap, shapeName);
-				}
-			}
-			foreach(QString shapeName, m_otherMap.keys())
-			{
-				if (m_otherMap[shapeName].isChanged)
-				{
-					m_otherMap[shapeName].isChanged = false;
-					updateShapeModel(m_otherMap, shapeName);
-				}
-			}
-			// 刷新界面
-			emit signalUpdateRobotShaps(false);
-			// 关闭定时器
-			//timer->deleteLater();
-
-			foreach(QString shapeName, m_shapesMap.keys())
-			{
-				foreach(QString robotName, m_robotMap.keys())
-				{
-					setCollisionDetection(m_shapesMap[shapeName], m_robotMap[robotName]);
-				}
-			}
-			//});
-
-		//timer->setInterval(20);
+		}
+		//});
+		m_currentPostion = shapeValues;
+	//timer->setInterval(20);
 	}
 	void RobotCore::slotUpdataRobotShaps(void)
 	{
@@ -354,6 +359,7 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::loadWorkShapes(QString filePath)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		for (QString shapeName : m_shapesMap.keys())
 		{
 			removeShapeModel(m_shapesMap, m_shapesMap[shapeName]);
@@ -376,6 +382,7 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::loadRobotShape(QString filePath)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		for (QString shapeName : m_robotMap.keys())
 		{
 			removeShapeModel(m_robotMap, m_robotMap[shapeName]);
@@ -394,6 +401,7 @@ namespace TCP_ROBOT
 	}
 	void RobotCore::loadOtherShape(QString filePath)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		for (QString shapeName : m_otherMap.keys())
 		{
 			removeShapeModel(m_otherMap, m_otherMap[shapeName]);
@@ -416,6 +424,7 @@ namespace TCP_ROBOT
 		ShapeType shapeType,
 		MoveDirection moveType)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		QElapsedTimer timer;
 		timer.start();
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
@@ -436,6 +445,7 @@ namespace TCP_ROBOT
 		ShapeType shapeType,
 		MoveDirection moveType)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
 			if (addRobotData.shapeType == shapeType)
@@ -448,6 +458,7 @@ namespace TCP_ROBOT
 
 	void RobotCore::slotRobotRotateShape(QMap<QString, ADDROBOTDATA>& robotMap, double angle, ShapeType shapeType, MoveDirection moveType, int index)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
 			if (addRobotData.shapeType == shapeType && addRobotData.ShapeLinkIndex != -1)
@@ -463,6 +474,7 @@ namespace TCP_ROBOT
 
 	void RobotCore::slotRobotMoveShape(QMap<QString, ADDROBOTDATA>& robotMap, double moveDistance, ShapeType shapeType, MoveDirection moveType, int index)
 	{
+		LOG_FUNCTION_LINE_MESSAGE;
 		foreach(ADDROBOTDATA addRobotData, robotMap.values())
 		{
 			if (addRobotData.shapeType == shapeType && addRobotData.ShapeLinkIndex != -1)
@@ -672,7 +684,7 @@ namespace TCP_ROBOT
 		robotMap.insert(shapeName, addRobot);
 		for (auto& newAisShape : addRobot.myAisShapes)
 		{
-			getContext()->Update(newAisShape, Standard_True);
+			getContext()->Display(newAisShape, Standard_True);
 		}
 	}
 	QVariantMap RobotCore::readJsonFileToMap(QString filePath)

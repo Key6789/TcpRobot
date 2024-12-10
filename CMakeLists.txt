@@ -146,6 +146,7 @@ if(WIN32)
              "D:/Soft/OCC3/products/tcltk-86-64/include/"
              "D:/Soft/eigen-user/"
              "D:/Soft/AtamiLib/QCusWidgetLib/include/"
+             "D:/Soft/AtamiLib/LoggerInterface/include/"
          )
         ### 库文件
         set(ADD_OTHER_LIB 
@@ -157,6 +158,7 @@ if(WIN32)
             "D:/Soft/OCC3/products/freetype-2.5.5-vc14-64/lib/"
             "D:/Soft/OCC3/products/tcltk-86-64/lib/"
             "D:/Soft/AtamiLib/QCusWidgetLib/Win64/Lib/Debug/"
+            "D:/Soft/AtamiLib/LoggerInterface/Win64/Lib/Debug/"
          )
          ### 库文件 dll
         set(ADD_OTHER_DLL 
@@ -169,6 +171,7 @@ if(WIN32)
              "D:/Soft/OCC3/products/tcltk-86-64/"
              "D:/Soft/OCC3/products/TBB2021/"
              "D:/Soft/AtamiLib/QCusWidgetLib/Win64/Lib/Debug/"
+             "D:/Soft/AtamiLib/LoggerInterface/Win64/Lib/Debug/"
         )
      else()
         ## 设置是否加载外部库 若为空，设置为 false
