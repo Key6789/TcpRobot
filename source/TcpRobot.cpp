@@ -15,6 +15,8 @@ namespace TCP_ROBOT
 		RobotFrame * gi = createRobotFrame("GI");
 
 		go->setSendFront(true);
+		vc->setIsResend(false);
+		ft->setIsResend(false);
 
 		QMap<QString, TCPXVIEWBASE_NAMESPACE::StandFrame*> robotFrames;
 		robotFrames.insert("PS", ps);
