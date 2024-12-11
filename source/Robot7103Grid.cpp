@@ -67,6 +67,24 @@ namespace TCP_ROBOT
 
 
 
+	void Robot7103Grid::slotRemoveGrid()
+	{
+		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
+		// 移除所有行
+		for (int i = 1; i < rowCount(); ++i)
+		{
+			if (item(i, 0) != nullptr)
+			{
+				//直接删除行
+				removeRow(i);
+			}
+		}
+		m_rowMap.clear();
+		// 重新初始化表格
+		initParamTableWidget();
+		
+	}
+
 	void Robot7103Grid::initUI()
 	{
 		// 表头初始化
@@ -1236,6 +1254,7 @@ namespace TCP_ROBOT
 			m_moveStruct.MoveMap.remove(m_curSaftPoint.SaftPointIndex);
 			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
+			emit removeGrid();
 		}
 		else
 		{
@@ -1250,6 +1269,7 @@ namespace TCP_ROBOT
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
 			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
+			emit removeGrid();
 		}
 		else
 		{
@@ -1265,6 +1285,7 @@ namespace TCP_ROBOT
 			m_moveStruct.MoveMap.insert(m_curSaftPoint.SaftPointIndex, m_curSaftPoint);
 			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
 			loadTreeWidget(m_treeWidget);
+			emit removeGrid();
 		}
 		else
 		{

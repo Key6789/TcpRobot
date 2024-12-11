@@ -681,11 +681,48 @@ namespace TCP_ROBOT
 		ADDROBOTDATA addRobot = robotMap.value(shapeName);
 		// 移除旧模型
 		addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
+		//addRobot.myAisShapes = updateShapTrsf(addRobot);
 		robotMap.insert(shapeName, addRobot);
 		for (auto& newAisShape : addRobot.myAisShapes)
 		{
 			getContext()->Display(newAisShape, Standard_True);
 		}
+	}
+	QVector<Handle(AIS_Shape)> RobotCore::updateShapTrsf(ADDROBOTDATA data)
+	{
+		//data.initShapeAx3();
+		QVector<TopoDS_Shape> vector = data.shapes;
+		QVector<Handle(AIS_Shape)> vectortemp;
+
+		gp_Trsf trsf;
+		trsf.SetTransformation(data.ShapeAxl3, gp_Ax3());
+		// 去除旧有的显示
+		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
+		{
+			gp_Trsf loc = ais->LocalTransformation();
+			ais->SetLocalTransformation(trsf);
+			ais->UpdateTransformation();
+
+			vectortemp.push_back(ais);
+
+			//if (ais->Shape().IsNull())
+			//{
+			//	continue;
+			//}
+			//m_mutex->lock();
+			//myContext->Remove(ais, Standard_True); // 移除旧的形状
+			//m_mutex->unlock();
+		}
+
+		/*for (int i = 0; i < vector.size(); ++i)
+		{
+
+			TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
+			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(transformedShape);
+			aisShapeTemp->SetColor(data.color);
+			vectortemp.push_back(aisShapeTemp);
+		}*/
+		return vectortemp;
 	}
 	QVariantMap RobotCore::readJsonFileToMap(QString filePath)
 	{

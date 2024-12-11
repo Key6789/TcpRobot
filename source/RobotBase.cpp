@@ -484,6 +484,7 @@ namespace TCP_ROBOT
 		// 去除旧有的显示
 		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
 		{
+			gp_Trsf loc = ais->LocalTransformation();
 			if (ais->Shape().IsNull())
 			{
 				continue;

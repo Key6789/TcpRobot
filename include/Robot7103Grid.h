@@ -38,6 +38,9 @@ namespace TCP_ROBOT
 		void slotfineTuningBtnClicked(int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 		void slotAddGrid(QStringList rowValues, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
 		void slotSeletedWorkChanged(QString text);
+
+		// 移除 操作
+		void slotRemoveGrid();
 	private:
 		void initUI();
 		void initTable();
@@ -86,7 +89,7 @@ namespace TCP_ROBOT
 	signals:
 		void sendMoveCommand(MoveStruct moveStruct);
 		void sendWorkAndHole(QStringList values, int saftIndex = -1, int workIndex = -1, int trackIndex = -1);
-
+		void removeGrid();
 		public slots:
 			void slotSeletedWorkChanged(QString text);
 	private:

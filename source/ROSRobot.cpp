@@ -728,6 +728,7 @@ namespace TCP_ROBOT
 		teaching->addWidget(m_teaching);
 		//connect(this, &ROSRobot::seletedWorkChanged, m_teaching, &RobotoDemonstrator::slotSeletedWorkChanged);
 		connect(m_teaching, &RobotoDemonstrator::sendWorkAndHole, m_robot7103Grid, &Robot7103Grid::slotAddGrid);
+		connect(m_teaching, &RobotoDemonstrator::removeGrid, m_robot7103Grid, &Robot7103Grid::slotRemoveGrid);
 		if (m_teaching != nullptr)
 		{
 			m_teaching->setTcpCommunication(m_tcpRobotCom);

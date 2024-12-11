@@ -92,6 +92,8 @@ namespace TCP_ROBOT
 
 		// 刷新 工件显示
 		void updateShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, QString shapeName);
+
+		QVector<Handle(AIS_Shape)> updateShapTrsf(ADDROBOTDATA data);
 	signals:
 		void signalUpdateRobotShaps(bool isUpdate);
 
