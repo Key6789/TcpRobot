@@ -680,13 +680,13 @@ namespace TCP_ROBOT
 	{
 		ADDROBOTDATA addRobot = robotMap.value(shapeName);
 		// 移除旧模型
-		addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
-		//addRobot.myAisShapes = updateShapTrsf(addRobot);
+		//addRobot.myAisShapes = RobotTransformParallelPreview(addRobot);
+		addRobot.myAisShapes = updateShapTrsf(addRobot);
 		robotMap.insert(shapeName, addRobot);
-		for (auto& newAisShape : addRobot.myAisShapes)
+		/*for (auto& newAisShape : addRobot.myAisShapes)
 		{
-			getContext()->Display(newAisShape, Standard_True);
-		}
+			getContext()->Update(newAisShape, Standard_True);
+		}*/
 	}
 	QVector<Handle(AIS_Shape)> RobotCore::updateShapTrsf(ADDROBOTDATA data)
 	{
@@ -696,13 +696,31 @@ namespace TCP_ROBOT
 
 		gp_Trsf trsf;
 		trsf.SetTransformation(data.ShapeAxl3, gp_Ax3());
-		// 去除旧有的显示
+		gp_Trsf trsfA;
+		data.printAll();
+		trsfA.SetRotation(gp_Ax1(data.ShapPnt(), gp_Dir(0, 0, 1)), 90.0 / 180.0 * M_PI);
 		foreach(Handle(AIS_Shape) ais, data.myAisShapes)
 		{
-			gp_Trsf loc = ais->LocalTransformation();
+			//TopoDS_Shape shape = ais->Shape();
+			//if (shape.IsNull())
+			//{
+			//	continue;
+			//}
+			//myContext->Remove(ais, Standard_True); // 移除旧的形状
+			//// 
+			//shape.Location(trsf);
+			//ais->SetShape(shape);
+			//myContext->Display(ais, Standard_True);
+			//ais->UpdateTransformation();
+			gp_Trsf trsfS = ais->LocalTransformation();
+
+			ais->ResetTransformation();
 			ais->SetLocalTransformation(trsf);
 			ais->UpdateTransformation();
 
+			/*ais->SetLocalTransformation(trsf);
+			ais->UpdateTransformation();*/
+			getContext()->Update(ais, Standard_True);
 			vectortemp.push_back(ais);
 
 			//if (ais->Shape().IsNull())

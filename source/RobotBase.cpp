@@ -497,9 +497,10 @@ namespace TCP_ROBOT
 		for (int i = 0; i < vector.size(); ++i)
 		{
 			
-			TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
-			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(transformedShape);
+			//TopoDS_Shape transformedShape = BRepBuilderAPI_Transform(vector[i], trsf).Shape();
+			Handle(AIS_Shape) aisShapeTemp = new AIS_Shape(vector[i]);
 			aisShapeTemp->SetColor(data.color);
+			aisShapeTemp->SetLocalTransformation(trsf);
 			vectortemp.push_back(aisShapeTemp);
 		}
 		return vectortemp;

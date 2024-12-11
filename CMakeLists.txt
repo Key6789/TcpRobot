@@ -14,7 +14,7 @@ else()
 endif()
 
 ### 是否生成 exe
-set(BUILD_EXE true)
+set(BUILD_EXE false)
 
 #设置exe 的 main.cpp及其他 文件 路径
 set(EXE_MAIN_FILE 
