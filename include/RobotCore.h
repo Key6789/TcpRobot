@@ -24,6 +24,9 @@ namespace TCP_ROBOT
 		QWidget* initZeroWidget(QWidget* parent = nullptr);
 		void initZeroData();
 
+		// 初始化 模型显示
+		void initRobotCore();
+
 		QVector<double> getChangedPostion(QString shapeValue);
 
 		void printTransform(const gp_Trsf& transform, const QString& message)
@@ -36,6 +39,8 @@ namespace TCP_ROBOT
 			qDebug() << "  " << transform.Value(3, 1) << ", " << transform.Value(3, 2) << ", " << transform.Value(3, 3);
 		}
 		void slotShapMove(QString shapeValue);
+		void updateLastCurrentPostion(QString shapeValue);
+		void slotInitMove();
 
 		void slotUpdataRobotShaps(void) override;
 
@@ -92,8 +97,10 @@ namespace TCP_ROBOT
 
 		// 刷新 工件显示
 		void updateShapeModel(QMap<QString, ADDROBOTDATA>& robotMap, QString shapeName);
-
+		// 高速 刷新 工件显示
 		QVector<Handle(AIS_Shape)> updateShapTrsf(ADDROBOTDATA data);
+
+		void updateShapTrsf(QMap<QString, ADDROBOTDATA>& robotMap);
 	signals:
 		void signalUpdateRobotShaps(bool isUpdate);
 
@@ -123,6 +130,14 @@ namespace TCP_ROBOT
 		bool m_isActiveMove = false;
 
 		double m_rowRate = 1.0;
+
+		bool m_isActiveUpdateShap = false;
+
+		QString m_currentWorkPath = "";
+		QString m_currentRobotPath = "";
+		QString m_currentOtherPath = "";
+
+		QString m_zeroPositon = "";
 
 	};
 }

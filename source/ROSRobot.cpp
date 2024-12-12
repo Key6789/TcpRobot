@@ -709,6 +709,9 @@ namespace TCP_ROBOT
 		m_robotCore->loadWorkShapes(SHAPEMODEPATH(m_currentWork));
 		m_robotCore->loadRobotShape(ROBOTPATH.append("/").append(ROBOTCONFIGPATH));
 		m_robotCore->loadOtherShape(OTHERPATH.append("/").append(OTERDATAPATH));
+
+		m_robotCore->initRobotCore();
+		m_robotCore->slotInitMove();
 		mainLayout->addWidget(m_robotCore);
 		//initConnect();
 		return robotCore;
@@ -831,6 +834,8 @@ namespace TCP_ROBOT
 		m_standFrame = m_tcpRobotCom->getStandFrame("PS");
 		ISNULLPOINTER(m_standFrame);
 		connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::slotShapMove);
+		connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, m_robotCore, &RobotCore::updateLastCurrentPostion);
+
 		/*connect(m_standFrame, &TCPXVIEWBASE_NAMESPACE::StandFrame::signalReciveValue, [=](QString data) {
 			qDebug() << "GO RECEIVE DATA:" << data;
 			});*/
