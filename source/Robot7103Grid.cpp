@@ -328,7 +328,7 @@ namespace TCP_ROBOT
 		}
 		m_calibrationDialog = new QDialog(this);
 		m_calibrationDialog->setWindowTitle(__StandQString("校准工件"));
-		m_calibrationDialog->setModal(true);
+		
 
 		m_calibrationDialog->move(QCursor::pos());
 
@@ -416,7 +416,21 @@ namespace TCP_ROBOT
 		vcList->clearList();
 		if (!workPoint.getVCList().isEmpty())
 		{
-			vcList->setItems(workPoint.getVCList());
+			if (!workPoint.getVCValue("VC0").isEmpty())
+			{
+				vcList->addItem(__StandQString("α"));
+				m_vcMap.insert(__StandQString("α"), workPoint.getVCValue("VC0"));
+			}
+			if (!workPoint.getVCValue("VC1").isEmpty())
+			{
+				vcList->addItem(__StandQString("β1"));
+				m_vcMap.insert(__StandQString("β1"), workPoint.getVCValue("VC1"));
+			}
+			if (!workPoint.getVCValue("VC2").isEmpty())
+			{
+				vcList->addItem(__StandQString("β2"));
+				m_vcMap.insert(__StandQString("β2"), workPoint.getVCValue("VC2"));
+			}
 			vcList->setBtnStatus(1, true);
 		}
 		connect(buttonApply, &QPushButton::clicked, [=]()
@@ -457,12 +471,31 @@ namespace TCP_ROBOT
 			workPoint.VcA2 = QString::number(A2Label->getValue());
 			workPoint.VcB2 = QString::number(B2Label->getValue());
 			workPoint.VcLen = QString::number(L1Label->getValue());
+			foreach(QString vcName, m_vcMap.keys())
+			{
+				QString vcValue = m_vcMap[vcName];
+				if(m_vcMap[vcName].contains("VC0"))
+				{
+					workPoint.VC0 = m_vcMap[vcName];
+				}
+				else if(m_vcMap[vcName].contains("VC1"))
+				{
+					workPoint.VC1 = m_vcMap[vcName];
+				}
+				else if(m_vcMap[vcName].contains("VC2"))
+				{
+					workPoint.VC2 = m_vcMap[vcName];
+				}
+			}
+			
 			QMap<int, WorkpieceStruct> SaftPointMap = m_moveStruct.MoveMap.value(saftIndex).SaftPointMap;
 			SaftPointMap.insert(workIndex, workPoint);
 			SaftPointStruct saftPoint = m_moveStruct.MoveMap.value(saftIndex);
 			saftPoint.SaftPointMap = SaftPointMap;
 			m_moveStruct.MoveMap.insert(saftIndex, saftPoint);
 			m_moveStruct.SaveJson(MOVESTRUCTPATH(m_currentWork));
+
+			QMessageBox::information(this, __StandQString("提示"), __StandQString("保存成功！"));
 			});
 		vcList->setBtnClicked(2, [=]() {m_calibrationDialog->close(); });
 		if (m_tcpRobotCom)
@@ -488,7 +521,7 @@ namespace TCP_ROBOT
 				if (status)
 				{
 					vcList->setItems(m_vcMap.keys());
-					QMessageBox::information(this, __StandQString("提示"), __StandQString("VC参数设置成功！"));
+					//QMessageBox::information(this, __StandQString("提示"), __StandQString("VC参数设置成功！"));
 				}
 				});
 
@@ -517,7 +550,7 @@ namespace TCP_ROBOT
 		QVBoxLayout* dialogLay = new QVBoxLayout(m_calibrationDialog);
 		dialogLay->addWidget(widget);
 		m_calibrationDialog->resize(450, 300);
-		m_calibrationDialog->exec();
+		m_calibrationDialog->show();
 	}
 
 	void Robot7103Grid::slotfineTuningBtnClicked(
@@ -532,7 +565,6 @@ namespace TCP_ROBOT
 		}
 		m_fineTuningDialog = new QDialog(this);
 		m_fineTuningDialog->setWindowTitle(__StandQString("微调工件"));
-		m_fineTuningDialog->setModal(true);
 
 		m_fineTuningDialog->move(QCursor::pos());
 
@@ -592,7 +624,7 @@ namespace TCP_ROBOT
 
 		QVBoxLayout* dialogLay = new QVBoxLayout(m_fineTuningDialog);
 		dialogLay->addWidget(widget);
-		m_fineTuningDialog->exec();
+		m_fineTuningDialog->show();
 	}
 
 	void Robot7103Grid::slotAddGrid(QStringList rowValues,
