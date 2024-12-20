@@ -89,7 +89,7 @@ namespace TCP_ROBOT
 		}
 		if (reciveData.contains("GI,OVER"))
 		{
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 		}
 		if (reciveData.contains("ST,IG"))
 		{
@@ -101,17 +101,17 @@ namespace TCP_ROBOT
 		}
 		if (reciveData.contains("VC,OVER"))
 		{
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 			emit signalRobotCommandFeedback(VC_OVER);
 		}
 		if (reciveData.contains("GO,OVER"))
 		{
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 			emit signalRobotCommandFeedback(GO_OVER);
 		}
 		if (reciveData.contains("FT,OVER"))
 		{
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 			emit signalRobotCommandFeedback(FT_OVER);
 		}
 		if (reciveData.contains("ER"))

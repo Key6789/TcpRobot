@@ -226,19 +226,23 @@ namespace TCP_ROBOT
 		// 定位按钮
 		QPushButton* locationBtn = new QPushButton(this);
 		locationBtn->setText(__StandQString("定位"));
+		locationBtn->setStyleSheet("background-color:red;color:white;");
 
 		QPushButton* calibrationBtn = new QPushButton(this);
 		calibrationBtn->setText(__StandQString("校准"));
+		calibrationBtn->setStyleSheet("background-color:gray;color:white;");
 		//calibrationBtn->setEnabled(false);
 
 		QPushButton* fineTuningBtn = new QPushButton(this);
 		fineTuningBtn->setText(__StandQString("微调"));
+		// 橙色
+		fineTuningBtn->setStyleSheet("background-color:gray;color:white;");
 		//fineTuningBtn->setEnabled(false);
 
 		QPushButton* confirmBtn = new QPushButton(this);
 		confirmBtn->setText(__StandQString("待确认"));
 
-		confirmBtn->setStyleSheet("background-color:red");
+		confirmBtn->setStyleSheet("background-color:gray;color:white;");
 		connect(confirmBtn, &QPushButton::clicked, [=]() {
 			if (confirmBtn->text() == __StandQString("确认"))
 			{
@@ -264,6 +268,10 @@ namespace TCP_ROBOT
 		setCellWidget(row, 5, fineTuningBtn);
 		setCellWidget(row, 6, confirmBtn);
 
+		// 置灰 状态
+		calibrationBtn->setEnabled(false);
+		fineTuningBtn->setEnabled(false);
+
 		connect(locationBtn, &QPushButton::clicked, [=]() {slotLocationBtnClicked(saftIndex, workIndex, trackIndex); });
 		connect(calibrationBtn, &QPushButton::clicked, [=]() {slotcalibrationBtnClicked(saftIndex, workIndex, trackIndex); });
 		connect(fineTuningBtn, &QPushButton::clicked, [=]() {slotfineTuningBtnClicked(saftIndex, workIndex, trackIndex); });
@@ -287,6 +295,37 @@ namespace TCP_ROBOT
 		calibrationBtn->setEnabled(true);
 		fineTuningBtn->setEnabled(true);
 
+		calibrationBtn->setStyleSheet("background-color:orange;color:white;");
+		fineTuningBtn->setStyleSheet("background-color:blue;color:white;");
+
+		
+
+		LOG_FUNCTION_LINE_INFO("saftIndex:%d, workIndex:%d, trackIndex:%d", saftIndex, workIndex, trackIndex);
+
+		QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
+		LOG_FUNCTION_LINE_INFO("sendValueList:%s", sendValueList.join("\n").toStdString().c_str());
+
+		// 遍历表格其他行，将其他按钮置灰
+		for (int i = 0; i < rowCount(); ++i)
+		{
+			if (i != row)
+			{
+				QPushButton* btn = static_cast<QPushButton*>(cellWidget(i, 4));
+				if (btn != nullptr)
+				{
+					btn->setEnabled(false);
+					btn->setStyleSheet("background-color:gray;color:white;");
+				}
+
+				btn = static_cast<QPushButton*>(cellWidget(i, 5));
+				if (btn != nullptr)
+				{
+					btn->setEnabled(false);
+					btn->setStyleSheet("background-color:gray;color:white;");
+				}
+			}
+		}
+
 		// 组装 指令 
 		if (m_currentSaftIndex == -1)
 		{
@@ -294,15 +333,27 @@ namespace TCP_ROBOT
 			QMessageBox* messageBox = new QMessageBox(
 				QMessageBox::Warning,
 				__StandQString("警告"),
-				__StandQString("为确保安全,请手动移动到安全位置！"),
+				__StandQString("为确保安全,请手动移动到安全位置！\n %1").arg(sendValueList.join("\n")),
 				QMessageBox::Ok, this);
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
 			messageBox->exec();
 
 		}
+		else
+		{
+			// 按钮 文本为 我已确认安全
+			QMessageBox* messageBox = new QMessageBox(
+				QMessageBox::Warning,
+				__StandQString("提示"),
+				__StandQString("机器人即将开始定位工件，请确认安全！\n %1").arg(sendValueList.join("\n")),
+				QMessageBox::Ok, this);
+
+			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
+			messageBox->exec();
+		}
 		
-		QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
+		
 
 		foreach(QString value, sendValueList)
 		{
@@ -315,6 +366,8 @@ namespace TCP_ROBOT
 		m_currentSaftIndex = saftIndex;
 		m_currentWorkIndex = workIndex;
 		m_currentTrackIndex = trackIndex;
+
+		
 	}
 
 	void Robot7103Grid::slotcalibrationBtnClicked(

@@ -101,6 +101,9 @@ namespace TCP_ROBOT
 		QVector<Handle(AIS_Shape)> updateShapTrsf(ADDROBOTDATA data);
 
 		void updateShapTrsf(QMap<QString, ADDROBOTDATA>& robotMap);
+
+
+		// 工件范围
 	signals:
 		void signalUpdateRobotShaps(bool isUpdate);
 
