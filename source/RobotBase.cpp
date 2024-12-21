@@ -120,7 +120,7 @@ namespace TCP_ROBOT
 		myContext->SetDisplayMode(AIS_Shaded, Standard_True);
 		//myView->SetSize(400);
 		slotUpdataRobotShaps();
-
+		//myView->SetProj(V3d_Zpos,true);
 	}
 
 
@@ -135,6 +135,11 @@ namespace TCP_ROBOT
 	{
 
 		return myContext;
+	}
+
+	void RobotBase::SetProj(const V3d_TypeOfOrientation theOrientation, const Standard_Boolean theIsYup)
+	{
+		myView->SetProj(theOrientation, theIsYup);
 	}
 
 

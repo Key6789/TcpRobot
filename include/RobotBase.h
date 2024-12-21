@@ -23,6 +23,8 @@ namespace TCP_ROBOT
 		//  数据获取
 		// 获取当前的交互上下文
 		const Handle(AIS_InteractiveContext)& getContext() const;
+		 void SetProj(const V3d_TypeOfOrientation theOrientation,
+			const Standard_Boolean theIsYup = Standard_False);
 
 		// 获取形状
 		TopoDS_Shape getShape();
