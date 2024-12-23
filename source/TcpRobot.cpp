@@ -17,7 +17,7 @@ namespace TCP_ROBOT
 		go->setSendFront(true);
 		vc->setIsResend(false);
 		ft->setIsResend(false);
-
+		go->setIsResend(false);
 		QMap<QString, TCPXVIEWBASE_NAMESPACE::StandFrame*> robotFrames;
 		robotFrames.insert("PS", ps);
 		robotFrames.insert("GO", go);
@@ -34,6 +34,8 @@ namespace TCP_ROBOT
 	TcpRobotCommunication::~TcpRobotCommunication()
 	{
 	}
+
+
 	RobotFrame* TcpRobotCommunication::createRobotFrame(QString robotName)
 	{
 		QString frameName = robotName.append(",");
@@ -75,6 +77,7 @@ namespace TCP_ROBOT
 		if (reciveData.contains("ST,READY"))
 		{
 			setCurrentFrameIsReceived(true);
+			setSendStatus(true);
 			emit signalRobotCommandFeedback(ST_READY);
 		}
 		if (reciveData.contains("ST,VCING"))

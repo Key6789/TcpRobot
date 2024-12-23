@@ -469,7 +469,7 @@ namespace TCP_ROBOT
 		}
 		//});
 		m_currentPostion = shapeValues;
-
+		getContext()->UpdateCurrentViewer();
 		m_isActiveUpdateShap = false;
 		//timer->setInterval(20);
 	}
@@ -1137,7 +1137,7 @@ namespace TCP_ROBOT
 			line->connectBtnClicked([=]() {
 				for (int count = 0; count < m_cloneData.size(); count++)
 				{
-					//initMoveCloneShape();
+					initMoveCloneShape();
 					slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
 					foreach(QString shapeName, m_cloneData[count].robotMap.keys())
 					{

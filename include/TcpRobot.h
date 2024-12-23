@@ -29,7 +29,6 @@ namespace TCP_ROBOT
 
 		// 界面增加指令到位反馈，指令发出、收到、执行完成等
 		QWidget* commandFeedbackUI(QWidget* parent = nullptr);
-
 	signals:
 		void signalRobotCommandFeedback(RobotState state);
 	};
@@ -45,9 +44,7 @@ namespace TCP_ROBOT
 		void sendStandValue() override;
 
 	signals:
-			void signalAllReceived(const QString& command);
-
-
+		void signalAllReceived(const QString& command);
 	};
 }
 #endif // T3TCPROBOT_H_

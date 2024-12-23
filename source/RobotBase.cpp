@@ -507,6 +507,7 @@ namespace TCP_ROBOT
 			aisShapeTemp->SetColor(data.color);
 			aisShapeTemp->SetLocalTransformation(trsf);
 			vectortemp.push_back(aisShapeTemp);
+			//getContext()->Update(aisShapeTemp, true);
 		}
 		return vectortemp;
 	}
