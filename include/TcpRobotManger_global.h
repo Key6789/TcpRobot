@@ -1156,10 +1156,10 @@ struct MoveStruct
 		if (saftCurrent == nextSaft)
 		{
 			// 点击 同一位置 返回
-			if (workCurrent == nextWork)
+			/*if (workCurrent == nextWork)
 			{
 				return sendValueList;
-			}
+			}*/
 			// 获取当前工作件的 离开 轨迹列表
 			QStringList currentSaftList;
 			if (saftCurrent != -1 && workCurrent != -1)

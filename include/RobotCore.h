@@ -103,6 +103,9 @@ namespace TCP_ROBOT
 		void updateShapTrsf(QMap<QString, ADDROBOTDATA>& robotMap);
 
 
+
+
+
 		// 工件范围
 	signals:
 		void signalUpdateRobotShaps(bool isUpdate);
@@ -120,6 +123,8 @@ namespace TCP_ROBOT
 		// 文件读入
 		QVariantMap readJsonFileToMap(QString filePath);
 		void writeJsonFileFromMap(QString filePath, QVariantMap map);
+
+		QMap<QString, ADDROBOTDATA> getCurrentRobotMap() { return m_robotMap; }
 
 		// 工件集合
 		QMap<QString, ADDROBOTDATA> m_shapesMap = QMap<QString, ADDROBOTDATA>();
@@ -141,6 +146,56 @@ namespace TCP_ROBOT
 		QString m_currentOtherPath = "";
 
 		QString m_zeroPositon = "";
+
+	};
+
+
+	class TCPROBOT_EXPORT RobotCoreClone : public RobotCore
+	{
+	public:
+		Q_OBJECT
+		struct CloneData
+		{
+			int count = 0;
+			int x = 0;
+			int y = 0;
+			int z = 0;
+			double angleX = 0;
+			double angleY = 0;
+			double angleZ = 0;
+			double scale = 0;
+			QMap<QString, ADDROBOTDATA> robotMap;
+			QMap<QString, CLabLineEditBtn*> labLineMap;
+		};
+		using RobotCore::RobotCore;
+	public:
+		void cloneRobot(int count, CloneData data);
+		void slotUpdataCount(int count, QString Value );
+
+		void initMoveCloneShape();
+		void initMoveCloneShape(int count);
+
+		void initConnect();
+
+		QWidget * initCloneShapeWidget(int count, QWidget* parent = nullptr);
+
+		QWidget * initCloneRobotWidget(QWidget* parent = nullptr);
+		QWidget * initCloneSingleALLWidget(QWidget* parent = nullptr);
+
+	signals:
+		// 同步更新
+		void signalUpdateCloneData(int count, CloneData data);
+
+		
+
+
+
+
+	private:
+		QMap<int, CloneData> m_cloneData = QMap<int, CloneData>();
+		QMap<QString, CLabLineEditBtn*> m_cloneLabLineMap = QMap<QString, CLabLineEditBtn*>();
+		
+
 
 	};
 }

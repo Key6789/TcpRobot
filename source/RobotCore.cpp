@@ -179,7 +179,7 @@ namespace TCP_ROBOT
 			}
 			else { return; }
 			});
-			
+
 		pLayout->addWidget(pTable);
 		pLayout->addWidget(pCheckBox);
 		pLayout->addWidget(pBtns);
@@ -216,9 +216,9 @@ namespace TCP_ROBOT
 			m_isUpdate = false;
 			m_rowRate = pDoubleSpinBox->value();
 			// 重新加载 模型文件
-			if(!m_isUpdate)
+			if (!m_isUpdate)
 			{
-				QMessageBox * msgBox = new QMessageBox(parent);
+				QMessageBox* msgBox = new QMessageBox(parent);
 				msgBox->setText(__StandQString("是否进行零点矫正？"));
 				msgBox->setInformativeText(__StandQString("矫正模型将会重新加载模型文件、停止实时刷新且模型位置发生变化，是否继续？"));
 				msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -310,19 +310,19 @@ namespace TCP_ROBOT
 		// 加载机器人 模型
 		foreach(QString shapeName, m_shapesMap.keys())
 		{
-			ADDROBOTDATA &data = m_shapesMap[shapeName];
+			ADDROBOTDATA& data = m_shapesMap[shapeName];
 			data.initShapeAx3();
 			data.isChanged = true;
 		}
 		foreach(QString shapeName, m_robotMap.keys())
 		{
-			ADDROBOTDATA &data = m_robotMap[shapeName];
+			ADDROBOTDATA& data = m_robotMap[shapeName];
 			data.initShapeAx3();
 			data.isChanged = true;
 		}
 		foreach(QString shapeName, m_otherMap.keys())
 		{
-			ADDROBOTDATA &data = m_otherMap[shapeName];
+			ADDROBOTDATA& data = m_otherMap[shapeName];
 			data.initShapeAx3();
 			data.isChanged = true;
 		}
@@ -471,7 +471,7 @@ namespace TCP_ROBOT
 		m_currentPostion = shapeValues;
 
 		m_isActiveUpdateShap = false;
-	//timer->setInterval(20);
+		//timer->setInterval(20);
 	}
 	void RobotCore::updateLastCurrentPostion(QString shapeValue)
 	{
@@ -566,6 +566,7 @@ namespace TCP_ROBOT
 				setCollisionDetection(m_shapesMap[shapeName], m_robotMap[robotName]);
 			}
 		}
+		getContext()->UpdateCurrentViewer();
 	}
 	void RobotCore::slotUpdataRobotShaps(void)
 	{
@@ -938,7 +939,7 @@ namespace TCP_ROBOT
 
 			/*ais->SetLocalTransformation(trsf);
 			ais->UpdateTransformation();*/
-			getContext()->Update(ais, Standard_True);
+			//getContext()->Update(ais, Standard_True);
 			vectortemp.push_back(ais);
 
 			//if (ais->Shape().IsNull())
@@ -1025,5 +1026,143 @@ namespace TCP_ROBOT
 		QJsonDocument jsonDoc(QJsonObject::fromVariantMap(map));
 		out << jsonDoc.toJson(QJsonDocument::Indented);
 		file.close();
+	}
+
+
+	void RobotCoreClone::cloneRobot(int count, CloneData cloneData)
+	{
+		LOG_FUNCTION_LINE_MESSAGE;
+		QMap<QString, ADDROBOTDATA> robotMap = getCurrentRobotMap();
+
+		QMap<QString, ADDROBOTDATA> newRobotMap = robotMap;
+		for (int i = 0; i < count; i++)
+		{
+			for (auto it = robotMap.begin(); it != robotMap.end(); ++it)
+			{
+				QString name = it.key();
+				ADDROBOTDATA addRobotData = it.value();
+				addRobotData.assemblyPoint = gp_Pnt(cloneData.x * i + addRobotData.assemblyPoint.X(), cloneData.y * i + addRobotData.assemblyPoint.Y(), cloneData.z * i + addRobotData.assemblyPoint.Z());
+				addRobotData.angleX = cloneData.angleX * i + addRobotData.angleX;
+				addRobotData.angleY = cloneData.angleY * i + addRobotData.angleY;
+				addRobotData.angleZ = cloneData.angleZ * i + addRobotData.angleZ;
+				addRobotData.sacle = cloneData.scale * i + addRobotData.sacle;
+
+				addRobotData.shapes = scaleShapes(addRobotData.shapes, addRobotData.sacle);
+				addRobotData.initShapeAx3();
+				addRobotData.myAisShapes = RobotTransformParallelPreview(addRobotData);
+				newRobotMap.insert(name, addRobotData);
+
+				// 移除旧模型
+				removeShapeModel(newRobotMap, addRobotData);
+				// 显示新模型
+				newRobotMap.insert(name, addRobotData);
+				displaySingalAddRobot(addRobotData);
+			}
+			cloneData.count = i;
+			cloneData.robotMap = newRobotMap;
+			m_cloneData.insert(i, cloneData);
+		}
+	}
+	void RobotCoreClone::slotUpdataCount(int count, QString Value)
+	{
+	}
+	void RobotCoreClone::initMoveCloneShape()
+	{
+		for (int i = 0; i < m_cloneData.size(); i++)
+		{
+			initMoveCloneShape(i);
+		}
+	}
+	void RobotCoreClone::initMoveCloneShape(int count)
+	{
+		if (!m_cloneData.contains(count))
+		{
+			QMessageBox::warning(nullptr, __TCPString("警告"), __TCPString("没有克隆数据%1").arg(count));
+			return;
+		}
+		QMap<QString, ADDROBOTDATA> robotMap = m_cloneData[count].robotMap;
+		for (auto it = robotMap.begin(); it != robotMap.end(); ++it)
+		{
+			QString name = it.key();
+			ADDROBOTDATA addRobotData = it.value();
+			addRobotData.initShapeAx3();
+			addRobotData.myAisShapes = RobotTransformParallelPreview(addRobotData);
+			m_cloneData[count].robotMap.insert(name, addRobotData);
+		}
+	}
+	void RobotCoreClone::initConnect()
+	{
+		//foreach
+	}
+	QWidget* RobotCoreClone::initCloneShapeWidget(int count, QWidget* parent)
+	{
+		CWidgetVLay* widget = new CWidgetVLay(parent);
+		QMap<QString, ADDROBOTDATA> robotMap = m_cloneData[count].robotMap;
+		widget->addWidget(new QLabel(__TCPString("主控-%1").arg(count)));
+		for (int i = 0; i < robotMap.keys().size(); i++)
+		{
+			CLabLineEditBtn* line = new CLabLineEditBtn(widget);
+			line->setLabelText(robotMap.keys()[i]);
+			line->setLineEditText(QString::number(robotMap[robotMap.keys()[i]].angleZ));
+			line->setBtnText(__TCPString("确认"));
+			line->connectBtnClicked([=]() {
+				//initMoveCloneShape(count);
+				slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
+				foreach(QString shapeName, m_cloneData[count].robotMap.keys())
+				{
+					if (m_cloneData[count].robotMap[shapeName].isChanged)
+					{
+						m_cloneData[count].robotMap[shapeName].isChanged = false;
+						updateShapeModel(m_cloneData[count].robotMap, shapeName);
+					}
+				}
+				});
+			widget->addWidget(line);
+			m_cloneData[count].labLineMap.insert(robotMap.keys()[i], line);
+		}
+		return widget;
+	}
+	QWidget* RobotCoreClone::initCloneRobotWidget(QWidget* parent)
+	{
+		CWidgetVLay* widget = new CWidgetVLay(parent);
+		QMap<QString, ADDROBOTDATA> robotMap = getCurrentRobotMap();
+		widget->addWidget(new QLabel(__TCPString("主控")));
+		for (int i = 0; i < robotMap.keys().size(); i++)
+		{
+			CLabLineEditBtn* line = new CLabLineEditBtn(widget);
+			line->setLabelText(robotMap.keys()[i]);
+			line->setBtnText(__TCPString("确认"));
+			line->setLineEditText(QString::number(robotMap[robotMap.keys()[i]].angleZ));
+
+			line->connectBtnClicked([=]() {
+				for (int count = 0; count < m_cloneData.size(); count++)
+				{
+					//initMoveCloneShape();
+					slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
+					foreach(QString shapeName, m_cloneData[count].robotMap.keys())
+					{
+						if (m_cloneData[count].robotMap[shapeName].isChanged)
+						{
+							m_cloneData[count].robotMap[shapeName].isChanged = false;
+							updateShapeModel(m_cloneData[count].robotMap, shapeName);
+						}
+					}
+				}
+				getContext()->UpdateCurrentViewer();
+				});
+			widget->addWidget(line);
+			m_cloneLabLineMap.insert(robotMap.keys()[i], line);
+		}
+		return widget;
+	}
+	QWidget* RobotCoreClone::initCloneSingleALLWidget(QWidget* parent)
+	{
+		CWidgetHLay *widget = new CWidgetHLay(parent);
+		widget->addWidget(new QLabel(__TCPString("逐个主控")));
+		for (int i = 0; i < m_cloneData.size(); i++)
+		{
+			widget->addWidget(initCloneShapeWidget(i, parent));
+		}
+		return widget;
 	}
 } // namespace TCP_ROBOT
