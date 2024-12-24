@@ -29,6 +29,8 @@ namespace TCP_ROBOT
 		QWidget* showRobotPreview(QWidget* parent = nullptr);
 		QWidget* showGuidePreview(QWidget* parent = nullptr);
 
+
+		QWidget * showCommondPreview(QWidget* parent = nullptr);
 		// QWidget 用于显示表格
 		QWidget* showTable(QWidget* parent = nullptr);
 

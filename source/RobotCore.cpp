@@ -1033,7 +1033,7 @@ namespace TCP_ROBOT
 	{
 		LOG_FUNCTION_LINE_MESSAGE;
 		QMap<QString, ADDROBOTDATA> robotMap = getCurrentRobotMap();
-
+		m_cloneOtherMap = getOtherMap();
 		QMap<QString, ADDROBOTDATA> newRobotMap = robotMap;
 		for (int i = 0; i < count; i++)
 		{
@@ -1137,7 +1137,7 @@ namespace TCP_ROBOT
 			line->connectBtnClicked([=]() {
 				for (int count = 0; count < m_cloneData.size(); count++)
 				{
-					initMoveCloneShape();
+					//initMoveCloneShape();
 					slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
 					foreach(QString shapeName, m_cloneData[count].robotMap.keys())
 					{
@@ -1163,6 +1163,107 @@ namespace TCP_ROBOT
 		{
 			widget->addWidget(initCloneShapeWidget(i, parent));
 		}
+		return widget;
+	}
+	QWidget* RobotCoreClone::initCloneDemoWidget(QWidget* parent)
+	{
+		CWidgetVLay *widget = new CWidgetVLay(parent);
+		widget->addWidget(new QLabel(__TCPString("克隆演示")));
+
+		
+		CLabLineEditBtn* line = new CLabLineEditBtn(widget);
+		line->setLabelText(__TCPString("部件-1"));
+		line->setLineEditText("0");
+		line->setBtnText(__TCPString("确认"));  
+		line->connectBtnClicked([=]() {
+			slotShapesMoveShape(m_cloneOtherMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_1, MoveDirection::MoveDirection_YAxis);
+			foreach(QString shapeName, m_cloneOtherMap.keys())
+			{
+				if (m_cloneOtherMap[shapeName].isChanged)
+				{
+					m_cloneOtherMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneOtherMap, shapeName);
+				}
+			}
+			getContext()->UpdateCurrentViewer();
+
+			});
+
+		CLabLineEditBtn* line2 = new CLabLineEditBtn(widget);
+		line2->setLabelText(__TCPString("部件-2"));
+		line2->setLineEditText("0");
+		line2->setBtnText(__TCPString("确认"));
+		line2->connectBtnClicked([=]() {
+			slotShapesMoveShape(m_cloneOtherMap, line2->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_2, MoveDirection::MoveDirection_YAxis);
+			foreach(QString shapeName, m_cloneOtherMap.keys())
+			{
+				if (m_cloneOtherMap[shapeName].isChanged)
+				{
+					m_cloneOtherMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneOtherMap, shapeName);
+				}
+			}
+			getContext()->UpdateCurrentViewer();
+			
+			});
+
+		CLabLineEditBtn* line3 = new CLabLineEditBtn(widget);
+		line3->setLabelText(__TCPString("部件-3"));
+		line3->setLineEditText("0");
+		line3->setBtnText(__TCPString("确认"));
+		line3->connectBtnClicked([=]() {
+			slotShapesMoveShape(m_cloneOtherMap, line3->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_3, MoveDirection::MoveDirection_XAxis);
+			foreach(QString shapeName, m_cloneOtherMap.keys())
+			{
+				if (m_cloneOtherMap[shapeName].isChanged)
+				{
+					m_cloneOtherMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneOtherMap, shapeName);
+				}
+			}
+			getContext()->UpdateCurrentViewer();
+			
+			});
+
+		CLabLineEditBtn* line4 = new CLabLineEditBtn(widget);
+		line4->setLabelText(__TCPString("部件-4"));
+		line4->setLineEditText("0");
+		line4->setBtnText(__TCPString("确认"));
+		line4->connectBtnClicked([=]() {
+			slotShapesMoveShape(m_cloneOtherMap, line4->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_4, MoveDirection::MoveDirection_ZAxis);
+			foreach(QString shapeName, m_cloneOtherMap.keys())
+			{
+				if (m_cloneOtherMap[shapeName].isChanged)
+				{
+					m_cloneOtherMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneOtherMap, shapeName);
+				}
+			}
+			getContext()->UpdateCurrentViewer();
+			});
+
+		CLabLineEditBtn* line5 = new CLabLineEditBtn(widget);
+		line5->setLabelText(__TCPString("部件-5"));
+		line5->setLineEditText("0");
+		line5->setBtnText(__TCPString("确认"));
+		line5->connectBtnClicked([=]() {
+			slotShapesRotateShape(m_cloneOtherMap, line5->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_5, MoveDirection::MoveDirection_ZAxis);
+			foreach(QString shapeName, m_cloneOtherMap.keys())
+			{
+				if (m_cloneOtherMap[shapeName].isChanged)
+				{
+					m_cloneOtherMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneOtherMap, shapeName);
+				}
+			}
+			getContext()->UpdateCurrentViewer();
+			});
+
+		widget->addWidget(line);
+		widget->addWidget(line2);
+		widget->addWidget(line3);
+		widget->addWidget(line4);
+		widget->addWidget(line5);
 		return widget;
 	}
 } // namespace TCP_ROBOT

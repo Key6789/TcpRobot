@@ -125,6 +125,7 @@ namespace TCP_ROBOT
 		void writeJsonFileFromMap(QString filePath, QVariantMap map);
 
 		QMap<QString, ADDROBOTDATA> getCurrentRobotMap() { return m_robotMap; }
+		QMap<QString, ADDROBOTDATA> getOtherMap() { return m_otherMap; }
 
 		// 工件集合
 		QMap<QString, ADDROBOTDATA> m_shapesMap = QMap<QString, ADDROBOTDATA>();
@@ -152,8 +153,8 @@ namespace TCP_ROBOT
 
 	class TCPROBOT_EXPORT RobotCoreClone : public RobotCore
 	{
-	public:
 		Q_OBJECT
+	public:
 		struct CloneData
 		{
 			int count = 0;
@@ -182,6 +183,11 @@ namespace TCP_ROBOT
 		QWidget * initCloneRobotWidget(QWidget* parent = nullptr);
 		QWidget * initCloneSingleALLWidget(QWidget* parent = nullptr);
 
+		QWidget * initCloneDemoWidget(QWidget* parent = nullptr);
+
+
+		
+
 	signals:
 		// 同步更新
 		void signalUpdateCloneData(int count, CloneData data);
@@ -194,6 +200,7 @@ namespace TCP_ROBOT
 	private:
 		QMap<int, CloneData> m_cloneData = QMap<int, CloneData>();
 		QMap<QString, CLabLineEditBtn*> m_cloneLabLineMap = QMap<QString, CLabLineEditBtn*>();
+		QMap<QString,ADDROBOTDATA> m_cloneOtherMap = QMap<QString, ADDROBOTDATA>();
 		
 
 

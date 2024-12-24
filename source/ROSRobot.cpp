@@ -14,7 +14,7 @@ namespace TCP_ROBOT
 	ROSRobot::~ROSRobot()
 	{
 		LOG_FUNCTION_LINE_MESSAGE;
-		if(m_tcpRobotCom)
+		if (m_tcpRobotCom)
 		{
 			delete m_tcpRobotCom;
 			m_tcpRobotCom = nullptr;
@@ -36,6 +36,7 @@ namespace TCP_ROBOT
 		tabWidget->addTab(showGuidePreview(preview), __StandQString("导轨配置"));
 		tabWidget->addTab(showRobotPreview(preview), __StandQString("机器人配置"));
 		tabWidget->addTab(m_robotCore->initZeroWidget(preview), __StandQString("零点设置"));
+		tabWidget->addTab(showCommondPreview(preview), __StandQString("通用配置"));
 		mainLayout->addWidget(m_robotPreview, 5);
 		m_robotPreview->resize(600, 600);
 
@@ -669,6 +670,201 @@ namespace TCP_ROBOT
 		return preview;
 	}
 
+	QWidget* ROSRobot::showCommondPreview(QWidget* parent)
+	{
+		LOG_FUNCTION_LINE_MESSAGE;
+
+		QWidget* preview = new QWidget(parent);
+		preview->setWindowTitle(__StandQString("通用配置"));
+
+		QTabWidget* tabWidget = new QTabWidget(preview);
+		
+		ShapeCommondPreview* preViewLong = new ShapeCommondPreview(preview);
+		preViewLong->setShapeType(ShapeType_Clone_1);
+		preViewLong->setLinkIsVisable(false);
+		tabWidget->addTab(preViewLong, __StandQString("Demo_1"));
+
+
+
+		ShapeCommondPreview* preViewShort = new ShapeCommondPreview(preview);
+		preViewShort->setShapeType(ShapeType_Clone_2);
+		preViewShort->setLinkIsVisable(false);
+		tabWidget->addTab(preViewShort, __StandQString("Demo_2"));
+
+		ShapeCommondPreview* preViewRotation = new ShapeCommondPreview(preview);
+		preViewRotation->setShapeType(ShapeType_Clone_3);
+		preViewRotation->setLinkIsVisable(false);
+		tabWidget->addTab(preViewRotation, __StandQString("Demo_3"));
+
+		ShapeCommondPreview* preViewRotation2 = new ShapeCommondPreview(preview);
+		preViewRotation2->setShapeType(ShapeType_Clone_4);
+		preViewRotation2->setLinkIsVisable(false);
+		tabWidget->addTab(preViewRotation2, __StandQString("Demo_4"));
+
+		ShapeCommondPreview* preViewRotation3 = new ShapeCommondPreview(preview);
+		preViewRotation3->setShapeType(ShapeType_Clone_5);
+		preViewRotation3->setLinkIsVisable(false);
+		tabWidget->addTab(preViewRotation3, __StandQString("Demo_5"));
+
+		ShapeCommondPreview* preViewRotation4 = new ShapeCommondPreview(preview);
+		preViewRotation4->setShapeType(ShapeType_Clone_6);
+		preViewRotation4->setLinkIsVisable(false);
+		tabWidget->addTab(preViewRotation4, __StandQString("Demo_6"));
+
+		preViewLong->setRobotPreviewPoint(m_robotPreview);
+		preViewShort->setRobotPreviewPoint(m_robotPreview);
+		preViewRotation->setRobotPreviewPoint(m_robotPreview);
+		preViewRotation2->setRobotPreviewPoint(m_robotPreview);
+		preViewRotation3->setRobotPreviewPoint(m_robotPreview);
+		preViewRotation4->setRobotPreviewPoint(m_robotPreview);
+		QVBoxLayout* mainLayout = new QVBoxLayout(preview);
+		mainLayout->addWidget(tabWidget);
+
+		QPushButton* saveButton = new QPushButton(preview);
+		saveButton->setText(__StandQString("保存"));
+		mainLayout->addWidget(saveButton);
+		{
+			QVariantMap variantMap;
+			// 读取导轨列表
+			createOrCheckDirectory(OTHERPATH);
+			QString fileName = OTHERPATH.append("/").append(OTERDATAPATH);
+			QFile file(fileName);
+			qDebug() << "导轨配置文件:" << fileName;
+			if (file.open(QIODevice::ReadOnly))
+			{
+				QTextStream in(&file);
+				QJsonDocument doc = QJsonDocument::fromJson(in.readAll().toUtf8());
+				QVariantMap variantMap = doc.toVariant().toMap();
+				if (!variantMap.isEmpty())
+				{
+					// 长轴
+					if (variantMap.contains("Demo_1"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_1"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_1;
+						shapeStruct.ShapeName = "Demo_1";
+						preViewLong->setShapeStruct(shapeStruct);
+					}
+					// 短轴
+					if (variantMap.contains("Demo_2"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_2"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_2;
+						shapeStruct.ShapeName = "Demo_2";
+
+						preViewShort->setShapeStruct(shapeStruct);
+					}
+					// 转盘
+					if (variantMap.contains("Demo_3"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_3"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_3;
+						shapeStruct.ShapeName = "Demo_3";
+						preViewRotation->setShapeStruct(shapeStruct);
+					}
+					if (variantMap.contains("Demo_4"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_4"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_4;
+						shapeStruct.ShapeName = "Demo_4";
+						preViewRotation2->setShapeStruct(shapeStruct);
+					}
+					if (variantMap.contains("Demo_5"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_5"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_5;
+						shapeStruct.ShapeName = "Demo_5";
+						preViewRotation3->setShapeStruct(shapeStruct);
+					}
+					if (variantMap.contains("Demo_6"))
+					{
+						SHAPESTRUCT shapeStruct;
+						shapeStruct.setShapeVariantMap(variantMap["Demo_6"].toMap());
+						shapeStruct.shapeType = ShapeType_Clone_6;
+						shapeStruct.ShapeName = "Demo_6";
+						preViewRotation4->setShapeStruct(shapeStruct);
+					}
+					file.close();
+				}
+			}
+			else
+			{
+				SHAPESTRUCT shapeStruct;
+				shapeStruct.shapeType = ShapeType_Clone_1;
+				shapeStruct.ShapeName = "Demo_1";
+				preViewLong->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_Clone_2;
+				shapeStruct.ShapeName = "Demo_2";
+				preViewShort->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_Clone_3;
+				shapeStruct.ShapeName = "Demo_3";
+				preViewRotation->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_Clone_4;
+				shapeStruct.ShapeName = "Demo_4";
+				preViewRotation2->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_Clone_5;
+				shapeStruct.ShapeName = "Demo_5";
+				preViewRotation3->setShapeStruct(shapeStruct);
+
+				shapeStruct.shapeType = ShapeType_Clone_6;
+				shapeStruct.ShapeName = "Demo_6";
+				preViewRotation4->setShapeStruct(shapeStruct);
+
+
+			}
+
+		}
+		
+		connect(saveButton, &QPushButton::clicked, [=]() {
+			QVariantMap variantMap;
+			SHAPESTRUCT longShapeStruct = preViewLong->getShapeStruct();
+			SHAPESTRUCT shortShapeStruct = preViewShort->getShapeStruct();
+			SHAPESTRUCT rotationShapeStruct = preViewRotation->getShapeStruct();
+			SHAPESTRUCT rotationShapeStruct2 = preViewRotation2->getShapeStruct();
+			SHAPESTRUCT rotationShapeStruct3 = preViewRotation3->getShapeStruct();
+			SHAPESTRUCT rotationShapeStruct4 = preViewRotation4->getShapeStruct();
+
+			/*if (!longShapeStruct.nextShapeNames.contains(shortShapeStruct.ShapeName))
+			{
+				longShapeStruct.nextShapeNames.append(shortShapeStruct.ShapeName);
+			}
+			if (!shortShapeStruct.nextShapeNames.contains(rotationShapeStruct.ShapeName))
+			{
+				shortShapeStruct.nextShapeNames.append(rotationShapeStruct.ShapeName);
+			}*/
+
+			variantMap.insert(longShapeStruct.ShapeName, longShapeStruct.getShapeVariantMap());
+			variantMap.insert(shortShapeStruct.ShapeName, shortShapeStruct.getShapeVariantMap());
+			variantMap.insert(rotationShapeStruct.ShapeName, rotationShapeStruct.getShapeVariantMap());
+			variantMap.insert(rotationShapeStruct2.ShapeName, rotationShapeStruct2.getShapeVariantMap());
+			variantMap.insert(rotationShapeStruct3.ShapeName, rotationShapeStruct3.getShapeVariantMap());
+			variantMap.insert(rotationShapeStruct4.ShapeName, rotationShapeStruct4.getShapeVariantMap());
+
+			createOrCheckDirectory(OTHERPATH);
+			QString fileName = OTHERPATH.append("/").append(OTERDATAPATH);
+			QFile file(fileName);
+
+			if (file.open(QIODevice::WriteOnly))
+			{
+				QJsonDocument doc(QJsonObject::fromVariantMap(variantMap));
+				QTextStream out(&file);
+				out << doc.toJson();
+			}
+			file.close();
+			});
+
+		return preview;
+	}
+
 	QWidget* ROSRobot::showTable(QWidget* parent)
 	{
 		LOG_FUNCTION_LINE_MESSAGE;
@@ -720,12 +916,12 @@ namespace TCP_ROBOT
 	QWidget* ROSRobot::showTeaching(QWidget* parent)
 	{
 		LOG_FUNCTION_LINE_MESSAGE;
-		CWidgetVLay *teaching = new CWidgetVLay(parent);
+		CWidgetVLay* teaching = new CWidgetVLay(parent);
 		teaching->setWindowTitle(__StandQString("示教界面"));
 		if (!m_teaching)
 		{
 			m_teaching->close();
-			
+
 		}
 		m_teaching = new RobotoDemonstrator(parent);
 		teaching->addWidget(m_teaching);
@@ -736,7 +932,7 @@ namespace TCP_ROBOT
 		{
 			m_teaching->setTcpCommunication(m_tcpRobotCom);
 		}
-		
+
 		return teaching;
 	}
 
@@ -1408,7 +1604,7 @@ namespace TCP_ROBOT
 	void ShapeCommondPreview::readShapePath()
 	{
 		// 打开文件选择对话框
-		QFileDialog * fileDialog = new QFileDialog(this);
+		QFileDialog* fileDialog = new QFileDialog(this);
 		fileDialog->setFileMode(QFileDialog::ExistingFile);
 		fileDialog->setNameFilter(__StandQString("*.step"));
 		fileDialog->setViewMode(QFileDialog::Detail);
@@ -1424,7 +1620,7 @@ namespace TCP_ROBOT
 				QDir dir;
 				dir.mkpath(QCoreApplication::applicationDirPath() + "/Models");
 				QFile::copy(fileName, QCoreApplication::applicationDirPath() + "/Models/" + fileName.split("/").last());
-				m_shapeStruct.ShapePath =  "/Models/" + fileName.split("/").last();
+				m_shapeStruct.ShapePath = "/Models/" + fileName.split("/").last();
 			}
 		}
 		//ISNULLPOINTER(m_robotPreview);

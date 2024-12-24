@@ -139,7 +139,7 @@ namespace TCP_ROBOT
 			if (dataList.constLast() == "40")
 			{
 				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("错误"), __StandQString("位置不可达!"));
-				messageBox->exec();
+				messageBox->show();
 			}
 			setCurrentFrameIsReceived(true);
 		}

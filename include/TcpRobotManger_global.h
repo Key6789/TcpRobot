@@ -392,8 +392,19 @@ enum ShapeType
 	ShapeType_Robot_10,
 	ShapeType_Robot_11,
 	ShapeType_Robot_12,
-	ShapeType_Robot_13
-
+	ShapeType_Robot_13,
+	ShapeType_Clone_1,
+	ShapeType_Clone_2,
+	ShapeType_Clone_3,
+	ShapeType_Clone_4,
+	ShapeType_Clone_5,
+	ShapeType_Clone_6,
+	ShapeType_Clone_7,
+	ShapeType_Clone_8,
+	ShapeType_Clone_9,
+	ShapeType_Clone_10,
+	ShapeType_Clone_11,
+	ShapeType_Clone_12,
 };
 
 // 获取图形驱动程序的静态实例
