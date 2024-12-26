@@ -14,7 +14,7 @@ namespace TCP_ROBOT
 		RobotFrame * ig = createRobotFrame("IG");
 		RobotFrame * gi = createRobotFrame("GI");
 
-		go->setSendFront(true);
+		//go->setSendFront(true);
 		vc->setIsResend(false);
 		ft->setIsResend(false);
 		go->setIsResend(false);

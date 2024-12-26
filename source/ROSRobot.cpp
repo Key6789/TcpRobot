@@ -995,6 +995,7 @@ namespace TCP_ROBOT
 		m_tcpRobotCom->setIPAndPort("127.0.0.1", 8080);
 		// 设置重发间隔
 		m_tcpRobotCom->setRollInterval(5000);
+		m_tcpRobotCom->getCommunicator()->setConnectIndex(8888);
 		// 模型预览
 		m_robotPreview = new RobotPreview(this);
 		// 模型核心
