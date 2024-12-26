@@ -168,7 +168,7 @@ namespace TCP_ROBOT
 			QMap<QString, ADDROBOTDATA> robotMap;
 			QMap<QString, CLabLineEditBtn*> labLineMap;
 
-			double currentValue = 0;
+			QMap<int,double> currentValueMap;
 		};
 		using RobotCore::RobotCore;
 	public:

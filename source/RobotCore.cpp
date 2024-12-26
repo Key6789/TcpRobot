@@ -1069,10 +1069,7 @@ namespace TCP_ROBOT
 		for (int i = 0; i < robotMap.keys().size(); i++)
 		{
 			QStringList values = Value.split(",");
-			foreach(QString value, values)
-			{
-				slotRobotRotateShape(m_cloneData[count].robotMap, value.toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
-			}
+			slotRobotRotateShape(m_cloneData[count].robotMap, values[i].toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
 			foreach(QString shapeName, m_cloneData[count].robotMap.keys())
 			{
 				if (m_cloneData[count].robotMap[shapeName].isChanged)
@@ -1149,11 +1146,12 @@ namespace TCP_ROBOT
 			line->setLabelText(robotMap.keys()[i]);
 			line->setLineEditText("0");
 			line->setBtnText(__TCPString("确认"));
-			static int countValue = 0;
-			line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
+			line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(0));
+			m_cloneData[count].currentValueMap.insert(i, 0);
 			line->connectBtnClicked([=]() {
-				countValue = countValue + line->getLineEditText().toDouble();
-				line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
+				double value = line->getLineEditText().toDouble() + m_cloneData[count].currentValueMap[i];
+				m_cloneData[count].currentValueMap.insert(i, value);
+				line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(value));
 				//initMoveCloneShape(count);
 				slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
 				foreach(QString shapeName, m_cloneData[count].robotMap.keys())
