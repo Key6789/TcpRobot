@@ -68,20 +68,24 @@ namespace TCP_ROBOT
 		qDebug() << "TcpRobotCommunication::parseFrame";
 		QString reciveData = byte.data();
 		reciveData = reciveData.trimmed();
-
+		LOG_FUNCTION_LINE_INFO("TcpRobotCommunication::parseFrame");
+		LOG_FUNCTION_LINE_INFO(reciveData.toStdString());
 		if (reciveData.contains("ST,MOVING"))
 		{
+			LOG_FUNCTION_LINE_INFO("ST,MOVING");
 			setCurrentFrameIsReceived(false);
 			emit signalRobotCommandFeedback(ST_MOVING);
 		}
 		if (reciveData.contains("ST,READY"))
 		{
+			LOG_FUNCTION_LINE_INFO("ST,READY");
 			setCurrentFrameIsReceived(true);
 			setSendStatus(true);
 			emit signalRobotCommandFeedback(ST_READY);
 		}
 		if (reciveData.contains("ST,VCING"))
 		{
+			LOG_FUNCTION_LINE_INFO("ST,VCING");
 			setCurrentFrameIsReceived(false);
 			emit signalRobotCommandFeedback(ST_VCING);
 

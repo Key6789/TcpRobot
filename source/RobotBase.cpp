@@ -196,6 +196,7 @@ namespace TCP_ROBOT
 
 
 
+
 		// 显示平面
 		if (m_gridShape.IsNull())
 		{

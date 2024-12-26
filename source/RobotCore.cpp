@@ -1065,6 +1065,50 @@ namespace TCP_ROBOT
 	}
 	void RobotCoreClone::slotUpdataCount(int count, QString Value)
 	{
+		QMap<QString, ADDROBOTDATA> robotMap = m_cloneData[count].robotMap;
+		for (int i = 0; i < robotMap.keys().size(); i++)
+		{
+			QStringList values = Value.split(",");
+			foreach(QString value, values)
+			{
+				slotRobotRotateShape(m_cloneData[count].robotMap, value.toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
+			}
+			foreach(QString shapeName, m_cloneData[count].robotMap.keys())
+			{
+				if (m_cloneData[count].robotMap[shapeName].isChanged)
+				{
+					m_cloneData[count].robotMap[shapeName].isChanged = false;
+					updateShapeModel(m_cloneData[count].robotMap, shapeName);
+				}
+			}
+
+		}
+	}
+	void RobotCoreClone::slotUpdate()
+	{
+		getContext()->UpdateCurrentViewer();
+
+	}
+	void RobotCoreClone::slotUpdataDemo(QString value)
+	{
+		QStringList values = value.split(",");
+		if (values.size() != 5)
+		{
+			return;
+		}
+		slotShapesMoveShape(m_cloneOtherMap, values[0].toDouble(), ShapeType::ShapeType_Clone_1, MoveDirection::MoveDirection_YAxis);
+		slotShapesMoveShape(m_cloneOtherMap, values[1].toDouble(), ShapeType::ShapeType_Clone_2, MoveDirection::MoveDirection_YAxis);
+		slotShapesMoveShape(m_cloneOtherMap, values[2].toDouble(), ShapeType::ShapeType_Clone_3, MoveDirection::MoveDirection_XAxis);
+		slotShapesMoveShape(m_cloneOtherMap, values[3].toDouble(), ShapeType::ShapeType_Clone_4, MoveDirection::MoveDirection_ZAxis);
+		slotShapesRotateShape(m_cloneOtherMap, values[4].toDouble(), ShapeType::ShapeType_Clone_5, MoveDirection::MoveDirection_ZAxis);
+		foreach(QString shapeName, m_cloneOtherMap.keys())
+		{
+			if (m_cloneOtherMap[shapeName].isChanged)
+			{
+				m_cloneOtherMap[shapeName].isChanged = false;
+				updateShapeModel(m_cloneOtherMap, shapeName);
+			}
+		}
 	}
 	void RobotCoreClone::initMoveCloneShape()
 	{
@@ -1103,9 +1147,13 @@ namespace TCP_ROBOT
 		{
 			CLabLineEditBtn* line = new CLabLineEditBtn(widget);
 			line->setLabelText(robotMap.keys()[i]);
-			line->setLineEditText(QString::number(robotMap[robotMap.keys()[i]].angleZ));
+			line->setLineEditText("0");
 			line->setBtnText(__TCPString("确认"));
+			static int countValue = 0;
+			line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
 			line->connectBtnClicked([=]() {
+				countValue = countValue + line->getLineEditText().toDouble();
+				line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
 				//initMoveCloneShape(count);
 				slotRobotRotateShape(m_cloneData[count].robotMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Robot, MoveDirection::MoveDirection_ZAxis, i);
 				foreach(QString shapeName, m_cloneData[count].robotMap.keys())
@@ -1116,6 +1164,7 @@ namespace TCP_ROBOT
 						updateShapeModel(m_cloneData[count].robotMap, shapeName);
 					}
 				}
+				getContext()->UpdateCurrentViewer();
 				});
 			widget->addWidget(line);
 			m_cloneData[count].labLineMap.insert(robotMap.keys()[i], line);
@@ -1132,9 +1181,13 @@ namespace TCP_ROBOT
 			CLabLineEditBtn* line = new CLabLineEditBtn(widget);
 			line->setLabelText(robotMap.keys()[i]);
 			line->setBtnText(__TCPString("确认"));
-			line->setLineEditText(QString::number(robotMap[robotMap.keys()[i]].angleZ));
+			line->setLineEditText(0);
 
+			static int countValue = 0;
+			line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
 			line->connectBtnClicked([=]() {
+				countValue = countValue + line->getLineEditText().toDouble();
+				line->setLabelText(robotMap.keys()[i] + QString("(%1)").arg(countValue));
 				for (int count = 0; count < m_cloneData.size(); count++)
 				{
 					//initMoveCloneShape();
@@ -1157,8 +1210,7 @@ namespace TCP_ROBOT
 	}
 	QWidget* RobotCoreClone::initCloneSingleALLWidget(QWidget* parent)
 	{
-		CWidgetHLay *widget = new CWidgetHLay(parent);
-		widget->addWidget(new QLabel(__TCPString("逐个主控")));
+		CWidgetHLay* widget = new CWidgetHLay(parent);
 		for (int i = 0; i < m_cloneData.size(); i++)
 		{
 			widget->addWidget(initCloneShapeWidget(i, parent));
@@ -1167,15 +1219,20 @@ namespace TCP_ROBOT
 	}
 	QWidget* RobotCoreClone::initCloneDemoWidget(QWidget* parent)
 	{
-		CWidgetVLay *widget = new CWidgetVLay(parent);
-		widget->addWidget(new QLabel(__TCPString("克隆演示")));
+		CWidgetVLay* widget = new CWidgetVLay(parent);
+		widget->addWidget(new QLabel(__TCPString("射线控制机构")));
 
-		
+
 		CLabLineEditBtn* line = new CLabLineEditBtn(widget);
 		line->setLabelText(__TCPString("部件-1"));
 		line->setLineEditText("0");
-		line->setBtnText(__TCPString("确认"));  
+		line->setBtnText(__TCPString("确认"));
+
+		static int countValue = 0;
+		line->setLabelText(__TCPString("部件-1(%1)").arg(countValue));
 		line->connectBtnClicked([=]() {
+			countValue = countValue + line->getLineEditText().toDouble();
+			line->setLabelText(__TCPString("部件-1(%1)").arg(countValue));
 			slotShapesMoveShape(m_cloneOtherMap, line->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_1, MoveDirection::MoveDirection_YAxis);
 			foreach(QString shapeName, m_cloneOtherMap.keys())
 			{
@@ -1193,7 +1250,11 @@ namespace TCP_ROBOT
 		line2->setLabelText(__TCPString("部件-2"));
 		line2->setLineEditText("0");
 		line2->setBtnText(__TCPString("确认"));
+		static int countValue2 = 0;
+		line2->setLabelText(__TCPString("部件-2(%1)").arg(countValue2));
 		line2->connectBtnClicked([=]() {
+			countValue2 = countValue2 + line2->getLineEditText().toDouble();
+			line2->setLabelText(__TCPString("部件-2(%1)").arg(countValue2));
 			slotShapesMoveShape(m_cloneOtherMap, line2->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_2, MoveDirection::MoveDirection_YAxis);
 			foreach(QString shapeName, m_cloneOtherMap.keys())
 			{
@@ -1204,14 +1265,18 @@ namespace TCP_ROBOT
 				}
 			}
 			getContext()->UpdateCurrentViewer();
-			
+
 			});
 
 		CLabLineEditBtn* line3 = new CLabLineEditBtn(widget);
 		line3->setLabelText(__TCPString("部件-3"));
 		line3->setLineEditText("0");
 		line3->setBtnText(__TCPString("确认"));
+		static int countValue3 = 0;
+		line3->setLabelText(__TCPString("部件-3(%1)").arg(countValue3));
 		line3->connectBtnClicked([=]() {
+			countValue3 = countValue3 + line3->getLineEditText().toDouble();
+			line3->setLabelText(__TCPString("部件-3(%1)").arg(countValue3));
 			slotShapesMoveShape(m_cloneOtherMap, line3->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_3, MoveDirection::MoveDirection_XAxis);
 			foreach(QString shapeName, m_cloneOtherMap.keys())
 			{
@@ -1222,14 +1287,18 @@ namespace TCP_ROBOT
 				}
 			}
 			getContext()->UpdateCurrentViewer();
-			
+
 			});
 
 		CLabLineEditBtn* line4 = new CLabLineEditBtn(widget);
 		line4->setLabelText(__TCPString("部件-4"));
 		line4->setLineEditText("0");
 		line4->setBtnText(__TCPString("确认"));
+		static int countValue4 = 0;
+		line4->setLabelText(__TCPString("部件-4(%1)").arg(countValue4));
 		line4->connectBtnClicked([=]() {
+			countValue4 = countValue4 + line4->getLineEditText().toDouble();
+			line4->setLabelText(__TCPString("部件-4(%1)").arg(countValue4));
 			slotShapesMoveShape(m_cloneOtherMap, line4->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_4, MoveDirection::MoveDirection_ZAxis);
 			foreach(QString shapeName, m_cloneOtherMap.keys())
 			{
@@ -1246,7 +1315,11 @@ namespace TCP_ROBOT
 		line5->setLabelText(__TCPString("部件-5"));
 		line5->setLineEditText("0");
 		line5->setBtnText(__TCPString("确认"));
+		static int countValue5 = 0;
+		line5->setLabelText(__TCPString("部件-5(%1)").arg(countValue5));
 		line5->connectBtnClicked([=]() {
+			countValue5 = countValue5 + line5->getLineEditText().toDouble();
+			line5->setLabelText(__TCPString("部件-5(%1)").arg(countValue5));
 			slotShapesRotateShape(m_cloneOtherMap, line5->getLineEditText().toDouble(), ShapeType::ShapeType_Clone_5, MoveDirection::MoveDirection_ZAxis);
 			foreach(QString shapeName, m_cloneOtherMap.keys())
 			{

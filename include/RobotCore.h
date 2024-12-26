@@ -167,11 +167,16 @@ namespace TCP_ROBOT
 			double scale = 0;
 			QMap<QString, ADDROBOTDATA> robotMap;
 			QMap<QString, CLabLineEditBtn*> labLineMap;
+
+			double currentValue = 0;
 		};
 		using RobotCore::RobotCore;
 	public:
 		void cloneRobot(int count, CloneData data);
-		void slotUpdataCount(int count, QString Value );
+		void slotUpdataCount(int count, QString Value);
+		void slotUpdate();
+
+		void slotUpdataDemo(QString value);
 
 		void initMoveCloneShape();
 		void initMoveCloneShape(int count);
