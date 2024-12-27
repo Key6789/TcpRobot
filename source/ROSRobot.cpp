@@ -951,6 +951,7 @@ namespace TCP_ROBOT
 		{
 			m_tcpRobotCom = new TcpRobotCommunication(this);
 			m_tcpRobotCom->setIPAndPort(ip, port);
+			m_tcpRobotCom->getCommunicator()->setConnectIndex(6666);
 			initConnect();
 			return;
 		}
