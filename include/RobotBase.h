@@ -18,7 +18,7 @@ namespace TCP_ROBOT
 		RobotBase(QWidget* parent = nullptr);
 		~RobotBase();
 
-
+		Handle(V3d_View) getMyView() const;
 	public:
 		//  数据获取
 		// 获取当前的交互上下文
@@ -124,7 +124,7 @@ namespace TCP_ROBOT
 		// 弹出菜单处理
 		virtual void addItemInPopup(QMenu* theMenu);
 
-	protected:
+	public:
 
 		// 显示弹出菜单
 		void popup(const int x, const int y);

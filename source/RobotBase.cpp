@@ -57,6 +57,11 @@ namespace TCP_ROBOT
 	{
 	}
 
+	Handle(V3d_View) RobotBase::getMyView() const
+	{
+		return myView;
+	}
+
 	/**************************************** 界面初始化 **********/
 	void RobotBase::initRobotView()
 	{
@@ -561,23 +566,6 @@ namespace TCP_ROBOT
 	{
 		myCurrentMode = CurAction3d_DynamicRotation;
 		// 沿Z轴旋转
-		//定义轴的起点
-		gp_Pnt oriPoint(0, 0, 0);
-		//定义方向
-		gp_Dir dir(0, 1, 0);
-		//定义旋转轴
-		gp_Ax1 ax(oriPoint, dir);
-		//定义一个变换
-		gp_Trsf trsf;
-		//设置旋转轴和旋转角度，这里以90°为例
-		trsf.SetRotation(ax, 90 * 3.14 / 180);
-
-		//执行旋转变换
-		//获取要操作的shape
-		TopoDS_Shape tempshape = getShape();
-		BRepBuilderAPI_Transform aBRespTrsf(tempshape, trsf, true);
-		aBRespTrsf.Build();
-		TopoDS_Shape resShape = aBRespTrsf.Shape();
 	}
 
 	void RobotBase::slotUpdataRobotShaps(void)
@@ -710,6 +698,27 @@ namespace TCP_ROBOT
 		aAction->setShortcut(Qt::CTRL + Qt::Key_1);
 		aAction->setStatusTip(__StandQString("正视图"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(reset()));
+		aMenu->addAction(aAction);
+
+		// 平移视图
+		aAction = new QAction(__StandQString("平移视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_2);
+		aAction->setStatusTip(__StandQString("平移视图"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(pan()));
+		aMenu->addAction(aAction);
+
+		// 缩放视图
+		aAction = new QAction(__StandQString("缩放视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_3);
+		aAction->setStatusTip(__StandQString("缩放视图"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(zoom()));
+		aMenu->addAction(aAction);
+
+		// 旋转视图
+		aAction = new QAction(__StandQString("旋转视图"), aMenu);
+		aAction->setShortcut(Qt::CTRL + Qt::Key_4);
+		aAction->setStatusTip(__StandQString("旋转视图"));
+		connect(aAction, SIGNAL(triggered()), this, SLOT(rotate()));
 		aMenu->addAction(aAction);
 
 
