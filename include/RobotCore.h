@@ -190,6 +190,8 @@ namespace TCP_ROBOT
 
 		QWidget * initCloneDemoWidget(QWidget* parent = nullptr);
 
+		void visibleCloneShape(int count, bool isVisible);
+
 
 		
 

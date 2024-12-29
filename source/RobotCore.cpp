@@ -1337,4 +1337,53 @@ namespace TCP_ROBOT
 		widget->addWidget(line5);
 		return widget;
 	}
+	void RobotCoreClone::visibleCloneShape(int count, bool isVisible)
+	{
+		if (isVisible)
+		{
+			ADDROBOTDATA addRobotData8 = m_cloneData[count].robotMap["Robot_8"];
+			QVector<Handle(AIS_Shape)> myAisShapes8 = addRobotData8.myAisShapes;
+			for (int i = 0; i < myAisShapes8.size(); i++)
+			{
+				if (myAisShapes8[i].IsNull())
+				{
+					continue;
+				}
+				myContext->Erase(myAisShapes8[i], Standard_False);
+			}
+			ADDROBOTDATA addRobotData9 = m_cloneData[count].robotMap["Robot_9"];
+			QVector<Handle(AIS_Shape)> myAisShapes9 = addRobotData9.myAisShapes;
+			for (int i = 0; i < myAisShapes9.size(); i++)
+			{
+				if (myAisShapes9[i].IsNull())
+				{
+					continue;
+				}
+				myContext->Display(myAisShapes9[i], Standard_False);
+			}
+		}
+		else
+		{
+			ADDROBOTDATA addRobotData9 = m_cloneData[count].robotMap["Robot_9"];
+			QVector<Handle(AIS_Shape)> myAisShapes9 = addRobotData9.myAisShapes;
+			for (int i = 0; i < myAisShapes9.size(); i++)
+			{
+				if (myAisShapes9[i].IsNull())
+				{
+					continue;
+				}
+				myContext->Erase(myAisShapes9[i], Standard_False);
+			}
+			ADDROBOTDATA addRobotData8 = m_cloneData[count].robotMap["Robot_8"];
+			QVector<Handle(AIS_Shape)> myAisShapes8 = addRobotData8.myAisShapes;
+			for (int i = 0; i < myAisShapes8.size(); i++)
+			{
+				if (myAisShapes8[i].IsNull())
+				{
+					continue;
+				}
+				myContext->Display(myAisShapes8[i], Standard_False);
+			}
+		}
+	}
 } // namespace TCP_ROBOT
