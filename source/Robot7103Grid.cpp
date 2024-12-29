@@ -360,6 +360,13 @@ namespace TCP_ROBOT
 			if (getTcpCommunication())
 			{
 				getTcpCommunication()->sendValue("GO", value);
+				int connectIndex = getTcpCommunication()->getCommunicator()->getConnectIndex();
+				LOG_FUNCTION_LINE_INFO(QString("sendValue:%1, connectIndex:%2").arg(value).arg(connectIndex).toStdString().c_str());
+				LOG_FUNCTION_LINE_INFO(std::to_string(m_currentSaftIndex));
+			}
+			else
+			{
+				LOG_FUNCTION_LINE_INFO("ROBOT TCP IS NULL");
 			}
 		}
 		// 按照 安全点、工件、轨迹 进行定位
