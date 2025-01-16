@@ -96,7 +96,7 @@ namespace TCP_ROBOT
 	void Robot7103Grid::initTable()
 	{
 		// 共计六列，分别为工艺、焊缝、位置
-		setColumnCount(7);
+		setColumnCount(10);
 		// 行数不确定，先设置一个大概的数值
 		setRowCount(20);
 		// 仅选择单个单元格
@@ -112,7 +112,7 @@ namespace TCP_ROBOT
 		setCellWidget(0, 2, new QLabel(__StandQString("位置"), this));
 
 		// 接下来的几列合并为一列
-		setSpan(0, 3, 1, 3);
+		setSpan(0, 3, 1, 6);
 		// 设置单元格内容
 		// 设置网格可见
 		setShowGrid(true);
@@ -212,7 +212,7 @@ namespace TCP_ROBOT
 		{
 			setItem(row, i, new QTableWidgetItem(rowValues[i]));
 		}
-		setColumnCount(rowCount + 4);
+		setColumnCount(rowCount + 6);
 		addPushButtonClicked(row, saftIndex, workpieceIndex, trackIndex);
 
 	}
@@ -237,36 +237,109 @@ namespace TCP_ROBOT
 		fineTuningBtn->setText(__StandQString("微调"));
 		// 橙色
 		fineTuningBtn->setStyleSheet("background-color:gray;color:white;");
+
 		//fineTuningBtn->setEnabled(false);
+		QPushButton* confirmBtnA = new QPushButton(this);
+		confirmBtnA->setText(__StandQString("α待确认"));
 
-		QPushButton* confirmBtn = new QPushButton(this);
-		confirmBtn->setText(__StandQString("待确认"));
+		static bool Aconfirmed = false;
+		static bool Bconfirmed = false;
+		static bool Cconfirmed = false;
 
-		confirmBtn->setStyleSheet("background-color:gray;color:white;");
-		connect(confirmBtn, &QPushButton::clicked, [=]() {
-			if (confirmBtn->text() == __StandQString("确认"))
+		confirmBtnA->setStyleSheet("background-color:gray;color:white;");
+		connect(confirmBtnA, &QPushButton::clicked, [=]() {
+			if (confirmBtnA->text() == __StandQString("α已确认"))
 			{
-				confirmBtn->setStyleSheet("background-color:red");
-				confirmBtn->setText(__StandQString("待确认"));
-				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
-				emit signalChangeShapeColor(modeName, "#FF0000");
+				confirmBtnA->setStyleSheet("background-color:gray;color:white;");
+				confirmBtnA->setText(__StandQString("α待确认"));
+
+				Aconfirmed = false;
+
 			}
 			else
 			{
-				confirmBtn->setStyleSheet("background-color:gray");
-				confirmBtn->setText(__StandQString("确认"));
-				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				confirmBtnA->setStyleSheet("background-color:red;color:white;");
+				confirmBtnA->setText(__StandQString("α已确认"));
+				Aconfirmed = true;
+				
 				// 设为灰色
+				
+			}
+			if (Bconfirmed && Cconfirmed && Aconfirmed)
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
 				emit signalChangeShapeColor(modeName, "#808080");
+			}
+			else
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#FF0000");
 			}
 			});
 
+		QPushButton* confirmBtnB = new QPushButton(this);
+		confirmBtnB->setText(__StandQString("β1待确认"));
+		confirmBtnB->setStyleSheet("background-color:gray;color:white;");
+		connect(confirmBtnB, &QPushButton::clicked, [=]() {
+			if (confirmBtnB->text() == __StandQString("β1已确认"))
+			{
+				confirmBtnB->setStyleSheet("background-color:gray;color:white;");
+				confirmBtnB->setText(__StandQString("β1待确认"));
+				Bconfirmed = false;
+			}
+			else
+			{
+				confirmBtnB->setStyleSheet("background-color:red;color:white;");
+				confirmBtnB->setText(__StandQString("β1已确认"));
+				Bconfirmed = true;
+			}
+			if (Bconfirmed && Cconfirmed && Aconfirmed)
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#808080");
+			}
+			else
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#FF0000");
+			}
+			});
+
+		QPushButton* confirmBtnC = new QPushButton(this);
+		confirmBtnC->setText(__StandQString("β2待确认"));
+		confirmBtnC->setStyleSheet("background-color:gray;color:white;");
+		connect(confirmBtnC, &QPushButton::clicked, [=]() {
+			if (confirmBtnC->text() == __StandQString("β2已确认"))
+			{
+				confirmBtnC->setStyleSheet("background-color:gray;color:white;");
+				confirmBtnC->setText(__StandQString("β2待确认"));
+				Cconfirmed = false;
+			}
+			else
+			{
+				confirmBtnC->setStyleSheet("background-color:red;color:white;");
+				confirmBtnC->setText(__StandQString("β2已确认"));
+				Cconfirmed = true;
+			}
+			if (Bconfirmed && Cconfirmed && Aconfirmed)
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#808080");
+			}
+			else
+			{
+				QString modeName = m_moveStruct.getModeName(saftIndex, workIndex);
+				emit signalChangeShapeColor(modeName, "#FF0000");
+			}
+			});
 
 		// 按钮添加到单元格
 		setCellWidget(row, 3, locationBtn);
 		setCellWidget(row, 4, calibrationBtn);
 		setCellWidget(row, 5, fineTuningBtn);
-		setCellWidget(row, 6, confirmBtn);
+		setCellWidget(row, 6, confirmBtnA);
+		setCellWidget(row, 7, confirmBtnB);
+		setCellWidget(row, 8, confirmBtnC);
 
 		// 置灰 状态
 		calibrationBtn->setEnabled(false);
@@ -338,6 +411,8 @@ namespace TCP_ROBOT
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
 			messageBox->exec();
+			// 关闭弹窗
+			messageBox->close();
 
 		}
 		else
@@ -351,6 +426,8 @@ namespace TCP_ROBOT
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
 			messageBox->exec();
+			// 关闭弹窗
+			messageBox->close();
 		}
 		
 		

@@ -1,6 +1,21 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
   "configurePresets": [
+    {
+      "name": "default",
+      "hidden": false,
+      "description": "Default configuration",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
     {
       "hidden": true,
       "name": "Qt",
@@ -16,7 +31,7 @@
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "67SmY24ZeVbebyKD0fGfIzb/bGI="
+      "checksum": "ew5mah6YWtgUX6aDjyEQKIWmbpo="
     }
   }
 }

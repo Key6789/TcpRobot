@@ -437,6 +437,7 @@ namespace TCP_ROBOT
 			{
 				m_shapesMap[shapeName].isChanged = false;
 				updateShapeModel(m_shapesMap, shapeName);
+				getContext()->UpdateCurrentViewer();
 			}
 		}
 		foreach(QString shapeName, m_robotMap.keys())
@@ -445,6 +446,7 @@ namespace TCP_ROBOT
 			{
 				m_robotMap[shapeName].isChanged = false;
 				updateShapeModel(m_robotMap, shapeName);
+				getContext()->UpdateCurrentViewer();
 			}
 		}
 		foreach(QString shapeName, m_otherMap.keys())
@@ -453,6 +455,7 @@ namespace TCP_ROBOT
 			{
 				m_otherMap[shapeName].isChanged = false;
 				updateShapeModel(m_otherMap, shapeName);
+				getContext()->UpdateCurrentViewer();
 			}
 		}
 		// 刷新界面

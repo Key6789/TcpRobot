@@ -546,6 +546,7 @@ namespace TCP_ROBOT
 		myView->ZFitAll();
 		myView->Redraw();
 		myView->Zoom(0, 0, 150, 150);
+		//myView->Pan(0, 0, 100, 100);
 	}
 
 	void RobotBase::reset(void)
@@ -686,6 +687,7 @@ namespace TCP_ROBOT
 		aAction->setStatusTip(__StandQString("窗口适应"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(fitAll()));
 		aMenu->addAction(aAction);
+		
 
 		// 窗口重置
 		aAction = new QAction(__StandQString("窗口重置"), aMenu);
@@ -693,6 +695,7 @@ namespace TCP_ROBOT
 		aAction->setStatusTip(__StandQString("窗口重置"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(fitAll()));
 		aMenu->addAction(aAction);
+		
 
 		// 正视图
 		aAction = new QAction(__StandQString("正视图"), aMenu);
@@ -700,6 +703,7 @@ namespace TCP_ROBOT
 		aAction->setStatusTip(__StandQString("正视图"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(reset()));
 		aMenu->addAction(aAction);
+		
 
 		// 平移视图
 		aAction = new QAction(__StandQString("平移视图"), aMenu);
@@ -707,6 +711,7 @@ namespace TCP_ROBOT
 		aAction->setStatusTip(__StandQString("平移视图"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(pan()));
 		aMenu->addAction(aAction);
+		
 
 		// 缩放视图
 		aAction = new QAction(__StandQString("缩放视图"), aMenu);
@@ -714,6 +719,7 @@ namespace TCP_ROBOT
 		aAction->setStatusTip(__StandQString("缩放视图"));
 		connect(aAction, SIGNAL(triggered()), this, SLOT(zoom()));
 		aMenu->addAction(aAction);
+		
 
 		// 旋转视图
 		aAction = new QAction(__StandQString("旋转视图"), aMenu);
@@ -722,7 +728,7 @@ namespace TCP_ROBOT
 		connect(aAction, SIGNAL(triggered()), this, SLOT(rotate()));
 		aMenu->addAction(aAction);
 
-
+		
 
 		aMenu->popup(QCursor::pos());
 	}
