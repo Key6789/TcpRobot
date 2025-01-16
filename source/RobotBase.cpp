@@ -545,6 +545,7 @@ namespace TCP_ROBOT
 		myView->FitAll();
 		myView->ZFitAll();
 		myView->Redraw();
+		myView->Zoom(0, 0, 150, 150);
 	}
 
 	void RobotBase::reset(void)
