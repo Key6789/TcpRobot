@@ -31,6 +31,12 @@ namespace TCP_ROBOT
 		QWidget* commandFeedbackUI(QWidget* parent = nullptr);
 	signals:
 		void signalRobotCommandFeedback(RobotState state);
+
+	private:
+		// ÷∏¡Ó∂”¡–
+		QMap<QString,QQueue<QString>> m_commandQueue = QMap<QString,QQueue<QString>>();
+
+		static const QTime m_timeOut;
 	};
 
 	class TCPROBOT_EXPORT RobotFrame : public TCPXVIEWBASE_NAMESPACE::StandFrame

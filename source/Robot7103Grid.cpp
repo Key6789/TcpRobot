@@ -675,9 +675,16 @@ namespace TCP_ROBOT
 				if (applyList.size() == 10) {
 					VcValue = applyList.mid(1,8).join(",");
 				}
-			
+				QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
+				QMessageBox::information(this, __StandQString("重要通知"), __StandQString("即将运动到下一个透照点，请注意！\n").append(sendValueList.join("\n")).append("\n").append(VcValue), QMessageBox::Yes);
+
+
 				if (getTcpCommunication())
 				{
+					foreach(QString value, sendValueList)
+					{
+						getTcpCommunication()->sendValue("GO", value);
+					}
 					getTcpCommunication()->sendValue("GO", VcValue);
 				}
 				});

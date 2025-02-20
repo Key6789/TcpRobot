@@ -3,6 +3,7 @@
 
 namespace TCP_ROBOT
 {
+	// 
 	TcpRobotCommunication::TcpRobotCommunication(QObject* parent)
 	{
 
@@ -33,6 +34,7 @@ namespace TCP_ROBOT
 	}
 	TcpRobotCommunication::~TcpRobotCommunication()
 	{
+
 	}
 
 
@@ -104,7 +106,7 @@ namespace TCP_ROBOT
 		}
 		if (reciveData.contains("IG,OVER"))
 		{
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 		}
 		if (reciveData.contains("VC,OVER"))
 		{
@@ -127,25 +129,25 @@ namespace TCP_ROBOT
 			if (dataList.constLast() == "10")
 			{
 				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("错误"), __StandQString("视觉拍照失败!"));
-				messageBox->exec();
+				messageBox->show();
 				//QMessageBox::warning(nullptr, "错误", "电机驱动失败!");
 			}
 			if (dataList.constLast() == "20")
 			{
 				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("错误"), __StandQString("导轨移动失败!"));
-				messageBox->exec();
+				messageBox->show();
 			}
 			if (dataList.constLast() == "30")
 			{
 				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("错误"), __StandQString("转盘运行错误!"));
-				messageBox->exec();
+				messageBox->show();
 			}
 			if (dataList.constLast() == "40")
 			{
 				QMessageBox* messageBox = new QMessageBox(QMessageBox::Warning, __StandQString("错误"), __StandQString("位置不可达!"));
 				messageBox->show();
 			}
-			setCurrentFrameIsReceived(true);
+			setCurrentFrameIsReceived(false);
 		}
 
 		return true;
@@ -236,23 +238,28 @@ namespace TCP_ROBOT
 	{
 		
 		QString reciveData = byte.data();
-		reciveData = reciveData.trimmed();
-		emit signalAllReceived(reciveData);
-		if (reciveData.contains(getReciveStandFrameHearder()))
+
+		QStringList reciveDataList = reciveData.split(" ");
+		for (int i = 0; i < reciveDataList.size(); i++)
 		{
-			
-			QStringList dataList = reciveData.split(",");
-			if (dataList.size() == 10)
+			reciveData = reciveDataList[i].trimmed();
+			emit signalAllReceived(reciveData);
+			if (reciveData.contains(getReciveStandFrameHearder()))
 			{
-				QStringList valueList = dataList.mid(1, 8);
-				QString value = valueList.join(",");
-				setFrameData(value);
-				emit signalReciveValue(value);
-				qDebug() << getReciveStandFrameHearder() << " Send Value " << value;
-			}
-			if (dataList.contains("OVER"))
-			{
-				emit signalReciveStatus(true);
+
+				QStringList dataList = reciveData.split(",");
+				if (dataList.size() == 10)
+				{
+					QStringList valueList = dataList.mid(1, 8);
+					QString value = valueList.join(",");
+					setFrameData(value);
+					emit signalReciveValue(value);
+					qDebug() << getReciveStandFrameHearder() << " Send Value " << value;
+				}
+				if (dataList.contains("OVER"))
+				{
+					emit signalReciveStatus(true);
+				}
 			}
 		}
 	}
