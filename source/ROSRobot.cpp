@@ -936,6 +936,115 @@ namespace TCP_ROBOT
 		return teaching;
 	}
 
+	QWidget* ROSRobot::showVcParam(QWidget* parent)
+	{
+		CWidgetVLay* widget = new CWidgetVLay(parent);
+		QLabel* vcSetLabel = new QLabel(__StandQString("VC参数设置"), widget);
+		
+
+		LabelDoubleSpinbox* obLabel = new LabelDoubleSpinbox(widget);
+		obLabel->setLabelText(__StandQString("OB(mm)："));
+
+		LabelDoubleSpinbox* ocLabel = new LabelDoubleSpinbox(widget);
+		ocLabel->setLabelText(__StandQString("OC(mm)："));
+
+		LabelDoubleSpinbox* A0Label = new LabelDoubleSpinbox(widget);
+		A0Label->setLabelText(__StandQString("α0(°)："));
+		A0Label->setRange(-180, 180);
+
+		LabelDoubleSpinbox* A1Label = new LabelDoubleSpinbox(widget);
+		A1Label->setLabelText(__StandQString("α1(°)："));
+		A1Label->setRange(-180, 180);
+
+		LabelDoubleSpinbox* B1Label = new LabelDoubleSpinbox(widget);
+		B1Label->setLabelText(__StandQString("β1(°)："));
+		B1Label->setRange(-180, 180);
+
+		LabelDoubleSpinbox* A2Label = new LabelDoubleSpinbox(widget);
+		A2Label->setLabelText(__StandQString("α2(°)："));
+		A2Label->setRange(-180, 180);
+
+		LabelDoubleSpinbox* B2Label = new LabelDoubleSpinbox(widget);
+		B2Label->setLabelText(__StandQString("β2(°)："));
+		B2Label->setRange(-180, 180);
+
+		LabelDoubleSpinbox* L1Label = new LabelDoubleSpinbox(widget);
+		L1Label->setLabelText(__StandQString("L1(mm)："));
+
+		widget->addWidget(vcSetLabel);
+		widget->addWidget(obLabel);
+		widget->addWidget(ocLabel);
+		widget->addWidget(A0Label);
+		widget->addWidget(A1Label);
+		widget->addWidget(B1Label);
+		widget->addWidget(A2Label);
+		widget->addWidget(B2Label);
+		widget->addWidget(L1Label);
+
+		widget->addStretch();
+
+		QPushButton* saveBtn = new QPushButton(__StandQString("保存"), widget);
+		widget->addWidget(saveBtn);
+
+		connect(saveBtn, &QPushButton::clicked, [=]() {
+			// 文件加载用于 更新 VcOB VcOC VcLen VC0 VC1 VC2
+			QString fileName = QApplication::applicationDirPath() + "/profile/WorkpieceSet.json";
+
+			// 如果文件不存在则创建
+			if (!QFile(fileName).exists())
+			{
+				QFile file(fileName);
+				if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+				{
+					qDebug() << "open file error";
+					return;
+				}
+				QJsonDocument doc;
+				QVariantMap map;
+				map.insert("VcOB", QString::number(obLabel->getValue()));
+				map.insert("VcOC", QString::number(ocLabel->getValue()));
+				map.insert("VcA0", QString::number(A0Label->getValue()));
+				map.insert("VcA1", QString::number(A1Label->getValue()));
+				map.insert("VcA2", QString::number(A2Label->getValue()));
+				map.insert("VcB1", QString::number(B1Label->getValue()));
+				map.insert("VcB2", QString::number(B2Label->getValue()));
+				map.insert("VcLen", QString::number(L1Label->getValue()));
+
+				QJsonObject obj = QJsonObject::fromVariantMap(map);
+				doc.setObject(obj);
+				file.write(doc.toJson());
+				file.close();
+				return;
+			}
+			{
+				QFile file(fileName);
+				if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+				{
+					qDebug() << "open file error";
+					return;
+				}
+				QJsonDocument doc;
+				QVariantMap map;
+				map.insert("VcOB", QString::number(obLabel->getValue()));
+				map.insert("VcOC", QString::number(ocLabel->getValue()));
+				map.insert("VcA0", QString::number(A0Label->getValue()));
+				map.insert("VcA1", QString::number(A1Label->getValue()));
+				map.insert("VcA2", QString::number(A2Label->getValue()));
+				map.insert("VcB1", QString::number(B1Label->getValue()));
+				map.insert("VcB2", QString::number(B2Label->getValue()));
+				map.insert("VcLen", QString::number(L1Label->getValue()));
+
+				QJsonObject obj = QJsonObject::fromVariantMap(map);
+				doc.setObject(obj);
+				file.write(doc.toJson());
+				file.close();
+			}
+			
+			});
+		
+		return widget;
+	}
+
 	void ROSRobot::setCommunicationPointer(TcpRobotCommunication* tcpRobotCom)
 	{
 		LOG_FUNCTION_LINE_MESSAGE;

@@ -39,6 +39,8 @@ namespace TCP_ROBOT
 		// 用于显示 示教
 		QWidget* showTeaching(QWidget* parent = nullptr);
 
+		QWidget * showVcParam(QWidget* parent = nullptr);
+
 		// 设置通信指针
 		void setCommunicationPointer(TcpRobotCommunication* tcpRobotCom);
 

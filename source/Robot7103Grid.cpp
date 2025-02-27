@@ -43,6 +43,9 @@ namespace TCP_ROBOT
 			}
 		}
 		m_moveStruct.LoadJson(MOVESTRUCTPATH(m_currentWork));
+
+
+
 	}
 	void Robot7103Grid::initParamTableWidget()
 	{
@@ -82,7 +85,7 @@ namespace TCP_ROBOT
 		m_rowMap.clear();
 		// 重新初始化表格
 		initParamTableWidget();
-		
+
 	}
 
 	void Robot7103Grid::initUI()
@@ -261,9 +264,9 @@ namespace TCP_ROBOT
 				confirmBtnA->setStyleSheet("background-color:red;color:white;");
 				confirmBtnA->setText(__StandQString("α已确认"));
 				Aconfirmed = true;
-				
+
 				// 设为灰色
-				
+
 			}
 			if (Bconfirmed && Cconfirmed && Aconfirmed)
 			{
@@ -371,7 +374,7 @@ namespace TCP_ROBOT
 		calibrationBtn->setStyleSheet("background-color:orange;color:white;");
 		fineTuningBtn->setStyleSheet("background-color:blue;color:white;");
 
-		
+
 
 		LOG_FUNCTION_LINE_INFO("saftIndex:%d, workIndex:%d, trackIndex:%d", saftIndex, workIndex, trackIndex);
 
@@ -429,8 +432,8 @@ namespace TCP_ROBOT
 			// 关闭弹窗
 			messageBox->close();
 		}
-		
-		
+
+
 
 		foreach(QString value, sendValueList)
 		{
@@ -451,7 +454,7 @@ namespace TCP_ROBOT
 		m_currentWorkIndex = workIndex;
 		m_currentTrackIndex = trackIndex;
 
-		
+
 	}
 
 	void Robot7103Grid::slotcalibrationBtnClicked(
@@ -465,7 +468,7 @@ namespace TCP_ROBOT
 		}
 		m_calibrationDialog = new QDialog(this);
 		m_calibrationDialog->setWindowTitle(__StandQString("校准工件"));
-		
+
 
 		m_calibrationDialog->move(QCursor::pos());
 
@@ -507,6 +510,11 @@ namespace TCP_ROBOT
 		LabelDoubleSpinbox* L1Label = new LabelDoubleSpinbox(widget);
 		L1Label->setLabelText(__StandQString("L1(mm)："));
 
+		CLabComBox* comBox = new CLabComBox(widget);
+		comBox->setLabel(__StandQString("选择焊缝类型："));
+		comBox->addItem(__StandQString("横缝"));
+		comBox->addItem(__StandQString("纵缝"));
+
 		layout->addWidget(obLabel);
 		layout->addWidget(ocLabel);
 		layout->addWidget(A0Label);
@@ -515,6 +523,7 @@ namespace TCP_ROBOT
 		layout->addWidget(A2Label);
 		layout->addWidget(B2Label);
 		layout->addWidget(L1Label);
+		layout->addWidget(comBox);
 
 		QPushButton* buttonApply = new QPushButton(__StandQString("应用"), widget);
 		layout->addWidget(buttonApply);
@@ -587,7 +596,14 @@ namespace TCP_ROBOT
 				QString VcValue = applyList.join(",");
 				if (getTcpCommunication())
 				{
-					getTcpCommunication()->sendValue("VC", VcValue);
+					if (comBox->getCurIndex() == 0)
+					{
+						getTcpCommunication()->sendValue("VC0", VcValue);
+					}
+					if (comBox->getCurIndex() == 1)
+					{
+						getTcpCommunication()->sendValue("VC1", VcValue);
+					}
 				}
 				m_vcMap.clear();
 				vcList->clearList();
@@ -611,20 +627,20 @@ namespace TCP_ROBOT
 			foreach(QString vcName, m_vcMap.keys())
 			{
 				QString vcValue = m_vcMap[vcName];
-				if(m_vcMap[vcName].contains("VC0"))
+				if (m_vcMap[vcName].contains("VC0"))
 				{
 					workPoint.VC0 = m_vcMap[vcName];
 				}
-				else if(m_vcMap[vcName].contains("VC1"))
+				else if (m_vcMap[vcName].contains("VC1"))
 				{
 					workPoint.VC1 = m_vcMap[vcName];
 				}
-				else if(m_vcMap[vcName].contains("VC2"))
+				else if (m_vcMap[vcName].contains("VC2"))
 				{
 					workPoint.VC2 = m_vcMap[vcName];
 				}
 			}
-			
+
 			QMap<int, WorkpieceStruct> SaftPointMap = m_moveStruct.MoveMap.value(saftIndex).SaftPointMap;
 			SaftPointMap.insert(workIndex, workPoint);
 			SaftPointStruct saftPoint = m_moveStruct.MoveMap.value(saftIndex);
@@ -673,7 +689,7 @@ namespace TCP_ROBOT
 				VcValue.trimmed();
 				QStringList applyList = VcValue.split(",");
 				if (applyList.size() == 10) {
-					VcValue = applyList.mid(1,8).join(",");
+					VcValue = applyList.mid(1, 8).join(",");
 				}
 				QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
 				QMessageBox::information(this, __StandQString("重要通知"), __StandQString("即将运动到下一个透照点，请注意！\n").append(sendValueList.join("\n")).append("\n").append(VcValue), QMessageBox::Yes);
@@ -805,8 +821,8 @@ namespace TCP_ROBOT
 		setRowCount(0);
 
 		initUI();
-		
-	
+
+
 
 	}
 	RobotoDemonstrator::RobotoDemonstrator(QWidget* parent)
@@ -1267,6 +1283,56 @@ namespace TCP_ROBOT
 
 			m_moveStruct.changedModeNames(listValue);
 		}
+		{
+			// 文件加载用于 更新 VcOB VcOC VcLen VC0 VC1 VC2
+			QString fileName = QApplication::applicationDirPath() + "/profile/WorkpieceSet.json";
+
+			// 如果文件不存在则创建
+			if (!QFile(fileName).exists())
+			{
+				QFile file(fileName);
+				if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+				{
+					qDebug() << "open file error";
+					return;
+				}
+				QJsonDocument doc;
+				QVariantMap map;
+				map.insert("VcOB", "40");
+				map.insert("VcOC", "1265");
+				map.insert("VcA0", "30");
+				map.insert("VcA1", "30");
+				map.insert("VcA2", "30");
+				map.insert("VcB1", "30");
+				map.insert("VcB2", "30");
+				map.insert("VcLen", "1");
+
+				QJsonObject obj = QJsonObject::fromVariantMap(map);
+				doc.setObject(obj);
+				file.write(doc.toJson());
+				file.close();
+			}
+
+			QFile file(fileName);
+			if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+			{
+				qDebug() << "open file error";
+				return;
+			}
+			// 读取json数据 并转换为 QVariantMap
+			QByteArray byteArr = file.readAll();
+			QJsonDocument doc = QJsonDocument::fromJson(byteArr);
+			QVariantMap map = doc.toVariant().toMap();
+
+			m_vcOB = map.value("VcOB").toString();
+			m_vcOC = map.value("VcOC").toString();
+			m_vcA0 = map.value("VcA0").toString();
+			m_vcA1 = map.value("VcA1").toString();
+			m_vcA2 = map.value("VcA2").toString();
+			m_vcB1 = map.value("VcB1").toString();
+			m_vcB2 = map.value("VcB2").toString();
+			m_vcLen = map.value("VcLen").toString();
+		}
 	}
 	void RobotoDemonstrator::loadTreeWidget(QTreeWidget* treeWidget)
 	{
@@ -1380,6 +1446,14 @@ namespace TCP_ROBOT
 		workpiece.PostioName = m_lineEditP->text();
 		workpiece.HolePosition = m_lineEditHP->text();
 		workpiece.HoleModeName = m_comBoxMode->currentText();
+		workpiece.VcA0 = m_vcA0;
+		workpiece.VcA1 = m_vcA1;
+		workpiece.VcA2 = m_vcA2;
+		workpiece.VcB1 = m_vcB1;
+		workpiece.VcB2 = m_vcB2;
+		workpiece.VcLen = m_vcLen;
+		workpiece.VcOB = m_vcOB;
+		workpiece.VcOC = m_vcOC;
 		m_curWorkpiece = workpiece;
 
 		if (m_curWorkpiece.WorkpieceIndex != -1)

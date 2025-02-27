@@ -907,6 +907,7 @@ struct TrajectoryStruct
 
 struct WorkpieceStruct
 {
+
 	int WorkpieceIndex = -1; // 工作件序号
 	QString WorkpieceName = __StandQString("焊缝-").append(QString::number(WorkpieceIndex)); // 工作件名称
 	QString HolePosition = ""; // 工作件位置X

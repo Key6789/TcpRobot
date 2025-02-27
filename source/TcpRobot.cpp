@@ -11,6 +11,8 @@ namespace TCP_ROBOT
 		RobotFrame * ps = createRobotFrame("PS");
 		RobotFrame * go = createRobotFrame("GO");
 		RobotFrame * vc = createRobotFrame("VC");
+		RobotFrame* vc0 = createRobotFrame("VC0");
+		RobotFrame* vc1 = createRobotFrame("VC1");
 		RobotFrame * ft = createRobotFrame("FT");
 		RobotFrame * ig = createRobotFrame("IG");
 		RobotFrame * gi = createRobotFrame("GI");
@@ -26,7 +28,8 @@ namespace TCP_ROBOT
 		robotFrames.insert("FT", ft);
 		robotFrames.insert("IG", ig);
 		robotFrames.insert("GI", gi);
-
+		robotFrames.insert("VC1", vc1);
+		robotFrames.insert("VC0", vc0);
 		// 注册完成
 		setStandFrame(robotFrames);
 
@@ -244,7 +247,8 @@ namespace TCP_ROBOT
 		{
 			reciveData = reciveDataList[i].trimmed();
 			emit signalAllReceived(reciveData);
-			if (reciveData.contains(getReciveStandFrameHearder()))
+			// 数据适配
+			if (reciveData.startsWith(getReciveStandFrameHearder()))
 			{
 
 				QStringList dataList = reciveData.split(",");

@@ -76,6 +76,7 @@ namespace TCP_ROBOT
 		int m_currentSaftIndex = ROBOTUNABLEVALUE;
 		int m_currentWorkIndex = ROBOTUNABLEVALUE;
 		int m_currentTrackIndex = ROBOTUNABLEVALUE;
+	
 	};
 
 	class RobotoDemonstrator :public QWidget
@@ -183,7 +184,14 @@ namespace TCP_ROBOT
 		treeItemStruct m_treeItemStruct = treeItemStruct();
 
 		QMap<int, QTreeWidgetItem*> m_treeSaftItemMap = QMap<int, QTreeWidgetItem*>();
-
+		QString m_vcOB;
+		QString m_vcOC;
+		QString m_vcA0;
+		QString m_vcA1;
+		QString m_vcA2;
+		QString m_vcB1;
+		QString m_vcB2;
+		QString m_vcLen;
 	};
 }
 
