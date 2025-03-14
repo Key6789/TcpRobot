@@ -24,6 +24,8 @@ namespace TCP_ROBOT
 
 		void setMoveStruct(MoveStruct moveStruct) { m_moveStruct = moveStruct; };
 		MoveStruct getMoveStruct() { return m_moveStruct; };
+
+		QString getStringSixZero(QString str, QString value);
 	signals:
 		void signalChangeShapeColor(QString shapeName, QString colorName);
 	public: // 参数初始化

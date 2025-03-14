@@ -17,6 +17,14 @@ namespace TCP_ROBOT
 	}
 
 
+	QString Robot7103Grid::getStringSixZero(QString str, QString value)
+	{
+		QStringList sendValue0 = str.split(",");
+		sendValue0[6] = value;
+		QString sendValue1 = sendValue0.join(",");
+		return sendValue1;
+	}
+
 	void Robot7103Grid::initOriginalParams()
 	{
 
@@ -378,9 +386,30 @@ namespace TCP_ROBOT
 
 		LOG_FUNCTION_LINE_INFO("saftIndex:%d, workIndex:%d, trackIndex:%d", saftIndex, workIndex, trackIndex);
 
-		QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
-		LOG_FUNCTION_LINE_INFO("sendValueList:%s", sendValueList.join("\n").toStdString().c_str());
+		QStringList sendValueListTemp = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
+		
 
+		QStringList sendValueList = QStringList();
+		// 获取 当前位置
+		if (getTcpCommunication())
+		{
+			RobotFrame* psFrame = qobject_cast<RobotFrame*>(getTcpCommunication()->getStandFrame("PS"));
+			if (psFrame)
+			{
+				QString currentPos = psFrame->getCurrentPosition();
+				QString Pos1 = getStringSixZero(currentPos, "0");
+				sendValueList.push_back(Pos1);
+				for (int i = 0; i < sendValueListTemp.size(); ++i)
+				{
+					QString sendValue = getStringSixZero(sendValueListTemp[i], "0");
+					sendValueList.push_back(sendValue);
+					if (i == sendValueListTemp.size() - 1)
+					{
+						sendValueList.push_back(sendValueListTemp[i]);
+					}
+				}
+			}
+		}
 		// 遍历表格其他行，将其他按钮置灰
 		for (int i = 0; i < rowCount(); ++i)
 		{
@@ -410,10 +439,16 @@ namespace TCP_ROBOT
 				QMessageBox::Warning,
 				__StandQString("警告"),
 				__StandQString("为确保安全,请手动移动到安全位置！\n %1").arg(sendValueList.join("\n")),
-				QMessageBox::Ok, this);
+				QMessageBox::Ok|QMessageBox::Cancel, this);
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
-			messageBox->exec();
+			messageBox->setButtonText(QMessageBox::Cancel, __StandQString("取消"));
+			messageBox->setDefaultButton(QMessageBox::Cancel);
+			if (messageBox->exec() != QMessageBox::Ok)
+			{
+				messageBox->close();
+				return;
+			}
 			// 关闭弹窗
 			messageBox->close();
 
@@ -425,16 +460,19 @@ namespace TCP_ROBOT
 				QMessageBox::Warning,
 				__StandQString("提示"),
 				__StandQString("机器人即将开始定位工件，请确认安全！\n %1").arg(sendValueList.join("\n")),
-				QMessageBox::Ok, this);
+				QMessageBox::Ok | QMessageBox::Cancel, this);
 
 			messageBox->setButtonText(QMessageBox::Ok, __StandQString("我已确认安全,可继续操作。"));
-			messageBox->exec();
+			messageBox->setButtonText(QMessageBox::Cancel, __StandQString("取消"));
+			messageBox->setDefaultButton(QMessageBox::Cancel);
+			if (messageBox->exec() != QMessageBox::Ok)
+			{
+				messageBox->close();
+				return;
+			}
 			// 关闭弹窗
 			messageBox->close();
 		}
-
-
-
 		foreach(QString value, sendValueList)
 		{
 			if (getTcpCommunication())
@@ -692,17 +730,79 @@ namespace TCP_ROBOT
 					VcValue = applyList.mid(1, 8).join(",");
 				}
 				QStringList sendValueList = m_moveStruct.getSendValueList(m_currentSaftIndex, m_currentWorkIndex, saftIndex, workIndex);
-				QMessageBox::information(this, __StandQString("重要通知"), __StandQString("即将运动到下一个透照点，请注意！\n").append(sendValueList.join("\n")).append("\n").append(VcValue), QMessageBox::Yes);
+				//QMessageBox::information(this, __StandQString("重要通知"), __StandQString("即将运动到下一个透照点，请注意！\n").append(sendValueList.join("\n")).append("\n").append(VcValue), QMessageBox::Yes);
 
 
+				QStringList sendValueListApply = {};
 				if (getTcpCommunication())
 				{
-					foreach(QString value, sendValueList)
+					RobotFrame *psFrame = qobject_cast<RobotFrame*>(getTcpCommunication()->getStandFrame("PS"));
+					QString psValue = QString();
+					if (psFrame)
 					{
-						getTcpCommunication()->sendValue("GO", value);
+						psValue = psFrame->getCurrentPosition();
 					}
-					getTcpCommunication()->sendValue("GO", VcValue);
+					if (sendValueList.size() == 2 && sendValueList[0] == sendValueList[1])
+					{
+						if (!psValue.isEmpty())
+						{
+							// 当前位置不为空
+							// 外部轴归零，机器人不动
+							QStringList psValueTemp = psValue.split(",");
+							psValueTemp[6] = "0";
+							sendValueListApply.push_back(psValueTemp.join(","));
+						}
+						QString valueTemp = sendValueList[0];
+						// 进行坐标拆分
+						// 机器人回拍照位置，外部轴不动
+						//sendValueListApply.push_back(valueTemp);
+
+						// 外部轴归零，机器人不动
+						QStringList vcValueList = valueTemp.split(",");
+						vcValueList[6] = "0";
+						sendValueListApply.push_back(vcValueList.join(","));
+					}
+
+					QStringList vcValueList = VcValue.split(",");
+					if (vcValueList.size() == 8)
+					{
+						// 机器人运动，外部轴还是0 ；
+						QStringList vcValueListTemp = vcValueList;
+						vcValueListTemp[6] = "0";
+						sendValueListApply.push_back(vcValueListTemp.join(","));
+
+						// 外部轴归位
+						sendValueListApply.push_back(VcValue);
+					}
+					QString valueTemp;
+					if (sendValueListApply.size() == 4)
+					{
+						valueTemp =  __StandQString("外部轴归零，机器人不动!") + "\n" + sendValueListApply[0] + "\n";
+						valueTemp += __StandQString("外部轴零点，机器人回拍照位置!") + "\n" + sendValueListApply[1] + "\n";
+						valueTemp += __StandQString("机器人运动，外部轴零点！") + "\n" + sendValueListApply[2] + "\n";
+						valueTemp += __StandQString("机器人不动，外部轴归位!") + "\n" + sendValueListApply[3];
+					}
+					
+					//QMessageBox::information(this, __StandQString("重要通知"), __StandQString("即将运动到下一个透照点，请注意！\n").append(valueTemp), QMessageBox::Yes);
+					QMessageBox * messageBox = new QMessageBox(this);
+					messageBox->setWindowTitle(__StandQString("提示"));
+					messageBox->setText(__StandQString("即将运动到下一个透照点，请注意！\n").append(valueTemp));
+					messageBox->setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+					messageBox->setDefaultButton(QMessageBox::Cancel);
+
+					if (messageBox->exec() == QMessageBox::Yes)
+					{
+						foreach(QString value, sendValueListApply)
+						{
+							if (getTcpCommunication())
+							{
+								getTcpCommunication()->sendValue("GO", value);
+							}
+						}
+					}
 				}
+
+				
 				});
 
 		}

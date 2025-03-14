@@ -257,6 +257,7 @@ namespace TCP_ROBOT
 					QStringList valueList = dataList.mid(1, 8);
 					QString value = valueList.join(",");
 					setFrameData(value);
+					m_currentPosition = value;
 					emit signalReciveValue(value);
 					qDebug() << getReciveStandFrameHearder() << " Send Value " << value;
 				}
@@ -271,5 +272,9 @@ namespace TCP_ROBOT
 	{
 
 		emit signalSendValue(getFrameHeader() + getFrameData() + getFrameFooter());
+	}
+	QString RobotFrame::getCurrentPosition() const
+	{
+		return m_currentPosition;
 	}
 }

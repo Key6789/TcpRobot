@@ -49,8 +49,13 @@ namespace TCP_ROBOT
 		void parseFrame(const QByteArray& byte) override;
 		void sendStandValue() override;
 
+		QString getCurrentPosition() const;
+
 	signals:
 		void signalAllReceived(const QString& command);
+
+	private:
+		QString m_currentPosition;
 	};
 }
 #endif // T3TCPROBOT_H_
